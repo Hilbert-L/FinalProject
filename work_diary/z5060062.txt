@@ -1,2 +1,3 @@
 Week 1 - sort out the group and decide on the project
 Week 2 - start the proposal draft and come up with functionalities including novel functionalities
+Week 3 - Finalise Proposal and made a start on the sprint API and sample UI using React and FastAPI

@@ -44,7 +44,6 @@ class jwtBearer(HTTPBearer):
         else:
             raise HTTPException(status_code = 403, details="Invalid or Expired Token!")
 
-
     def verify_jwt(self, jwtoken : str):
         isTokenValid : bool = False # A False flag
         payload = decodeJWT(jwtoken)

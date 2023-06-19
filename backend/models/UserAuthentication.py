@@ -47,21 +47,19 @@ class UserSchema(BaseModel):
     phonenumber: Optional[str] = Field(default=None)
     profilepicture: Optional[str] = Field(default=None)
     isloggedin: bool = Field(default=None)
-    DateCreated: datetime = datetime.now()
-    Reviews: List[CarSpaceReview] = Field(default=None)
+    datecreated: datetime = datetime.now()
     class Config:
         schema = {
             "sample" : {
                 "userId": "1",
-                "Firstname": "test",
-                "Lastname": "test",
-                "Username": "test",
-                "Email": "test@hotmail.com",
-                "Password": "test",
-                "ProfilePicture": "test",
-                "isLoggedin": False,
-                "DateCreated": "2000-01-01 15:54:53.845417",
-                "Reviews": []
+                "firstname": "test",
+                "lastname": "test",
+                "username": "test",
+                "email": "test@hotmail.com",
+                "password": "test",
+                "profilePicture": "test",
+                "isloggedin": False,
+                "datecreated": "2000-01-01 15:54:53.845417",
             }
         }
 

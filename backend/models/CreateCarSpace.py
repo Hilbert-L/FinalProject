@@ -39,7 +39,7 @@ class CreateCarSpaceSchema(BaseModel):
     Postcode: str = Field(default=None)
     Width: Optional[str] = Field(default=None)
     Breadth: Optional[str] = Field(default=None)
-    Spacetype: Optional[str] = Field(default=None)
+    SpaceType: Optional[str] = Field(default=None)
     AccessKeyRequired: Optional[bool] = Field(default=None)
     VehicleSize: Optional[str] = Field(default=None)
     Currency: str = Field(default=None)
@@ -60,7 +60,7 @@ class CreateCarSpaceSchema(BaseModel):
             "Postcode": "test",
             "Width": "test",
             "Breadth": "test",
-            "Spacetype": "test",
+            "SpaceType": "test",
             "AccessKeyRequired": False,
             "VehicleSize": "Large",
             "Currency": "AUD",
@@ -84,14 +84,13 @@ class CarSpaceSchema(BaseModel):
     Postcode: str = Field(default=None)
     Width: Optional[str] = Field(default=None)
     Breadth: Optional[str] = Field(default=None)
-    Spacetype: Optional[str] = Field(default=None)
+    SpaceType: Optional[str] = Field(default=None)
     AccessKeyRequired: Optional[bool] = Field(default=None)
     VehicleSize: Optional[str] = Field(default=None)
     Currency: str = Field(default=None)
     Price: int = Field(default=None)
     Frequency: str = Field(default=None)
     Pictures: List[str] = Field(default=None)
-    Reviews: List[CarSpaceReview] = Field(default=None)
     class Config:
         schema = {
             "Username": "test",
@@ -107,12 +106,11 @@ class CarSpaceSchema(BaseModel):
             "Postcode": "test",
             "Width": "test",
             "Breadth": "test",
-            "Spacetype": "test",
+            "SpaceType": "test",
             "AccessKeyRequired": False,
             "VehicleSize": "Large",
             "Currency": "AUD",
             "Price": 100,
             "Frequency": "Daily",
             "Pictures":"test",
-            "Reviews":[]
         }

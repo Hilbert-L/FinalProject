@@ -48,8 +48,8 @@ class UpdateName(BaseModel):
 
 class UpdateProfilePicture(BaseModel):
     username: str = Field(default=None)
-    oldProfilePic: str = Field(default=None)
-    newProfilePic: str = Field(default=None)
+    oldProfilePic: Optional[str] = Field(default=None)
+    newProfilePic: Optional[str] = Field(default=None)
     class Config:
         schema = {
             "sample" : {
