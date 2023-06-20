@@ -1,9 +1,12 @@
 from pydantic import BaseModel, Field, EmailStr 
 from typing import Optional, List
 from datetime import datetime
-from .CreateCarSpace import CarSpaceReview
+
+def get_current_datetime():
+    return datetime.now()
 
 class UserRegistrationSchema(BaseModel):
+    title: str = Field(default=None)
     firstname: str = Field(default=None)
     lastname: str = Field(default=None)
     username: str = Field(default=None)
@@ -12,15 +15,16 @@ class UserRegistrationSchema(BaseModel):
     phonenumber: Optional[str] = Field(default=None)
     profilepicture: Optional[str] = Field(default=None)
     class Config:
-        schema = {
+        json_schema_extra = {
             "sample" : {
-                "Firstname": "test",
-                "Lastname": "test",
-                "Username": "test",
-                "Email": "test@hotmail.com",
-                "Password": "test",
-                "PhoneNumber": "+614XXXXXXXX",
-                "ProfilePicture": "test",
+                "title": "mr",
+                "firstname": "test",
+                "lastname": "test",
+                "username": "test",
+                "email": "test@hotmail.com",
+                "password": "test",
+                "phonenumber": "0000000000",
+                "profilepicture": "test",
             }
         }
 
@@ -29,16 +33,17 @@ class LoginSchema(BaseModel):
     username: str = Field(default=None)
     password: str = Field(default=None)
     class Config:
-        schema = {
+        json_schema_extra = {
             "sample" : {
-                "Username": "test",
-                "Password": "test"
+                "username": "test",
+                "password": "test",
             }
         }
     
 
 class UserSchema(BaseModel):
-    userId: int = Field(default=None)
+    userId: str = Field(default=None)
+    title: str = Field(default=None)
     firstname: str = Field(default=None)
     lastname: str = Field(default=None)
     username: str = Field(default=None)
@@ -46,19 +51,20 @@ class UserSchema(BaseModel):
     password: str = Field(default=None)
     phonenumber: Optional[str] = Field(default=None)
     profilepicture: Optional[str] = Field(default=None)
-    isloggedin: bool = Field(default=None)
-    datecreated: datetime = datetime.now()
+    isloggedin: str = Field(default=None)
+    datecreated: datetime = Field(default_factory=get_current_datetime)
     class Config:
-        schema = {
+        json_schema_extra = {
             "sample" : {
-                "userId": "1",
+                "userid": "1",
+                "title": "mr",
                 "firstname": "test",
                 "lastname": "test",
                 "username": "test",
                 "email": "test@hotmail.com",
                 "password": "test",
-                "profilePicture": "test",
-                "isloggedin": False,
+                "profilepicture": "test",
+                "isloggedin": "False",
                 "datecreated": "2000-01-01 15:54:53.845417",
             }
         }
@@ -67,8 +73,8 @@ class UserSchema(BaseModel):
 class LogoutSchema(BaseModel):
     token: str
     class Config:
-        schema = {
+        json_schema_extra = {
             "sample" : {
-                "authorizationToken": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VybmFtZSI6InN0cmluZyJ9.8qE-7f6SOPTQH2RcKpDiO5pzsZiHP0HXxAS9YzFgG7E",
+                "authorizationtoken": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VybmFtZSI6InN0cmluZyJ9.8qE-7f6SOPTQH2RcKpDiO5pzsZiHP0HXxAS9YzFgG7E",
             }
         }

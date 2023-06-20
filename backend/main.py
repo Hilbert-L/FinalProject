@@ -5,8 +5,8 @@ from routers.GeneralRouters import GeneralRouter
 from routers.ProtectedEndpoints import ProtectedRouter
 from routers.UserRouters import UserRouter
 from routers.CarSpaceRouters import CarSpaceRouter
+from routers.AdminRouters import AdminRouter
 
-# Admins to the database + routes + models
 # Write unit tests with pymongo and mock objects
 # Create the frontend
 
@@ -16,6 +16,7 @@ app.include_router(GeneralRouter)
 app.include_router(ProtectedRouter)
 app.include_router(UserRouter)
 app.include_router(CarSpaceRouter)
+app.include_router(AdminRouter)
 
 # Can do this instead of CLI (python3 main.py) in which it will run on local host 9000 
 # instead of port 8000 (which is entered via uvicorn main:app --reload)
