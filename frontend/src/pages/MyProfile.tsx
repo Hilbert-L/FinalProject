@@ -1,1 +1,2 @@
-export const MyProfile = () => <div>CarSpace App</div>
+// where users can view listings and change profile details
+export const MyProfile = () => <div>listings and profile details</div>

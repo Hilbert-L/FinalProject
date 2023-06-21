@@ -1,2 +1,3 @@
-// where menu bar and footer will go
-export const Layout = () => <div>Layout</div>
+import { Outlet } from "react-router-dom";
+
+export const Layout = () => <div>menu<Outlet /></div>

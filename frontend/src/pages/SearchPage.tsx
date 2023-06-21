@@ -1,1 +1,1 @@
-export const SearchPage = () => <div>CarSpace App</div>
+export const SearchPage = () => <div>search page</div>
