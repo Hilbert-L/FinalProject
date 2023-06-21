@@ -1,0 +1,1 @@
+export const SearchPage = () => <div>CarSpace App</div>
