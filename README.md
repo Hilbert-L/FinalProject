@@ -18,15 +18,9 @@ touch .env
 touch main.py
 cd .. 
 echo backend/.venv/ >> .gitignore
-npm install -g create-react-app
-npx create-react-app frontend --template typescript
+npm create vite@latest
 cd frontend
-npm install axios bootstrap material-ui react-router-dom 
-npm install --save-dev prettier
-npm install 
-cd ..
-echo frontend/node_modules >> .gitignore
-cd frontend
+npm install axios bootstrap react-router-dom
 ```
 
 # Setup Frontend from package root
