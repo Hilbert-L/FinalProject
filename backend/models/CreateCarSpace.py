@@ -15,7 +15,7 @@ class CarSpaceReview(BaseModel):
     class Config:
         schema = {
             "sample": {
-                "carspaceowner": "test",
+                "ownerusername": "test",
                 "carspaceid": "1",
                 "reviewerusername": "test",
                 "overall": "10",
@@ -59,32 +59,18 @@ class CreateCarSpaceSchema(BaseModel):
                 "currency": "AUD",
                 "price": "100",
                 "frequency": "Daily",
-                "pictures":"test"
+                "pictures":[]
             }
         }
 
-
-class CarSpaceSchema(BaseModel):
+class CarSpaceSchema(CreateCarSpaceSchema):
     UserName: str = Field(default=None)
     CarSpaceId: str = Field(default=None)
-    DateCreated: datetime = datetime.now()
     Title: str = Field(default=None)
     FirstName: str = Field(default=None)
     LastName: str = Field(default=None)
     Email: EmailStr = Field(default=None)
     PhoneNumber: str = Field(default=None)
-    Address: str = Field(default=None)
-    Suburb: str = Field(default=None)
-    Postcode: str = Field(default=None)
-    Width: Optional[str] = Field(default=None)
-    Breadth: Optional[str] = Field(default=None)
-    SpaceType: Optional[str] = Field(default=None)
-    AccessKeyRequired: Optional[str] = Field(default=None)
-    VehicleSize: Optional[str] = Field(default=None)
-    Currency: str = Field(default=None)
-    Price: str = Field(default=None)
-    Frequency: str = Field(default=None)
-    Pictures: List[str] = Field(default=None)
     Reviews: List[CarSpaceReview] = Field(default=None)
     class Config:
         schema = {
@@ -108,6 +94,56 @@ class CarSpaceSchema(BaseModel):
                 "currency": "AUD",
                 "price": "100",
                 "frequency": "Daily",
-                "pictures":[]
+                "pictures": []
             }
         }
+
+
+
+# class CarSpaceSchema(BaseModel):
+#     UserName: str = Field(default=None)
+#     CarSpaceId: str = Field(default=None)
+#     DateCreated: datetime = datetime.now()
+#     Title: str = Field(default=None)
+#     FirstName: str = Field(default=None)
+#     LastName: str = Field(default=None)
+#     Email: EmailStr = Field(default=None)
+#     PhoneNumber: str = Field(default=None)
+#     Address: str = Field(default=None)
+#     Suburb: str = Field(default=None)
+#     Postcode: str = Field(default=None)
+#     Width: Optional[str] = Field(default=None)
+#     Breadth: Optional[str] = Field(default=None)
+#     SpaceType: Optional[str] = Field(default=None)
+#     AccessKeyRequired: Optional[str] = Field(default=None)
+#     VehicleSize: Optional[str] = Field(default=None)
+#     Currency: str = Field(default=None)
+#     Price: str = Field(default=None)
+#     Frequency: str = Field(default=None)
+#     Pictures: List[str] = Field(default=None)
+#     Reviews: List[CarSpaceReview] = Field(default=None)
+#     class Config:
+#         schema = {
+#             "sample" : {
+#                 "username": "test",
+#                 "carspaceid": "10",
+#                 "datecreated": "2000-01-01 15:54:53.845417",
+#                 "title": "Mr",
+#                 "firstname": "test",
+#                 "lastname": "test",
+#                 "email": "test@hotmail.com",
+#                 "phonenumber": "test",
+#                 "address": "test",
+#                 "suburb": "test",
+#                 "postcode": "1234",
+#                 "width": "test",
+#                 "breadth": "test",
+#                 "spacetype": "test",
+#                 "accesskeyrequired": "False",
+#                 "vehiclesize": "Large",
+#                 "currency": "AUD",
+#                 "price": "100",
+#                 "frequency": "Daily",
+#                 "pictures":[]
+#             }
+#         }

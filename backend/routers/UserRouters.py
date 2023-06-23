@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, status, HTTPException, Header
 from mongodbconnect.mongodb_connect import users_collections
-from models.UserAuthentication import UserRegistrationSchema, UserSchema, LoginSchema, LogoutSchema
+from models.UserAuthentication import UserRegistrationSchema, UserSchema, LoginSchema
 from models.UpdateUserInfo import UpdatePassword, UpdatePersonalDetails
 from wrappers.wrappers import check_token
 from authentication.authentication import generate_token, verify_user_token, pwd_context
