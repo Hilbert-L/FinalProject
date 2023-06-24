@@ -10,3 +10,4 @@ python-jose==3.3.0
 pymongo==4.3.3
 requests==2.31.0 
 bcrypt
+click

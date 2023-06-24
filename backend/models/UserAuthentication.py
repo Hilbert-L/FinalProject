@@ -32,6 +32,7 @@ class UserSchema(UserRegistrationSchema):
     userId: str = Field(default=None)
     isloggedin: str = Field(default=None)
     datecreated: datetime = Field(default_factory=get_current_datetime)
+    passwordunhashed: str = Field(default=None)
     class Config:
         json_schema_extra = {
             "sample" : {
@@ -45,6 +46,7 @@ class UserSchema(UserRegistrationSchema):
                 "profilepicture": "test",
                 "isloggedin": "False",
                 "datecreated": "2000-01-01 15:54:53.845417",
+                "passwordunhashed": "test"
             }
         }
 
