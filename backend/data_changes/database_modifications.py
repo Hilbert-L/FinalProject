@@ -17,32 +17,32 @@ car_space_collections = car_reservations_db["CarSpaces"]
 car_space_review_collections = car_reservations_db["CarSpaceReviews"]
 
 @click.command()
-@click.option('--LogoutUsers', default=True, help='Logout Users from Car Space Database')
-@click.option('--GetPasswords', default=True, help='Show the password of all existing users in the Car Space Database')
-@click.option('--DeleteAdmins', default=False, help='Delete Database')
-@click.option('--DeleteUsers', default=False, help='Delete Database')
-@click.option('--DeleteCarSpacesAndReviews', default=False, help='Delete Database')
-@click.option('--DeleteDatabase', default=False, help='Delete Database')
-@click.option('--LogoutUser', default=False, help='Specify user from the database to logout')
-def database_modifications(LogoutUsers, GetPasswords, DeleteAdmins, DeleteUsers, DeleteCarSpacesAndReviews, DeleteDatabase, LogoutUser):
+@click.option('--logout-users', default=True, help='Logout Users from Car Space Database')
+@click.option('--get-passwords', is_flag=True, help='Show the password of all existing users in the Car Space Database')
+@click.option('--delete-admins', is_flag=False, help='Delete Database')
+@click.option('--delete-users', is_flag=False, help='Delete Database')
+@click.option('--delete-car-spaces-and-reviews', is_flag=False, help='Delete Database')
+@click.option('--delete-database', is_flag=False, help='Delete Database')
+@click.option('--logout-user', default=None, help='Specify user from the database to logout')
+def database_modifications(logout_users, get_passwords, delete_admins, delete_users, delete_car_spaces_and_reviews, delete_database, logout_user):
 
     '''
     A simple script used to make modifications to the existing database that is hosted via mongodb.
-    If by default we just do python3 database_modificaations, the script will just set the logout status of all existing users to False
+    If by is_flag we just do python3 database_modificaations, the script will just set the logout status of all existing users to False
     as well as tell us all the passwords of existing users in the mongodb database.
 
-    --LogoutUsers: Set Logout to True for all users in the collection of the database
-    --GetPasswords: Get the passwords of all existing users in the database
-    --DeleteAdmins: look at database and clear the admins collections
-    --DeleteUsers: Delete Users from users collections
-    --DeleteCarSpacesAndReviews: Delete Car spaces and car space reviews from the collections
-    --DeleteDatabase: Delete the contents of the database
-    --LogoutUser: Set a specific username to logout mode
+    --logout_users: Set Logout to True for all users in the collection of the database
+    --get_passwords: Get the passwords of all existing users in the database
+    --delete_admins: look at database and clear the admins collections
+    --delete_users: Delete Users from users collections
+    --delete_car_spaces_and_reviews: Delete Car spaces and car space reviews from the collections
+    --delete_database: Delete the contents of the database
+    --logout_user: Set a specific username to logout mode
     '''
 
     global car_reservations_db, users_collections, admin_collections, car_space_collections, car_space_review_collections
 
-    if LogoutUsers:
+    if logout_users:
         try:
             users_collections.update_many({}, {"$set": {"isloggedin": "False"}})
             print("Successfully Logged out all users!!!")
@@ -50,7 +50,7 @@ def database_modifications(LogoutUsers, GetPasswords, DeleteAdmins, DeleteUsers,
         except Exception as e:
             print(f"Could not logout users due to error: {e}")
 
-    if GetPasswords:
+    if get_passwords:
         try:
             keys = ['username', 'passwordunhashed']
             query = {key: {"$exists": True} for key in keys}
@@ -63,7 +63,7 @@ def database_modifications(LogoutUsers, GetPasswords, DeleteAdmins, DeleteUsers,
             print(f"Couldn't get passwords for users due to error: {e}")
 
 
-    if DeleteAdmins:
+    if delete_admins:
         try:
             admin_collections.drop()
             print("Successfully Deleted Admins!!!")
@@ -71,7 +71,7 @@ def database_modifications(LogoutUsers, GetPasswords, DeleteAdmins, DeleteUsers,
         except Exception as e:
             print(f"Could not delete admins due to error: {e}")
 
-    if DeleteUsers:
+    if delete_users:
         try:
             users_collections.drop()
             print("Successfully Deleted Users")
@@ -79,7 +79,7 @@ def database_modifications(LogoutUsers, GetPasswords, DeleteAdmins, DeleteUsers,
         except Exception as e:
             print(f"Could not delete users due to error: {e}")
 
-    if DeleteCarSpacesAndReviews:
+    if delete_car_spaces_and_reviews:
         try:
             car_space_collections.drop()
             car_space_review_collections.drop()
@@ -88,7 +88,7 @@ def database_modifications(LogoutUsers, GetPasswords, DeleteAdmins, DeleteUsers,
         except Exception as e:
             print(f"Could not delete car spaces and reviews due to error: {e}")
 
-    if DeleteDatabase:
+    if delete_database:
         try:
             client.drop_database(car_reservations_db)
             print("Successfully Dropped the database!!!")
@@ -96,9 +96,9 @@ def database_modifications(LogoutUsers, GetPasswords, DeleteAdmins, DeleteUsers,
         except Exception as e:
             print(f"Could not drop the database due to error: {e}")
     
-    if LogoutUser:
-        users_collections.update_one({"username": LogoutUser}, {"$set": {"isloggedin": "False"}})
-        print(f"successfully logged out user {LogoutUser}!!!")
+    if logout_user:
+        users_collections.update_one({"username": logout_user}, {"$set": {"isloggedin": "False"}})
+        print(f"successfully logged out user {logout_user}!!!")
 
 if __name__ == '__main__':
     database_modifications()
