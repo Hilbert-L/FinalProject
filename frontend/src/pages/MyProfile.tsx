@@ -11,10 +11,23 @@ interface Profile {
 
 export const MyProfile = () => {
 
+  const container: React.CSSProperties = {
+    width: '100%',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: '15px',
+  }
+
   const profileContainer: React.CSSProperties = {
+    width: '95%',
+    maxWidth: '900px',
+    border: '2px solid black',
+    padding: '40px 0px',
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'space-evenly',
+    borderRadius: '10px',
   }
 
   const profilePictureContainer: React.CSSProperties = {
@@ -72,8 +85,8 @@ export const MyProfile = () => {
   }
 
   return (
-    <div>
-      <h2>Profile</h2>
+    <div style={container}>
+      <h1>Profile</h1>
       <div style={profileContainer}>
         <div style={profilePictureContainer}>
           <img src={profile.photo} style={ {width: '165px', height: '165px'} } alt="Profile Picture"/><br/>
@@ -81,7 +94,7 @@ export const MyProfile = () => {
         </div>
         <div style={profileDetailsContainer}>
           <div className="input-group">
-            <span className="input-group-text">full name</span>
+            <span className="input-group-text">name</span>
             <input type="text" aria-label="Full name" value={profile.name} className="form-control" disabled/>
             <button className="btn btn-primary" onClick={() => handleShow('name')} type="button" id="button-addon2">change</button>
           </div><br/>
