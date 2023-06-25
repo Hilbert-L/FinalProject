@@ -25,10 +25,16 @@ export const Register = () => {
     repeatPassword: '',
   });
 
+  const [error, setError] = useState("");
+
   const navigate = useNavigate();
 
   const handleRegister = () => {
     console.log(info);
+    if (info.password !== info.repeatPassword) {
+      setError("Passwords do not match");
+      return;
+    }
     localStorage.setItem("authToken", "logged-in");
     navigate("/");
   }
@@ -88,6 +94,7 @@ export const Register = () => {
             value={info.repeatPassword}
             onChange={(event) => setInfo({...info, repeatPassword: event.target.value})} />
         </FloatingLabel>
+        {error && <span style={{ color: "#D7504D", fontSize: "14px" }}>{error}</span>}
         <div className="d-grid gap-2" style={{ paddingTop: "10px" }}>
           <Button
             variant="primary"
