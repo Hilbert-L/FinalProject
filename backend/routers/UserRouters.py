@@ -1,9 +1,9 @@
-from fastapi import APIRouter, Depends, status, HTTPException, Header
-from mongodbconnect.mongodb_connect import users_collections
-from models.UserAuthentication import UserRegistrationSchema, UserSchema, LoginSchema, LogoutSchema
-from models.UpdateUserInfo import UpdatePassword, UpdatePersonalDetails
-from wrappers.wrappers import check_token
 from authentication.authentication import generate_token, verify_user_token, pwd_context
+from fastapi import APIRouter, Depends, status, HTTPException, Header
+from models.UpdateUserInfo import UpdatePassword, UpdatePersonalDetails
+from models.UserAuthentication import UserRegistrationSchema, UserSchema, LoginSchema
+from mongodbconnect.mongodb_connect import users_collections
+from wrappers.wrappers import check_token
 
 UserRouter = APIRouter()
 
@@ -91,7 +91,9 @@ async def change_password(password_update: UpdatePassword, token: str = Depends(
 
     if not pwd_context.verify(password_update.currentPassword, stored_user["password"]):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invalid username or password")
-    
+
+    if password_update.newPassword == password_update.currentPassword:
+        raise HTTPException(status_code=status.HTTP_406_NOT_ACCEPTABLE,detail="New password must be different from the current password")
     new_hashed_password = pwd_context.hash(password_update.newPassword)
     update = {"$set": {"password": new_hashed_password}}
     update_results = users_collections.update_one({"username": password_update.username}, update)
