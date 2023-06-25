@@ -28,11 +28,15 @@ npm install axios bootstrap react-router-dom
 # Setup Frontend from package root
 ```
 cd frontend
-npm start
+npm install -g create-vite
+npm run dev
 ```
 
-## To format files
-npm run format
+## To format frontent files
+```
+cd frontend
+npx prettier --write .
+```
 
 ## From project root, activate python virtual environment and install requirements
 ```
