@@ -29,12 +29,14 @@ export const Login = () => {
           <Form.Control
             type="email"
             placeholder="Email"
+            value={email}
             onChange={(event) => setEmail(event.target.value)} />
         </FloatingLabel>
         <FloatingLabel controlId="floatingPassword" label="Password" className="mb-3">
           <Form.Control
             type="password"
             placeholder="Password"
+            value={password}
             onChange={(event) => setPassword(event.target.value)} />
         </FloatingLabel>
         <div className="d-grid gap-2" style={{ paddingTop: "10px" }}>
