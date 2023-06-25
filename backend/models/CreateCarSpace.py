@@ -1,6 +1,14 @@
 from pydantic import BaseModel, Field, EmailStr
 from datetime import datetime
 from typing import Optional, List
+from pymongo import MongoClient
+from fastapi import FastAPI
+from base64 import b64encode
+
+# Change this to connect to MongoDB
+client = MongoClient("mongodb://localhost:27017/")
+db = client['CarSpace']
+app=FastAPI()
 
 class CarSpaceReview(BaseModel):
     OwnerUserName: str = Field(default=None)
@@ -15,7 +23,7 @@ class CarSpaceReview(BaseModel):
     class Config:
         schema = {
             "sample": {
-                "ownerusername": "test",
+                "carspaceowner": "test",
                 "carspaceid": "1",
                 "reviewerusername": "test",
                 "overall": "10",
@@ -59,18 +67,32 @@ class CreateCarSpaceSchema(BaseModel):
                 "currency": "AUD",
                 "price": "100",
                 "frequency": "Daily",
-                "pictures":[]
+                "pictures":"test"
             }
         }
 
-class CarSpaceSchema(CreateCarSpaceSchema):
+
+class CarSpaceSchema(BaseModel):
     UserName: str = Field(default=None)
     CarSpaceId: str = Field(default=None)
+    DateCreated: datetime = datetime.now()
     Title: str = Field(default=None)
     FirstName: str = Field(default=None)
     LastName: str = Field(default=None)
     Email: EmailStr = Field(default=None)
     PhoneNumber: str = Field(default=None)
+    Address: str = Field(default=None)
+    Suburb: str = Field(default=None)
+    Postcode: str = Field(default=None)
+    Width: Optional[str] = Field(default=None)
+    Breadth: Optional[str] = Field(default=None)
+    SpaceType: Optional[str] = Field(default=None)
+    AccessKeyRequired: Optional[str] = Field(default=None)
+    VehicleSize: Optional[str] = Field(default=None)
+    Currency: str = Field(default=None)
+    Price: str = Field(default=None)
+    Frequency: str = Field(default=None)
+    Pictures: List[str] = Field(default=None)
     Reviews: List[CarSpaceReview] = Field(default=None)
     class Config:
         schema = {
@@ -94,56 +116,20 @@ class CarSpaceSchema(CreateCarSpaceSchema):
                 "currency": "AUD",
                 "price": "100",
                 "frequency": "Daily",
-                "pictures": []
+                "pictures":[]
             }
         }
 
+@app.post("/CarSpaces")
+async def CreateCarSpaces(carspace: CarSpaceSchema):
+    carspace_dict = carspace.dict()
 
+    # Convert list of base64 string images to binary before storing in MongoDB
+    if carspace_dict.get("Pictures"):
+        carspace_dict["Pictures"] = [b64encode(base64_str.encode("utf-8")) for base64_str in carspace_dict["Pictures"]]
 
-# class CarSpaceSchema(BaseModel):
-#     UserName: str = Field(default=None)
-#     CarSpaceId: str = Field(default=None)
-#     DateCreated: datetime = datetime.now()
-#     Title: str = Field(default=None)
-#     FirstName: str = Field(default=None)
-#     LastName: str = Field(default=None)
-#     Email: EmailStr = Field(default=None)
-#     PhoneNumber: str = Field(default=None)
-#     Address: str = Field(default=None)
-#     Suburb: str = Field(default=None)
-#     Postcode: str = Field(default=None)
-#     Width: Optional[str] = Field(default=None)
-#     Breadth: Optional[str] = Field(default=None)
-#     SpaceType: Optional[str] = Field(default=None)
-#     AccessKeyRequired: Optional[str] = Field(default=None)
-#     VehicleSize: Optional[str] = Field(default=None)
-#     Currency: str = Field(default=None)
-#     Price: str = Field(default=None)
-#     Frequency: str = Field(default=None)
-#     Pictures: List[str] = Field(default=None)
-#     Reviews: List[CarSpaceReview] = Field(default=None)
-#     class Config:
-#         schema = {
-#             "sample" : {
-#                 "username": "test",
-#                 "carspaceid": "10",
-#                 "datecreated": "2000-01-01 15:54:53.845417",
-#                 "title": "Mr",
-#                 "firstname": "test",
-#                 "lastname": "test",
-#                 "email": "test@hotmail.com",
-#                 "phonenumber": "test",
-#                 "address": "test",
-#                 "suburb": "test",
-#                 "postcode": "1234",
-#                 "width": "test",
-#                 "breadth": "test",
-#                 "spacetype": "test",
-#                 "accesskeyrequired": "False",
-#                 "vehiclesize": "Large",
-#                 "currency": "AUD",
-#                 "price": "100",
-#                 "frequency": "Daily",
-#                 "pictures":[]
-#             }
-#         }
+    # Add carspace to the database
+    result = db['spaces'].insert_one(carspace_dict)
+
+    return {"_id": str(result.inserted_id)}
+
