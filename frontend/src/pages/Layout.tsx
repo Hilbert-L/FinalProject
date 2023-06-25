@@ -1,3 +1,8 @@
-import { Outlet } from "react-router-dom";
+import { Outlet } from 'react-router-dom';
 
-export const Layout = () => <div>menu<Outlet /></div>
+export const Layout = () => (
+  <div>
+    menu
+    <Outlet />
+  </div>
+);

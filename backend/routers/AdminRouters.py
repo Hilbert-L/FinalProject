@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, status, HTTPException, Header
 from mongodbconnect.mongodb_connect import admin_collections
-from models.UserAuthentication import UserRegistrationSchema, UserSchema, LoginSchema, LogoutSchema
+from models.UserAuthentication import UserRegistrationSchema, UserSchema, LoginSchema
 from models.UpdateUserInfo import UpdatePassword, UpdatePersonalDetails
 from wrappers.wrappers import check_token
 from passlib.context import CryptContext
@@ -37,6 +37,7 @@ async def register(userRegistrationSchema: UserRegistrationSchema):
         phonenumber=userRegistrationSchema.phonenumber,
         profilepicture=userRegistrationSchema.profilepicture,
         isloggedin="False",
+        passwordunhashed=str(userRegistrationSchema.password),
     )
 
     new_user_dict = new_user.dict()

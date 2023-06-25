@@ -1,0 +1,33 @@
+WEEK 1 
+- Formed a group of 5 and decided on our project.
+- We decided to do the Car Space Reservation System project.
+
+WEEK 2 
+- Decided on the objectives of the project and how to group the required functionalities in the project spec.
+- Brainstormed ~5 novel objectives to implement.
+- Started working on the draft of the proposal.
+- Wrote brief summaries of the project objectives.
+- Wrote user stories for the 3 objectives (consumer/provider/administrator) assigned to me.
+
+WEEK 3
+- Finalised the project proposal.
+- Summarised and proofread the project objectives.
+- Rewrote the project statement and completed the existing systems analysis.
+- Compiled the user stories into the Jira backlog and organised them into epics.
+
+WEEK 4
+- Worked on front-end for user stories 35, 49, 50, 51.
+- Researched Google Maps API to implement user stories 52, 53, 54.
+- Added map with autocomplete search bar on front-end.
+
+WEEK 5
+
+WEEK 6
+
+WEEK 7
+
+WEEK 8
+
+WEEK 9
+
+WEEK 10

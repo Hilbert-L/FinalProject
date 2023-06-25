@@ -6,14 +6,16 @@ python3 -m venv .venv
 touch requirements.txt
 echo "fastapi==0.70.0
 uvicorn==0.15.0
-PyJWT==1.7.1
-python-decouple==3.3
+PyJWT==2.1.0  # Update the version to the latest
 numpy==1.24.3
 scikit-learn==1.2.2
 pandas==2.0.2
-jwt==1.3.1
 python-decouple==3.8
-python-jose==3.3.0" >> requirements.txt
+python-jose==3.3.0
+pymongo==4.3.3
+requests==2.31.0
+bcrypt
+click" >> requirements.txt
 touch .env 
 touch main.py
 cd .. 
@@ -26,11 +28,16 @@ npm install axios bootstrap react-router-dom
 # Setup Frontend from package root
 ```
 cd frontend
-npm start
+npm install -g create-vite
+npm install --save-dev prettier
+npm run dev
 ```
 
-## To format files
-npm run format
+## To format frontent files
+```
+cd frontend
+npx prettier --write .
+```
 
 ## From project root, activate python virtual environment and install requirements
 ```

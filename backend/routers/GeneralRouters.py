@@ -5,6 +5,10 @@ import json
 
 GeneralRouter = APIRouter()
 
+@GeneralRouter.get("/", tags=["Test Route"])
+async def test():
+    return {"Message": "Test Route"}
+
 @GeneralRouter.get("/users", tags=["Information"])
 async def get_users():
     # users = list(users_collections.find())

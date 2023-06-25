@@ -6,16 +6,14 @@ from routers.ProtectedEndpoints import ProtectedRouter
 from routers.UserRouters import UserRouter
 from routers.CarSpaceRouters import CarSpaceRouter
 from routers.AdminRouters import AdminRouter
-
-# Write unit tests with pymongo and mock objects
-# Create the frontend
+from routers.SearchRouters import SearchRouter
 
 app = FastAPI(title=config("projectName"))
-
 app.include_router(GeneralRouter)
 app.include_router(ProtectedRouter)
 app.include_router(UserRouter)
 app.include_router(CarSpaceRouter)
+app.include_router(SearchRouter)
 app.include_router(AdminRouter)
 
 # Can do this instead of CLI (python3 main.py) in which it will run on local host 9000 
