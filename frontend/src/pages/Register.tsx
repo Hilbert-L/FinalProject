@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import logo from '../images/logo.png';
-import { RegistrationFormField } from '../Types/Authentication';
 import '../styling/register.css';
 import { useNavigate } from 'react-router-dom';
 import { FormContainer } from '../components/StyledFormContainer';
@@ -33,6 +32,13 @@ export const Register = () => {
     localStorage.setItem("authToken", "logged-in");
     navigate("/");
   }
+
+  const allFilledOut = info.firstName
+    && info.lastName
+    && info.email
+    && info.phone
+    && info.password
+    && info.repeatPassword
 
   return (
     <FormContainer>
@@ -86,7 +92,9 @@ export const Register = () => {
           <Button
             variant="primary"
             size="lg"
-            onClick={handleRegister}>Register</Button>
+            onClick={handleRegister}
+            disabled={!allFilledOut}
+          >Register</Button>
         </div>
         <div style={{ paddingTop: "20px", textAlign: "center" }}>
           <StyledLink onClick={() => navigate("/login")}>

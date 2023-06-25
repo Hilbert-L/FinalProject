@@ -19,6 +19,8 @@ export const Login = () => {
     navigate("/");
   }
 
+  const allFilledOut = email && password
+
   return (
     <FormContainer>
       <div style={{textAlign: "center", margin: "30px"}}>
@@ -43,7 +45,9 @@ export const Login = () => {
           <Button
             variant="primary"
             size="lg"
-            onClick={handleLogin}>Log In</Button>
+            onClick={handleLogin}
+            disabled={!allFilledOut}
+          >Log In</Button>
         </div>
         <div style={{ paddingTop: "20px", textAlign: "center" }}>
           <StyledLink onClick={() => navigate("/register")}>
