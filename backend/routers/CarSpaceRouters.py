@@ -10,6 +10,7 @@ from wrappers.wrappers import check_token
 from passlib.context import CryptContext
 from decouple import config
 from datetime import datetime
+from base64 import b64encode
 from authentication.authentication import generate_token, verify_user_token
 import json 
 
@@ -25,6 +26,12 @@ async def create_car_space(create_car_space: CreateCarSpaceSchema, token: str = 
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invalid user")
     
     num_car_spaces = car_space_collections.count_documents({})
+
+    if create_car_space.Pictures:
+        carspace_pictures = [b64encode(base64_str.encode("utf-8")) for base64_str in create_car_space.Pictures]
+
+    else:
+        carspace_pictures = None
 
     new_car_space = CarSpaceSchema(
         UserName=stored_user["username"],
@@ -46,7 +53,7 @@ async def create_car_space(create_car_space: CreateCarSpaceSchema, token: str = 
         Currency=create_car_space.Currency,
         Price=create_car_space.Price,
         Frequency=create_car_space.Frequency,
-        Pictures=create_car_space.Pictures,
+        Pictures=carspace_pictures,
         Reviews=[]
     )
     
@@ -70,81 +77,19 @@ async def update_car_space(update_car_space: UpdateCarSpace, token: str = Depend
     }
 
     update_info = {}
-
-    Outcome = {
-        "Message": "Car Space Updated Successfully",
-        "Address": "Address is unchanged",
-        "Postcode": "Postcode is unchanged",
-        "Suburb": "Suburb is unchanged",
-        "Width": "Width is unchanged",
-        "Breadth": "Breadth is unchanged",
-        "SpaceType": "Space Type is unchanged",
-        "AccessKeyRequired": "Access Key required is unchanged",
-        "VehicleSize": "Vehicle Size is unchanged",
-        "Currency": "Currency is unchanged",
-        "Price": "Price is unchanged",
-        "Frequency": "Frequency is unchanged",
-    }
-
-    if update_car_space.NewAddress is not None:
-        update_info["NewAddress"] = update_car_space.NewAddress
-        Outcome["Address"] = "Address has been updated"
-
-
-    if update_car_space.NewPostcode is not None:
-        update_info["Postcode"] = update_car_space.NewPostcode
-        Outcome["Postcode"] = "Postcode has been updated"
-
-
-    if update_car_space.NewSuburb is not None:
-        update_info["Suburb"] = update_car_space.NewSuburb
-        Outcome["Suburb"] = "Suburb has been updated"
-
-
-    if update_car_space.NewWidth is not None:
-        update_info["Width"] = update_car_space.NewWidth
-        Outcome["Width"] = "Width has been updated"
-
-
-    if update_car_space.NewBreadth is not None:
-        update_info["Breadth"] = update_car_space.NewBreadth
-        Outcome["Breadth"] = "Breadth has been updated"
-
-
-    if update_car_space.NewSpacetype is not None:
-        update_info["SpaceType"] = update_car_space.NewSpacetype
-        Outcome["SpaceType"] = "Space Type has been updated"
-
-
-    if update_car_space.NewAccessKeyRequired is not None:
-        update_info["AccessKeyRequired"] = update_car_space.NewAccessKeyRequired
-        Outcome["AccessKeyRequired"] = "Access Key Requirement has been updated"
-
-
-    if update_car_space.NewVehicleSize is not None:
-        update_info["VehicleSize"] = update_car_space.NewVehicleSize
-        Outcome["VehicleSize"] = "Vehicle Size has been updated"
-
-
-    if update_car_space.NewCurrency is not None:
-        update_info["Currency"] = update_car_space.NewCurrency
-        Outcome["Currency"] = "Currency has been updated"
-
-
-    if update_car_space.NewPrice is not None:
-        update_info["Price"] = update_car_space.NewPrice
-        Outcome["Price"] = "Price has been updated"
-
-
-    if update_car_space.NewFrequency is not None:
-        update_info["Frequency"] = update_car_space.NewFrequency
-        Outcome["Frequency"] = "Frequency has been updated"
-
+    Outcome = {}
+    for key, value in update_car_space.dict().items():
+        if value is None:
+            Outcome[key] = key + " is unchanged"
+        else:
+            update_info[key] = value
+            Outcome[key] = key + " has been updated"
+        
     update = {
         "$set": update_info
     }
 
-    update_results = car_space_collections.update_many(filter, update)
+    update_results = car_space_collections.update_one(filter, update)
 
     if update_results.modified_count < 1:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Car space cannot be updated")
@@ -153,17 +98,19 @@ async def update_car_space(update_car_space: UpdateCarSpace, token: str = Depend
 
 @CarSpaceRouter.post("/carspace/add_image", tags=["Car Spaces"])
 @check_token
-async def upload_car_space_image(add_image: AddImage, token: str = Depends(verify_user_token)):
+async def add_car_space_image(data: AddImage, token: str = Depends(verify_user_token)):
     filter = {
         "UserName": str(token),
-        "CarSpaceId": str(add_image.CarSpaceId),
+        "CarSpaceId": str(data.CarSpaceId),
     }
+    file = data.CarSpaceImage
+    contents = await file.read()
+    # Convert file to base64 string
+    base64_str = b64encode(contents).decode("utf-8")
 
-    image_str = str(add_image.CarSpaceImage)
-
-    update_results = car_space_collections.update_one(filter, {"$push": {"Pictures": image_str}})
+    update_results = car_space_collections.update_one(filter, {"$push": {"Pictures": base64_str}})
     
     if update_results.modified_count < 1:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Image could not be uploaded")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Image could not be added")
 
-    return {"Message": "Car Space Image Added Successfully"}
+    return {"Car Space Image Added Successfully": file.filename}

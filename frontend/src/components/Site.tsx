@@ -81,8 +81,6 @@ export const Site = (props: any) => {
           )}
         </nav>
         <Routes>
-          <Route></Route>
-          <Route></Route>
           <Route
             path="/myprofile"
             element={<MyProfile setTokenFn={setToken} />}

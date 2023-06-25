@@ -80,7 +80,7 @@ export const Register = (props: any) => {
         <div className="image-container">
           <img src={logo}></img>
         </div>
-        <div>Fill in Registration Form: </div>
+        <div>Register: </div>
         <br></br>
         {registrationFormFields.map(
           (field: RegistrationFormField, index: number) => (

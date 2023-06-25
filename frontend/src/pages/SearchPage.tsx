@@ -4,7 +4,7 @@ import 'bootstrap/dist/css/bootstrap.css';
 
 const libraries: ("places")[] = ['places'];
 
-export const SearchPage = () => {
+export const SearchPage = (props: any) => {
 
     const container: React.CSSProperties = {
         width: '100%',
@@ -67,15 +67,4 @@ export const SearchPage = () => {
         </div>
     )
 }
-
-// import React from 'react';
-// import { makeRequest, host } from '../helpers';
-
-// export const SearchPage = (props: any) => {
-//   return (
-//     <>
-//       <div>Search Page</div>
-//     </>
-//   );
-// };
 

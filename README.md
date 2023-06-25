@@ -29,6 +29,7 @@ npm install axios bootstrap react-router-dom
 ```
 cd frontend
 npm install -g create-vite
+npm install --save-dev prettier
 npm run dev
 ```
 

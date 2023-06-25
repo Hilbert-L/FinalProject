@@ -56,7 +56,7 @@ class AddImage(BaseModel):
         }
 
 @app.post("/CarSpaces")
-async def UpdateCareSpace(data: UpdateCarSpace):
+async def UpdateCarSpace(data: UpdateCarSpace):
     # Convert model to dictionary
     data = data.dict()
 
