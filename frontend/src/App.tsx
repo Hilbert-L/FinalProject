@@ -1,7 +1,7 @@
 import { PropsWithChildren } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { Register } from './pages/Register';
-import Login from './pages/Login';
+import { Login } from './pages/Login';
 import { Layout } from './pages/Layout';
 import { MyProfile } from './pages/MyProfile';
 import { ListingForm } from './pages/ListingForm';

@@ -84,7 +84,7 @@ export const Site = (props: any) => {
           ></Route>
           <Route
             path="/login"
-            element={<Login setTokenFn={setToken} />}
+            element={<Login />}
           ></Route>
           <Route
             path="/register"

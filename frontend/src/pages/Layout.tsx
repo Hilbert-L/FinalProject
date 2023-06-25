@@ -1,7 +1,8 @@
+import { PropsWithChildren } from 'react';
 import { Container, Nav, Navbar } from 'react-bootstrap';
 import { Outlet, useNavigate } from 'react-router-dom';
 
-export const Layout = () => {
+export const Layout = ({ children }: PropsWithChildren) => {
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -23,6 +24,7 @@ export const Layout = () => {
           </Navbar.Collapse>
         </Container>
       </Navbar>
+      {children}
       <Outlet />
     </div>
   );

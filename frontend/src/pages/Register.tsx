@@ -1,9 +1,8 @@
 import React from 'react';
 import logo from '../images/logo.png';
-import { makeRequest, host } from '../helpers';
 import { RegistrationFormField } from '../Types/Authentication';
 import '../styling/register.css';
-import { Navigate, Route, Routes, Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 export const Register = (props: any) => {
   const [title, setTitle] = React.useState('');
