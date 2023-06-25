@@ -1,17 +1,14 @@
-import React from 'react';
-import { makeRequest } from '../Helpers';
+import React, { PropsWithChildren } from 'react';
 import { MyProfile } from '../pages/MyProfile';
 import { SearchPage } from '../pages/SearchPage';
 import { Login } from '../pages/Login';
 import { Register } from '../pages/Register';
 import { LinkItem } from '../Types/LinkItems';
 import '../styling/site.css';
-// import { Layout } from "../pages/Layout";
-// import { ListingForm } from "../pages/ListingForm";
-// import { PropsWithChildren } from "react";
 import BigButton from './Buttons';
-
-import { Navigate, Route, Routes, Link } from 'react-router-dom';
+import { Route, Routes, Link, Navigate, BrowserRouter } from 'react-router-dom';
+import { Layout } from '../pages/Layout';
+import { ListingForm } from '../pages/ListingForm';
 
 export const Site = (props: any) => {
   const [token, setToken] = React.useState<string | null>(null);
@@ -101,120 +98,35 @@ export const Site = (props: any) => {
       </div>
     </>
   );
+}
 
-  {
-    /* <li style={{ margin: '0 10px' }}>
-      <Link to="/register">Register <span style={{ margin: '0 5px' }}>|</span>
-      </Link>
-  </li>
-  <li style={{ margin: '0 10px' }}>
-      <Link to="/login">Login <span style={{ margin: '0 5px' }}>|</span>
-      </Link>
-  </li> */
+const RequiresAuth = ({children}: PropsWithChildren) => {
+    const auth = localStorage.getItem("authToken");
+    const isLoggedIn = auth === "logged-in";
+    // to make loggedIn true type the following into console:
+    // localStorage.setItem("authToken", "logged-in")
+    return isLoggedIn ? <>{children}</> : <Navigate to={"/login"} replace />
   }
-};
 
-// function Site (props: any) {
-//   const [token, setToken] = React.useState(null);
-
-//   React.useEffect(() => {
-//     const lsToken = localStorage.getItem('token');
-//     if (lsToken) {
-//       setToken(lsToken);
-//     }
-//   }, []);
-
-//   const logout = async () => {
-//     makeRequest('/user/auth/logout', 'POST', token)
-//       .then(localStorage.removeItem('token'))
-//       .then(setToken(null))
-//   }
-
-//   return (
-//     <div>
-//       <nav>
-//         <ul>
-//           {!token && (
-//             <>
-//               <li>
-//                 <Link to="/login">Login</Link>
-//               </li>
-//               <li>
-//                 <Link to="/register">Register</Link>
-//               </li>
-//             </>
-//           )}
-//           {token && (
-//             <>
-//               <li>
-//                 <Link to="/">Home</Link>
-//               </li>
-//               <li>
-//                 <Link to="/listings/hosted">Hosted Listings</Link>
-//               </li>
-//             </>
-//           )}
-//         </ul>
-//         {token && (
-//           <>
-//           <BigButton onClick={logout}> <Link to="/">Logout</Link></BigButton>
-//           </>
-//         )}
-//       </nav>
-//       <Routes>
-//         <Route path="/listings/viewListing/:id" component={ViewListing} token={token}>
-//         </Route>
-//         <Route path="/listings/create" component={CreateListing} token={token}>
-//         </Route>
-//         <Route path="/listings/hosted/:id" component={AddAvailability} token={token}>
-//         </Route>
-//         <Route path="/listings/hosted">
-//           <HostedListings token={token}/>
-//         </Route>
-//         <Route path="/listings/:id" component={UpdateListing} token={token}>
-//         </Route>
-//         <Route path="/login">
-//           <Login setTokenFn={setToken} />
-//         </Route>
-//         <Route path="/register">
-//           <Register setTokenFn={setToken} />
-//         </Route>
-//         <Route path="/" component={LandingPage} token={token}>
-//         </Route>
-//       </Routes>
-//     </div>
-//   );
-// }
-
-// export default Site;
-
-// // const RequiresAuth = ({children}: PropsWithChildren) => {
-// //     const auth = localStorage.getItem("authToken");
-// //     const isLoggedIn = auth === "logged-in";
-// //     // to make loggedIn true type the following into console:
-// //     // localStorage.setItem("authToken", "logged-in")
-// //     return isLoggedIn ? <>{children}</> : <Navigate to={"/login"} replace />
-// //   }
-
-// // function App() {
-// //   return (
-// //     <BrowserRouter>
-// //       <Routes>
-// //         <Route path="/register" element={<Register />} />
-// //         <Route path="/login" element={<Login />} />
-// //         <Route
-// //           path="/"
-// //           element={
-// //             <RequiresAuth>
-// //               <Layout />
-// //             </RequiresAuth>
-// //         } >
-// //           <Route path="profile" element={<MyProfile />} />
-// //           <Route path="listingform" element={<ListingForm />} />
-// //           <Route path="" element={<SearchPage />} />
-// //         </Route>
-// //         <Route path="/*" element={<Navigate to="/" />} />
-// //       </Routes>
-// //     </BrowserRouter>
-// //   )
-// // }
+function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/register" element={<Register />} />
+        <Route path="/login" element={<Login />} />
+        <Route
+          path="/"
+          element={
+            <RequiresAuth>
+              <Layout />
+            </RequiresAuth>
+        } >
+          <Route path="profile" element={<MyProfile />} />
+          <Route path="listingform" element={<ListingForm />} />
+          <Route path="" element={<SearchPage />} />
+        </Route>
+        <Route path="/*" element={<Navigate to="/" />} />
+      </Routes>
+    </BrowserRouter>
+  )
+}
