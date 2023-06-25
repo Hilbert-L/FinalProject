@@ -1,7 +1,7 @@
 from typing import Optional
 from pydantic import BaseModel, Field
 from pymongo import MongoClient
-from fastapi import FastAPI, UploadFile, File
+from fastapi import FastAPI
 from base64 import b64encode
 
 # Change this to connect to MongoDB
@@ -60,14 +60,12 @@ async def UpdateCareSpace(data: UpdateCarSpace):
     # Convert model to dictionary
     data = data.dict()
 
-    # MongoDB uses '_id' as the default identifier
     data["_id"] = data.pop("CarSpaceId")
 
-    # We use '$set' to update fields
     update_values = {key: value for key, value in data.items() if value is not None and key != "_id"}
 
-    # Update operation
     db['spaces'].update_one({"_id": data["_id"]}, {"$set": update_values})
+    return {"Car Space Information": data}
 
 @app.post("/CarSpaces")
 async def UpdateImage(data: AddImage):

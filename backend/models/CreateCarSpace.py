@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field, EmailStr
 from datetime import datetime
 from typing import Optional, List
 from pymongo import MongoClient
-from fastapi import FastAPI, UploadFile, File
+from fastapi import FastAPI
 from base64 import b64encode
 
 # Change this to connect to MongoDB
