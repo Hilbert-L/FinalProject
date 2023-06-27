@@ -1,13 +1,20 @@
 import { PropsWithChildren } from 'react';
 import { Container, Nav, Navbar } from 'react-bootstrap';
 import { Outlet, useNavigate } from 'react-router-dom';
+import { makeRequest } from '../helpers';
 
 export const Layout = ({ children }: PropsWithChildren) => {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    localStorage.removeItem("authToken");
-    navigate("/login");
+    makeRequest("/user/auth/logout", "POST")
+      .then((response) => {
+        console.log(response);
+        if (response.status === 200) {
+          localStorage.removeItem("authToken");
+          navigate("/login");
+        }
+      });
   }
 
   return (

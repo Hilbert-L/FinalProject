@@ -3,7 +3,7 @@ export const HOST = 'http://127.0.0.1:8000';
 export async function makeRequest(
   endpoint: string,
   method: string,
-  body: Record<string, string>,
+  body?: Record<string, string>,
   headers?: Record<string, string>
 ) {
   try {
@@ -14,7 +14,7 @@ export async function makeRequest(
           Accept: 'application/json',
           'Content-Type': 'application/json',
         },
-      body: JSON.stringify(body),
+      body: body ? JSON.stringify(body) : null,
     });
     const resp = await response.json();
     return {resp, status: response.status};

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import logo from '../images/logo.png';
 import { useNavigate } from 'react-router-dom';
 import { Button, FloatingLabel, Form } from 'react-bootstrap';
@@ -9,8 +9,16 @@ import { makeRequest } from '../helpers';
 export const Login = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
 
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // redirect to home page if logged in
+    if (localStorage.getItem("authToken")) {
+      navigate("/");
+    }
+  }, []);
 
   const handleLogin = () => {
     makeRequest("/user/auth/login", "POST", { username, password })
@@ -19,6 +27,7 @@ export const Login = () => {
           localStorage.setItem("authToken", "logged-in");
           navigate("/");
         } else {
+          setError(response.resp.detail);
           console.log(response.resp);
         }
       }).catch(() => {
@@ -48,6 +57,7 @@ export const Login = () => {
             value={password}
             onChange={(event) => setPassword(event.target.value)} />
         </FloatingLabel>
+        {error && <span style={{ color: "#D7504D", fontSize: "14px" }}>{error}</span>}
         <div className="d-grid gap-2" style={{ paddingTop: "10px" }}>
           <Button
             variant="primary"

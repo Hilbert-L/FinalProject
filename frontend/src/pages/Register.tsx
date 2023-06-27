@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import logo from '../images/logo.png';
 import { useNavigate } from 'react-router-dom';
 import { FormContainer } from '../components/StyledFormContainer';
@@ -30,6 +30,13 @@ export const Register = () => {
   const [error, setError] = useState("");
 
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // redirect to home page if logged in
+    if (localStorage.getItem("authToken")) {
+      navigate("/");
+    }
+  }, []);
 
   const handleRegister = async () => {
     if (info.password !== info.repeatPassword) {
