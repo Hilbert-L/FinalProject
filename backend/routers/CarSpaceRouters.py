@@ -68,49 +68,49 @@ async def create_car_space_review(car_space_review: CarSpaceReview, token: str =
     return {"Message": "Car Space Review Added Successfully"}
 
 
-@CarSpaceRouter.put("/carspace/updatecarspace", tags=["Car Spaces"])
-@check_token
-async def update_car_space(update_car_space: UpdateCarSpace, token: str = Depends(verify_user_token)):
-    filter = {
-        "UserName" : str(token), 
-        "CarSpaceId" : str(update_car_space.CarSpaceId),
-    }
+# @CarSpaceRouter.put("/carspace/updatecarspace", tags=["Car Spaces"])
+# @check_token
+# async def update_car_space(update_car_space: UpdateCarSpace, token: str = Depends(verify_user_token)):
+#     filter = {
+#         "UserName" : str(token), 
+#         "CarSpaceId" : str(update_car_space.CarSpaceId),
+#     }
 
-    update_info = {}
-    Outcome = {}
-    for key, value in update_car_space.dict().items():
-        if value is None:
-            Outcome[key] = key + " is unchanged"
-        else:
-            update_info[key] = value
-            Outcome[key] = key + " has been updated"
+#     update_info = {}
+#     Outcome = {}
+#     for key, value in update_car_space.dict().items():
+#         if value is None:
+#             Outcome[key] = key + " is unchanged"
+#         else:
+#             update_info[key] = value
+#             Outcome[key] = key + " has been updated"
         
-    update = {
-        "$set": update_info
-    }
+#     update = {
+#         "$set": update_info
+#     }
 
-    update_results = car_space_collections.update_one(filter, update)
+#     update_results = car_space_collections.update_one(filter, update)
 
-    if update_results.modified_count < 1:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Car space cannot be updated")
+#     if update_results.modified_count < 1:
+#         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Car space cannot be updated")
 
-    return Outcome
+#     return Outcome
 
-@CarSpaceRouter.post("/carspace/add_image", tags=["Car Spaces"])
-@check_token
-async def add_car_space_image(data: AddImage, token: str = Depends(verify_user_token)):
-    filter = {
-        "UserName": str(token),
-        "CarSpaceId": str(data.CarSpaceId),
-    }
-    file = data.CarSpaceImage
-    contents = await file.read()
-    # Convert file to base64 string
-    base64_str = b64encode(contents).decode("utf-8")
+# @CarSpaceRouter.post("/carspace/add_image", tags=["Car Spaces"])
+# @check_token
+# async def add_car_space_image(data: AddImage, token: str = Depends(verify_user_token)):
+#     filter = {
+#         "UserName": str(token),
+#         "CarSpaceId": str(data.CarSpaceId),
+#     }
+#     file = data.CarSpaceImage
+#     contents = await file.read()
+#     # Convert file to base64 string
+#     base64_str = b64encode(contents).decode("utf-8")
 
-    update_results = car_space_collections.update_one(filter, {"$push": {"Pictures": base64_str}})
+#     update_results = car_space_collections.update_one(filter, {"$push": {"Pictures": base64_str}})
     
-    if update_results.modified_count < 1:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Image could not be added")
+#     if update_results.modified_count < 1:
+#         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Image could not be added")
 
-    return {"Car Space Image Added Successfully": file.filename}
+#     return {"Car Space Image Added Successfully": file.filename}
