@@ -12,6 +12,7 @@ export const Login = () => {
   const navigate = useNavigate();
 
   const handleLogin = () => {
+    
     // TODO: actually send email and password to server for authentication
     console.log(email);
     console.log(password);

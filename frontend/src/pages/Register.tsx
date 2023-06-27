@@ -5,10 +5,12 @@ import { useNavigate } from 'react-router-dom';
 import { FormContainer } from '../components/StyledFormContainer';
 import { Button, FloatingLabel, Form } from 'react-bootstrap';
 import { StyledLink } from '../components/StyledLink';
+import { makeRequest } from '../helpers';
 
 type UserInfo = {
   firstName: string;
   lastName: string;
+  userName: string;
   email: string;
   phone: string;
   password: string;
@@ -19,6 +21,7 @@ export const Register = () => {
   const [info, setInfo] = useState<UserInfo>({
     firstName: '',
     lastName: '',
+    userName: '',
     email: '',
     phone: '',
     password: '',
@@ -29,18 +32,34 @@ export const Register = () => {
 
   const navigate = useNavigate();
 
-  const handleRegister = () => {
+  const handleRegister = async () => {
     console.log(info);
     if (info.password !== info.repeatPassword) {
       setError("Passwords do not match");
       return;
     }
-    localStorage.setItem("authToken", "logged-in");
-    navigate("/");
+    try {
+      const body = {
+        title: "",
+        firstname: info.firstName,
+        lastname: info.lastName,
+        username: info.userName,
+        email: info.email,
+        password: info.password,
+        phonenumber: info.phone,
+        profilepicture: ""
+      };
+      await makeRequest("/user/auth/register", "POST", body)
+      localStorage.setItem("authToken", "logged-in");
+      navigate("/");
+    } catch {
+      setError("Register error");
+    }
   }
 
   const allFilledOut = info.firstName
     && info.lastName
+    && info.userName
     && info.email
     && info.phone
     && info.password
@@ -65,6 +84,13 @@ export const Register = () => {
             placeholder="Last name"
             value={info.lastName}
             onChange={(event) => setInfo({...info, lastName: event.target.value})} />
+        </FloatingLabel>
+        <FloatingLabel controlId="floatingLastName" label="Username" className="mb-3">
+          <Form.Control
+            type="text"
+            placeholder="Username"
+            value={info.userName}
+            onChange={(event) => setInfo({...info, userName: event.target.value})} />
         </FloatingLabel>
         <FloatingLabel controlId="floatingEmail" label="Email" className="mb-3">
           <Form.Control
