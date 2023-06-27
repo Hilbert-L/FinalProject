@@ -34,7 +34,6 @@ export const Register = () => {
   const navigate = useNavigate();
 
   const handleRegister = async () => {
-    console.log(info);
     if (info.password !== info.repeatPassword) {
       setError("Passwords do not match");
       return;
@@ -49,11 +48,15 @@ export const Register = () => {
         phonenumber: info.phone,
       };
       const response = await makeRequest("/user/auth/register", "POST", body);
-      if (response.ok) {
+      if (response.status === 200) {
         localStorage.setItem("authToken", "logged-in");
         navigate("/");
       } else {
-        setError(Array.isArray(response.detail) ? response.detail[0].msg : response.detail);
+        setError(
+          Array.isArray(response.resp.detail)
+            ? response.resp.detail[0].msg
+            : response.resp.detail
+        );
       }
     } catch(e) {
       console.log(e)

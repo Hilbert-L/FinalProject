@@ -17,8 +17,7 @@ export async function makeRequest(
       body: JSON.stringify(body),
     });
     const resp = await response.json();
-    console.log(resp);
-    return resp;
+    return {resp, status: response.status};
   } catch (error) {
     console.error('Error:', error);
     throw error;
