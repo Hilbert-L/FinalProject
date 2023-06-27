@@ -6,6 +6,7 @@ import { FormContainer } from '../components/StyledFormContainer';
 import { Button, FloatingLabel, Form } from 'react-bootstrap';
 import { StyledLink } from '../components/StyledLink';
 import { makeRequest } from '../helpers';
+import { HOST } from '../helpers';
 
 type UserInfo = {
   firstName: string;
@@ -40,14 +41,14 @@ export const Register = () => {
     }
     try {
       const body = {
-        title: "",
-        firstname: info.firstName,
-        lastname: info.lastName,
-        username: info.userName,
-        email: info.email,
-        password: info.password,
-        phonenumber: info.phone,
-        profilepicture: ""
+        "title": "",
+        "firstname": info.firstName,
+        "lastname": info.lastName,
+        "username": info.userName,
+        "email": info.email,
+        "password": info.password,
+        "phonenumber": info.phone,
+        "profilepicture": ""
       };
       await makeRequest("/user/auth/register", "POST", body)
       localStorage.setItem("authToken", "logged-in");
@@ -56,6 +57,7 @@ export const Register = () => {
       setError("Register error");
     }
   }
+
 
   const allFilledOut = info.firstName
     && info.lastName
