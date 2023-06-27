@@ -17,7 +17,7 @@ export async function makeRequest(
       body: JSON.stringify(body),
     });
     const resp = await response.json();
-    console.debug(resp);
+    console.log(resp);
     return resp;
   } catch (error) {
     console.error('Error:', error);

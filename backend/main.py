@@ -8,7 +8,6 @@ from routers.CarSpaceRouters import CarSpaceRouter
 from routers.AdminRouters import AdminRouter
 from routers.SearchRouters import SearchRouter
 from fastapi.middleware.cors import CORSMiddleware
-
 import sys
 import os
 
@@ -37,8 +36,3 @@ app.include_router(UserRouter)
 app.include_router(CarSpaceRouter)
 app.include_router(SearchRouter)
 app.include_router(AdminRouter)
-
-# Can do this instead of CLI (python3 main.py) in which it will run on local host 9000 
-# instead of port 8000 (which is entered via uvicorn main:app --reload)
-if __name__ == '__main__':
-    uvicorn.run(app, host="127.0.0.1", port = '9000')

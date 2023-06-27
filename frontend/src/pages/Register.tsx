@@ -41,20 +41,23 @@ export const Register = () => {
     }
     try {
       const body = {
-        "title": "",
-        "firstname": info.firstName,
-        "lastname": info.lastName,
-        "username": info.userName,
-        "email": info.email,
-        "password": info.password,
-        "phonenumber": info.phone,
-        "profilepicture": ""
+        firstname: info.firstName,
+        lastname: info.lastName,
+        username: info.userName,
+        email: info.email,
+        password: info.password,
+        phonenumber: info.phone,
       };
-      await makeRequest("/user/auth/register", "POST", body)
-      localStorage.setItem("authToken", "logged-in");
-      navigate("/");
-    } catch {
-      setError("Register error");
+      const response = await makeRequest("/user/auth/register", "POST", body);
+      if (response.ok) {
+        localStorage.setItem("authToken", "logged-in");
+        navigate("/");
+      } else {
+        setError(Array.isArray(response.detail) ? response.detail[0].msg : response.detail);
+      }
+    } catch(e) {
+      console.log(e)
+      setError("Something went wrong");
     }
   }
 
@@ -87,7 +90,7 @@ export const Register = () => {
             value={info.lastName}
             onChange={(event) => setInfo({...info, lastName: event.target.value})} />
         </FloatingLabel>
-        <FloatingLabel controlId="floatingLastName" label="Username" className="mb-3">
+        <FloatingLabel controlId="floatingUserName" label="Username" className="mb-3">
           <Form.Control
             type="text"
             placeholder="Username"
