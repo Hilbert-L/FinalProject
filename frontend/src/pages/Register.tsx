@@ -54,8 +54,8 @@ export const Register = () => {
       } else {
         setError(
           Array.isArray(response.resp.detail)
-            ? response.resp.detail[0].msg
-            : response.resp.detail
+            ? response.resp.detail[0].msg  // bad email format
+            : response.resp.detail         // other kinds of errors
         );
       }
     } catch(e) {
@@ -63,7 +63,6 @@ export const Register = () => {
       setError("Something went wrong");
     }
   }
-
 
   const allFilledOut = info.firstName
     && info.lastName

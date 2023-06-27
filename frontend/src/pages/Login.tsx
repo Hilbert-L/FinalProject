@@ -4,23 +4,29 @@ import { useNavigate } from 'react-router-dom';
 import { Button, FloatingLabel, Form } from 'react-bootstrap';
 import { StyledLink } from '../components/StyledLink';
 import { FormContainer } from '../components/StyledFormContainer';
+import { makeRequest } from '../helpers';
 
 export const Login = () => {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
   const navigate = useNavigate();
 
   const handleLogin = () => {
-    
-    // TODO: actually send email and password to server for authentication
-    console.log(email);
-    console.log(password);
-    localStorage.setItem("authToken", "logged-in");
-    navigate("/");
+    makeRequest("/user/auth/login", "POST", { username, password })
+      .then((response) => {
+        if (response.status === 200) {
+          localStorage.setItem("authToken", "logged-in");
+          navigate("/");
+        } else {
+          console.log(response.resp);
+        }
+      }).catch(() => {
+        console.log("Something went wrong");
+      })
   }
 
-  const allFilledOut = email && password
+  const allFilledOut = username && password
 
   return (
     <FormContainer>
@@ -28,12 +34,12 @@ export const Login = () => {
         <img src={logo} style={{ width: "200px", height: "auto" }}/>
       </div>
       <div style={{ margin: "30px 15px" }}>
-        <FloatingLabel controlId="floatingEmail" label="Email" className="mb-3">
+        <FloatingLabel controlId="floatingUserName" label="Username" className="mb-3">
           <Form.Control
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)} />
+            type="text"
+            placeholder="Username"
+            value={username}
+            onChange={(event) => setUsername(event.target.value)} />
         </FloatingLabel>
         <FloatingLabel controlId="floatingPassword" label="Password" className="mb-3">
           <Form.Control
