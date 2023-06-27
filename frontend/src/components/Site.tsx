@@ -3,12 +3,16 @@ import { MyProfile } from '../pages/MyProfile';
 import { SearchPage } from '../pages/SearchPage';
 import { Login } from '../pages/Login';
 import { Register } from '../pages/Register';
-import { LinkItem } from '../Types/LinkItems';
 import '../styling/site.css';
 import BigButton from './Buttons';
 import { Route, Routes, Link, Navigate, BrowserRouter } from 'react-router-dom';
 import { Layout } from '../pages/Layout';
 import { ListingForm } from '../pages/ListingForm';
+
+interface LinkItem {
+  title: string;
+  path: string;
+}
 
 export const Site = (props: any) => {
   const [token, setToken] = React.useState<string | null>(null);
