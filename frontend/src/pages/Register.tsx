@@ -1,12 +1,10 @@
 import { useState } from 'react';
 import logo from '../images/logo.png';
-import '../styling/register.css';
 import { useNavigate } from 'react-router-dom';
 import { FormContainer } from '../components/StyledFormContainer';
 import { Button, FloatingLabel, Form } from 'react-bootstrap';
 import { StyledLink } from '../components/StyledLink';
 import { makeRequest } from '../helpers';
-import { HOST } from '../helpers';
 
 type UserInfo = {
   firstName: string;
