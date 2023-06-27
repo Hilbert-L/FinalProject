@@ -119,17 +119,3 @@ class CarSpaceSchema(BaseModel):
                 "pictures":[]
             }
         }
-
-@app.post("/CarSpaces")
-async def CreateCarSpaces(carspace: CarSpaceSchema):
-    carspace_dict = carspace.dict()
-
-    # Convert list of base64 string images to binary before storing in MongoDB
-    if carspace_dict.get("Pictures"):
-        carspace_dict["Pictures"] = [b64encode(base64_str.encode("utf-8")) for base64_str in carspace_dict["Pictures"]]
-
-    # Add carspace to the database
-    result = db['spaces'].insert_one(carspace_dict)
-
-    return {"_id": str(result.inserted_id)}
-
