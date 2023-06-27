@@ -2,6 +2,7 @@ import jwt
 from fastapi import Header
 from decouple import config
 from jwt import PyJWTError
+from jwt.exceptions import PyJWTError
 from typing import Optional, List
 from models.UserAuthentication import UserSchema
 from mongodbconnect.mongodb_connect import car_reservations_db, users_collections, admin_collections, car_space_review_collections, car_space_collections

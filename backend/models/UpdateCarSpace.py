@@ -1,13 +1,6 @@
 from typing import Optional
 from pydantic import BaseModel, Field
-from pymongo import MongoClient
-from fastapi import FastAPI
-from base64 import b64encode
 
-# Change this to connect to MongoDB
-client = MongoClient("mongodb://localhost:27017/")
-db = client['CarSpace']
-app=FastAPI()
 
 class UpdateCarSpace(BaseModel):
     CarSpaceId: str = Field(default=None)# CarSpaceID may not be modified by providers

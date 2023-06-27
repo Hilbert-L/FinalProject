@@ -72,7 +72,7 @@ async def create_car_space_review(car_space_review: CarSpaceReview, token: str =
 @check_token
 async def update_car_space(update_car_space: UpdateCarSpace, token: str = Depends(verify_user_token)):
     filter = {
-        "UserName" : str(token), 
+        "UserName" : str(token),
         "CarSpaceId" : str(update_car_space.CarSpaceId),
     }
 
@@ -84,7 +84,7 @@ async def update_car_space(update_car_space: UpdateCarSpace, token: str = Depend
         else:
             update_info[key] = value
             Outcome[key] = key + " has been updated"
-        
+
     update = {
         "$set": update_info
     }
@@ -109,7 +109,7 @@ async def add_car_space_image(data: AddImage, token: str = Depends(verify_user_t
     base64_str = b64encode(contents).decode("utf-8")
 
     update_results = car_space_collections.update_one(filter, {"$push": {"Pictures": base64_str}})
-    
+
     if update_results.modified_count < 1:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Image could not be added")
 
