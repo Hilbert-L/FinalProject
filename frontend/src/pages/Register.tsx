@@ -1,101 +1,145 @@
-import React from 'react';
+import { useState } from 'react';
 import logo from '../images/logo.png';
-import { makeRequest, host } from '../helpers';
-import { RegistrationFormField } from '../Types/Authentication';
 import '../styling/register.css';
-import { Navigate, Route, Routes, Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { FormContainer } from '../components/StyledFormContainer';
+import { Button, FloatingLabel, Form } from 'react-bootstrap';
+import { StyledLink } from '../components/StyledLink';
+import { makeRequest } from '../helpers';
+import { HOST } from '../helpers';
 
-export const Register = (props: any) => {
-  const [title, setTitle] = React.useState('');
-  const [username, setUsername] = React.useState('');
-  const [password, setPassword] = React.useState('');
-  const [repeatPassword, setRepeatPassword] = React.useState('');
-  const [email, setEmail] = React.useState('');
-  const [firstname, setFirstname] = React.useState('');
-  const [lastname, setLastname] = React.useState('');
-  const [phoneNumber, setPhoneNumber] = React.useState('');
+type UserInfo = {
+  firstName: string;
+  lastName: string;
+  userName: string;
+  email: string;
+  phone: string;
+  password: string;
+  repeatPassword: string;
+}
+
+export const Register = () => {
+  const [info, setInfo] = useState<UserInfo>({
+    firstName: '',
+    lastName: '',
+    userName: '',
+    email: '',
+    phone: '',
+    password: '',
+    repeatPassword: '',
+  });
+
+  const [error, setError] = useState("");
 
   const navigate = useNavigate();
 
-  const registerBtn = async () => {
-    props.setTokenFn('test');
-    // localStorage.setItem('token', 'test');
-    navigate('/');
-  };
+  const handleRegister = async () => {
+    console.log(info);
+    if (info.password !== info.repeatPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+    try {
+      const body = {
+        firstname: info.firstName,
+        lastname: info.lastName,
+        username: info.userName,
+        email: info.email,
+        password: info.password,
+        phonenumber: info.phone,
+      };
+      const response = await makeRequest("/user/auth/register", "POST", body);
+      if (response.ok) {
+        localStorage.setItem("authToken", "logged-in");
+        navigate("/");
+      } else {
+        setError(Array.isArray(response.detail) ? response.detail[0].msg : response.detail);
+      }
+    } catch(e) {
+      console.log(e)
+      setError("Something went wrong");
+    }
+  }
 
-  const registrationFormFields: RegistrationFormField[] = [
-    {
-      placeholder: 'Title',
-      value: title,
-      inputType: 'text',
-      onChange: (event) => setTitle(event.target.value),
-    },
-    {
-      placeholder: 'First Name',
-      value: firstname,
-      inputType: 'text',
-      onChange: (event) => setFirstname(event.target.value),
-    },
-    {
-      placeholder: 'Last Name',
-      value: lastname,
-      inputType: 'text',
-      onChange: (event) => setLastname(event.target.value),
-    },
-    {
-      placeholder: 'Username',
-      value: username,
-      inputType: 'text',
-      onChange: (event) => setUsername(event.target.value),
-    },
-    {
-      placeholder: 'Password',
-      value: password,
-      inputType: 'password',
-      onChange: (event) => setPassword(event.target.value),
-    },
-    {
-      placeholder: 'Repeat Password',
-      value: repeatPassword,
-      inputType: 'password',
-      onChange: (event) => setRepeatPassword(event.target.value),
-    },
-    {
-      placeholder: 'Email',
-      value: email,
-      inputType: 'text',
-      onChange: (event) => setEmail(event.target.value),
-    },
-    {
-      placeholder: 'Phone Number',
-      value: phoneNumber,
-      inputType: 'text',
-      onChange: (event) => setPhoneNumber(event.target.value),
-    },
-  ];
+
+  const allFilledOut = info.firstName
+    && info.lastName
+    && info.userName
+    && info.email
+    && info.phone
+    && info.password
+    && info.repeatPassword
 
   return (
-    <div className="register-page">
-      <div className="register-form">
-        <div className="image-container">
-          <img src={logo}></img>
-        </div>
-        <div>Register: </div>
-        <br></br>
-        {registrationFormFields.map(
-          (field: RegistrationFormField, index: number) => (
-            <React.Fragment key={index}>
-              <input
-                type={field.inputType}
-                placeholder={field.placeholder}
-                value={field.value}
-                onChange={field.onChange}
-              />
-            </React.Fragment>
-          )
-        )}
-        <button onClick={registerBtn}>Register</button>
+    <FormContainer>
+      <div style={{textAlign: "center", margin: "30px"}}>
+        <img src={logo} style={{ width: "200px", height: "auto" }}/>
       </div>
-    </div>
+      <div style={{ margin: "30px 15px" }}>
+        <FloatingLabel controlId="floatingFirstName" label="First name" className="mb-3">
+          <Form.Control
+            type="text"
+            placeholder="First name"
+            value={info.firstName}
+            onChange={(event) => setInfo({...info, firstName: event.target.value})} />
+        </FloatingLabel>
+        <FloatingLabel controlId="floatingLastName" label="Last name" className="mb-3">
+          <Form.Control
+            type="text"
+            placeholder="Last name"
+            value={info.lastName}
+            onChange={(event) => setInfo({...info, lastName: event.target.value})} />
+        </FloatingLabel>
+        <FloatingLabel controlId="floatingUserName" label="Username" className="mb-3">
+          <Form.Control
+            type="text"
+            placeholder="Username"
+            value={info.userName}
+            onChange={(event) => setInfo({...info, userName: event.target.value})} />
+        </FloatingLabel>
+        <FloatingLabel controlId="floatingEmail" label="Email" className="mb-3">
+          <Form.Control
+            type="email"
+            placeholder="Email"
+            value={info.email}
+            onChange={(event) => setInfo({...info, email: event.target.value})} />
+        </FloatingLabel>
+        <FloatingLabel controlId="floatingPhone" label="Phone" className="mb-3">
+          <Form.Control
+            type="text"
+            placeholder="Phone"
+            value={info.phone}
+            onChange={(event) => setInfo({...info, phone: event.target.value})} />
+        </FloatingLabel>
+        <FloatingLabel controlId="floatingPassword" label="Password" className="mb-3">
+          <Form.Control
+            type="password"
+            placeholder="Password"
+            value={info.password}
+            onChange={(event) => setInfo({...info, password: event.target.value})} />
+        </FloatingLabel>
+        <FloatingLabel controlId="floatingRepeatPassword" label="Repeat password" className="mb-3">
+          <Form.Control
+            type="password"
+            placeholder="Repeat password"
+            value={info.repeatPassword}
+            onChange={(event) => setInfo({...info, repeatPassword: event.target.value})} />
+        </FloatingLabel>
+        {error && <span style={{ color: "#D7504D", fontSize: "14px" }}>{error}</span>}
+        <div className="d-grid gap-2" style={{ paddingTop: "10px" }}>
+          <Button
+            variant="primary"
+            size="lg"
+            onClick={handleRegister}
+            disabled={!allFilledOut}
+          >Register</Button>
+        </div>
+        <div style={{ paddingTop: "20px", textAlign: "center" }}>
+          <StyledLink onClick={() => navigate("/login")}>
+            Already a user? Log in here
+          </StyledLink>
+        </div>
+      </div>
+    </FormContainer>
   );
 };
