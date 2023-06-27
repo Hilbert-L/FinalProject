@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.css';
 import { Modal } from 'react-bootstrap';
+import { host, makeRequest } from '../helpers';
 
 interface Profile {
   name: string;
@@ -50,6 +51,7 @@ export const MyProfile = (props: any) => {
   const [showModal, setShowModal] = useState(false);
   const [modalContent, setModalContent] = useState('');
   const [detailChange, setDetailChange] = useState('');
+  const [showError, setShowError] = useState(false);
 
   // Checks for changes in input then updates state variable
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -57,11 +59,6 @@ export const MyProfile = (props: any) => {
       // Check that user actually uploaded something
       if (event.target.files) {
         setDetailChange(URL.createObjectURL(event.target.files[0]));
-        return;
-        // Else print an error
-      } else {
-        // TODO
-        // print an error message
         return;
       }
     }
@@ -71,16 +68,22 @@ export const MyProfile = (props: any) => {
 
   // Uses the newly entered details (detailChange) to update the profile elements
   const handleSave = () => {
+    if (detailChange === null || detailChange === '' || detailChange === ' ') {
+      setShowError(true);
+      setShowModal(false);
+      return;
+    }
     setProfile({ ...profile, [modalContent]: detailChange });
     setShowModal(false);
     // TODO
-    // Perform API call here
+    
   };
 
   const handleClose = () => setShowModal(false);
   const handleShow = (content: string) => {
     setShowModal(true);
     setModalContent(content);
+    setDetailChange('');
   };
 
   return (
@@ -201,6 +204,12 @@ export const MyProfile = (props: any) => {
           </button>
         </Modal.Footer>
       </Modal>
+
+      { showError && <div className="alert alert-danger alert-dismissible fade show" style={{position: 'absolute', top: '200px'}} role="alert">
+        <strong>Error!</strong> You can't leave the field empty.
+        <button type="button" className="btn-close" onClick={() => setShowError(false)} data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+      }
     </div>
   );
 };
