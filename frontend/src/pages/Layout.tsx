@@ -7,7 +7,13 @@ export const Layout = ({ children }: PropsWithChildren) => {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    makeRequest("/user/auth/logout", "POST")
+    const token = localStorage.getItem("authToken");
+    if (!token) return;
+    makeRequest("/user/auth/logout", "POST", undefined, {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      token,
+    })
       .then((response) => {
         console.log(response);
         if (response.status === 200) {

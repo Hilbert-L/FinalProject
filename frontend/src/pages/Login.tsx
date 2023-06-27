@@ -15,16 +15,14 @@ export const Login = () => {
 
   useEffect(() => {
     // redirect to home page if logged in
-    if (localStorage.getItem("authToken")) {
-      navigate("/");
-    }
+    if (localStorage.getItem("authToken")) navigate("/");
   }, []);
 
   const handleLogin = () => {
     makeRequest("/user/auth/login", "POST", { username, password })
       .then((response) => {
         if (response.status === 200) {
-          localStorage.setItem("authToken", "logged-in");
+          localStorage.setItem("authToken", response.resp.token);
           navigate("/");
         } else {
           setError(response.resp.detail);

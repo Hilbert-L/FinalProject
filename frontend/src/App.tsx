@@ -8,10 +8,7 @@ import { ListingForm } from './pages/ListingForm';
 import { SearchPage } from './pages/SearchPage';
 
 const RequiresAuth = ({children}: PropsWithChildren) => {
-  const auth = localStorage.getItem("authToken");
-  const isLoggedIn = auth === "logged-in";
-  // to make loggedIn true type the following into console:
-  // localStorage.setItem("authToken", "logged-in")
+  const isLoggedIn = localStorage.getItem("authToken");
   return isLoggedIn ? <>{children}</> : <Navigate to={"/login"} />
 }
 
