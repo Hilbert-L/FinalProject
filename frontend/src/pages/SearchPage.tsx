@@ -14,10 +14,10 @@ export const SearchPage = (props: any) => {
     }
 
     const userInput: React.CSSProperties = {
-        width: '550px', 
+        width: '600px', 
         position: 'absolute', 
         top: '120px', 
-        left: 'calc(50% - 275px)',
+        left: 'calc(50% - 300px)',
         zIndex: '10',
         display: 'flex',
         justifyContent: 'center',
@@ -35,6 +35,7 @@ export const SearchPage = (props: any) => {
       flexDirection: 'column',
       justifyContent: 'space-evenly',
       borderRadius: '15px',
+      overflowY: 'scroll',
   }
 
     const {isLoaded} = useJsApiLoader({
@@ -45,7 +46,8 @@ export const SearchPage = (props: any) => {
     const [mapCenter, setMapCenter] = useState({lat: -33.8688, lng: 151.2093});
     const [showModal, setShowModal] = useState(false);
     const [address, setAddress] = useState('');
-  
+    const [showList, setShowList] = useState(false);
+
     // Finds the coordinates of the given location
     const handleSearch = () => {
         if (!searchValue) return;
@@ -106,7 +108,7 @@ export const SearchPage = (props: any) => {
         }
       };
 
-    const handleClick = (position) => {
+    const handleClick = (position: any) => {
       getAddressFromCoordinates(position.position.lat, position.position.lng)
       .then((result) => {
         setAddress(result);
@@ -144,6 +146,7 @@ export const SearchPage = (props: any) => {
                   <span className="input-group-text">🚗</span>
                   <input onBlur={(e) => setSearchValue(e.target.value)} style={{width: '400px', paddingLeft: '10px'}} type="text" placeholder='Enter a suburb or address'/>
                   <button className="btn btn-primary" type="button" id="button-addon2" onClick={handleSearch}>search</button>
+                  <button className="btn btn-secondary" type="button" id="button-addon2" onClick={() => setShowList(true)}>list</button>
               </div>
           </Autocomplete>
           <GoogleMap center={mapCenter} zoom={15} options={{zoomControl: false, mapTypeControl: false, fullscreenControl: false}} mapContainerStyle={ {width: '100%', height: '100%'} }>
@@ -155,15 +158,32 @@ export const SearchPage = (props: any) => {
             <h4>{address}</h4>
             <hr />
             <div style={{display: 'flex', justifyContent: 'space-evenly'}}>
-              <img></img>
-              <div>
-                <span>Hey</span><br/>
-                <span>Hey</span><br/>
-                <span>Hey</span><br/>
-                <span>Hey</span><br/>
+              <img style={{ width: '165px', height: '165px' }} alt="Car Space Picture"></img>
+              <div style={{display: 'flex', flexDirection: 'column', alignItems: 'flex-start'}}>
+                <span>Dimensions: 2 m x 1.5 m</span>
+                <span>Access key required? No</span>
+                <span>Vehicle sizes: hatchback, sedan</span>
+                <span>Price per month: $300</span>
               </div>
             </div><br/>
-            <button onClick={() => setShowModal(false)}>Close</button>
+            <button style={{position: 'relative', left: '450px', width: '20%'}} onClick={() => setShowModal(false)}>Close</button>
+          </div>
+          }   
+
+          { showList && <div style={modalBox}>
+            <div style={{display: 'flex', justifyContent: 'left', gap: '20px'}}>
+              <img style={{ width: '75px', height: '75px' }} alt="Car Space Picture"></img>
+              <span>8 Conder St, Burwood NSW 2134, Australia</span>
+            </div><br/>
+            <div style={{display: 'flex', justifyContent: 'left', gap: '20px'}}>
+              <img style={{ width: '75px', height: '75px' }} alt="Car Space Picture"></img>
+              <span>11 Elizabeth St, Burwood NSW 2134, Australia</span>
+            </div><br/>
+            <div style={{display: 'flex', justifyContent: 'left', gap: '20px'}}>
+              <img style={{ width: '75px', height: '75px' }} alt="Car Space Picture"></img>
+              <span>Suite 3 Corner of George &, Elsie St, Burwood NSW 2134, Australia</span>
+            </div><br/>
+            <button style={{position: 'relative', left: '450px', width: '20%'}} onClick={() => setShowList(false)}>Close</button>
           </div>
           }   
         </div>
