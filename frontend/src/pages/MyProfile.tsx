@@ -75,8 +75,30 @@ export const MyProfile = (props: any) => {
     }
     setProfile({ ...profile, [modalContent]: detailChange });
     setShowModal(false);
-    // TODO
-    
+
+    // if (modalContent === "password") {
+    //   makeRequest("127.0.0.1:8000/user/change_password", "PUT",)
+    //     .then((response) => {
+    //       if (response.status === 200) {
+    //         console.log("success!")
+    //       } else {
+    //         console.log(response.resp);
+    //       }
+    //     }).catch(() => {
+    //       console.log("Something went wrong");
+    //     })
+    // } else {
+    //   makeRequest("/user/update_personal_details", "PUT", {  })
+    //     .then((response) => {
+    //       if (response.status === 200) {
+    //         console.log("success!")
+    //       } else {
+    //         console.log(response.resp);
+    //       }
+    //     }).catch(() => {
+    //       console.log("Something went wrong");
+    //     })
+    // }
   };
 
   const handleClose = () => setShowModal(false);
