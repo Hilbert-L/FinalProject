@@ -27,7 +27,7 @@ async def verify_user_token(token: str = Header(...)):
     try:
         payload = jwt.decode(
             token, JWT_SECRET, 
-            algorithm=JWT_ALGORITHM)
+            algorithms=[JWT_ALGORITHM])
         username = payload.get("username")
 
         user = users_collections.find_one({"username": username})

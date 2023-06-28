@@ -32,6 +32,7 @@ export const Layout = ({ children }: PropsWithChildren) => {
           <Navbar.Collapse id="basic-navbar-nav">
             <Nav className="me-auto">
               <Nav.Link onClick={() => navigate("/profile")}>My Profile</Nav.Link>
+              <Nav.Link onClick={() => navigate("/listingform")}>Add Listing</Nav.Link>
               <Nav.Link onClick={handleLogout}>Logout</Nav.Link>
             </Nav>
           </Navbar.Collapse>
