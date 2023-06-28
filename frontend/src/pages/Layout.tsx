@@ -9,11 +9,7 @@ export const Layout = ({ children }: PropsWithChildren) => {
   const handleLogout = () => {
     const token = localStorage.getItem("authToken");
     if (!token) return;
-    makeRequest("/user/auth/logout", "POST", undefined, {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      token,
-    })
+    makeRequest("/user/auth/logout", "POST", undefined, { token })
       .then((response) => {
         console.log(response);
         if (response.status === 200) {
