@@ -4,6 +4,7 @@ from models.UserAuthentication import UserRegistrationSchema, UserSchema, LoginS
 from models.UpdateUserInfo import UpdatePassword, UpdatePersonalDetails
 from wrappers.wrappers import check_token
 from authentication.authentication import generate_token, verify_user_token, pwd_context
+import json 
 
 UserRouter = APIRouter()
 
@@ -142,3 +143,16 @@ async def change_personal_details(personal_update: UpdatePersonalDetails, token:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Cannot update user information")
 
     return outcome
+
+
+
+@UserRouter.get("/user/get_current_user", tags=["Users"])
+@check_token
+async def change_personal_details(token: str = Depends(verify_user_token)):
+    user = users_collections.find_one({"username": token})
+    user_dict = json.loads(json.dumps(user, default=str))
+
+    return {
+        "Message": "User Information Retrieved Successfully",
+        "User Info": user_dict
+    }
