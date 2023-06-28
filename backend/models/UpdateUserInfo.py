@@ -21,7 +21,7 @@ class UpdatePassword(BaseModel):
 class UpdatePersonalDetails(BaseModel):
     username: str = Field(default=None)
     newEmail: Optional[EmailStr] = Field(default=None)
-    newTitle: Optional[EmailStr] = Field(default=None)
+    newTitle: Optional[str] = Field(default=None)
     newFirstName: Optional[str] = Field(default=None)
     newLastName: Optional[str] = Field(default=None)
     newProfilePic: Optional[str] = Field(default=None)
