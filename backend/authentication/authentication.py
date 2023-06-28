@@ -2,6 +2,7 @@ import jwt
 from fastapi import Header
 from decouple import config
 from jwt import PyJWTError
+from jwt.exceptions import PyJWTError
 from typing import Optional, List
 from models.UserAuthentication import UserSchema
 from mongodbconnect.mongodb_connect import car_reservations_db, users_collections, admin_collections, car_space_review_collections, car_space_collections
@@ -26,7 +27,7 @@ async def verify_user_token(token: str = Header(...)):
     try:
         payload = jwt.decode(
             token, JWT_SECRET, 
-            algorithm=JWT_ALGORITHM)
+            algorithms=[JWT_ALGORITHM])
         username = payload.get("username")
 
         user = users_collections.find_one({"username": username})
