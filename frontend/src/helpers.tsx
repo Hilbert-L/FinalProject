@@ -10,7 +10,8 @@ export async function makeRequest(
     const url = HOST + endpoint;
     const response = await fetch(url, {
       method,
-      headers: headers ?? {
+      headers: {
+          ...headers,
           Accept: 'application/json',
           'Content-Type': 'application/json',
         },
