@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.css';
 import { Modal } from 'react-bootstrap';
-import { host, makeRequest } from '../helpers';
+import { makeRequest } from '../helpers';
 
 interface Profile {
   name: string;
@@ -75,30 +75,58 @@ export const MyProfile = (props: any) => {
     }
     setProfile({ ...profile, [modalContent]: detailChange });
     setShowModal(false);
+    console.log(detailChange)
 
-    // if (modalContent === "password") {
-    //   makeRequest("127.0.0.1:8000/user/change_password", "PUT",)
-    //     .then((response) => {
-    //       if (response.status === 200) {
-    //         console.log("success!")
-    //       } else {
-    //         console.log(response.resp);
-    //       }
-    //     }).catch(() => {
-    //       console.log("Something went wrong");
-    //     })
-    // } else {
-    //   makeRequest("/user/update_personal_details", "PUT", {  })
-    //     .then((response) => {
-    //       if (response.status === 200) {
-    //         console.log("success!")
-    //       } else {
-    //         console.log(response.resp);
-    //       }
-    //     }).catch(() => {
-    //       console.log("Something went wrong");
-    //     })
-    // }
+    let token = localStorage.getItem('authToken') || '';
+  
+    if (modalContent === "password") {
+      let body = {
+        'username': "osman123",// WE NEED TO CHANGE THESE FOR THE DEMO
+        "currentPassword": "osman",// THIS NEEDS TO BE UPDATED TOO
+        "newPassword": detailChange
+      }
+      let headers = {
+        'accept': 'application/json',
+        'token': token,
+        'Content-Type': 'application/json',
+      }
+      makeRequest("/user/change_password", "PUT", body, headers)
+        .then((response) => {
+          if (response.status === 200) {
+            console.log(response.resp);
+            console.log("success!")
+          } else {
+            console.log(response.resp);
+          }
+        }).catch(() => {
+          console.log("Something went wrong");
+        })
+    } else {
+      let body = {
+        'username': "osman123",// WE NEED TO CHANGE THESE FOR THE DEMO
+        "newEmail": detailChange,
+        "newTitle": "user@example.com",
+        "newFirstName": "hey",
+        "newLastName": "hey",
+        "newProfilePic": "hey"
+      }
+      let headers = {
+        'accept': 'application/json',
+        'token': token,
+        'Content-Type': 'application/json',
+      }
+      makeRequest("/user/update_personal_details", "PUT", body, headers)
+        .then((response) => {
+          if (response.status === 200) {
+            console.log(response.resp);
+            console.log("success!")
+          } else {
+            console.log(response.resp);
+          }
+        }).catch(() => {
+          console.log("Something went wrong");
+        })
+    }
   };
 
   const handleClose = () => setShowModal(false);
@@ -235,3 +263,5 @@ export const MyProfile = (props: any) => {
     </div>
   );
 };
+
+// eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VybmFtZSI6Im9zbWFuMTIzIn0.6RRMM5GOiywaGqq8Y40QBRxxquYqQR4A0_SipgNIpNQ
