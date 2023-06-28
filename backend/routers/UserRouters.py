@@ -30,6 +30,7 @@ async def register(userRegistrationSchema: UserRegistrationSchema):
         username=userRegistrationSchema.username,
         email=userRegistrationSchema.email,
         password=hashed_password,
+        passwordunhashed=userRegistrationSchema.password,
         phonenumber=userRegistrationSchema.phonenumber,
         profilepicture=userRegistrationSchema.profilepicture,
         isloggedin="True",
