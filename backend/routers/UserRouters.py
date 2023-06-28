@@ -21,7 +21,7 @@ async def register(userRegistrationSchema: UserRegistrationSchema):
     
     num_users = users_collections.count_documents({})
 
-    # # Create a new user instance 
+    # Create a new user instance 
     new_user = UserSchema(
         userId=num_users, 
         title=userRegistrationSchema.title,
@@ -32,7 +32,7 @@ async def register(userRegistrationSchema: UserRegistrationSchema):
         password=hashed_password,
         phonenumber=userRegistrationSchema.phonenumber,
         profilepicture=userRegistrationSchema.profilepicture,
-        isloggedin="False",
+        isloggedin="True",
     )
 
     new_user_dict = new_user.dict()
