@@ -51,7 +51,6 @@ class UserSchema(UserRegistrationSchema):
         }
 
 
-
 class LoginSchema(BaseModel):
     username: str = Field(default=None)
     password: str = Field(default=None)
