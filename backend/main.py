@@ -1,6 +1,5 @@
 import uvicorn
 from fastapi import FastAPI, Depends, status, HTTPException, Header, Body
-from decouple import config
 from routers.GeneralRouters import GeneralRouter
 from routers.ProtectedEndpoints import ProtectedRouter
 from routers.UserRouters import UserRouter
@@ -14,7 +13,7 @@ import os
 # Add the project root directory to the Python path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-app = FastAPI(title=config("projectName"))
+app = FastAPI(title=os.getenv("PROJECT_NAME"))
 
 origins = [
     "http://localhost:5173",  # Allow requests from this origin

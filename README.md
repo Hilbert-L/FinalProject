@@ -39,12 +39,11 @@ cd frontend
 npx prettier --write .
 ```
 
-## From project root, activate python virtual environment and install requirements
+## From project backend directory, build the docker image with the following and start the application this will enable you to run the backend on http://0.0.0.0:8000
 ```
 cd backend
-source .venv/bin/activate
-pip3 install -r requirements.txt 
-uvicorn main:app --reload
+docker-compose build
+docker run -p 8000:8000 backend-app
 ```
 
 # Docker Container for backend
