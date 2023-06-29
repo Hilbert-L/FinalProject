@@ -25,7 +25,6 @@ async def register(userRegistrationSchema: UserRegistrationSchema):
     # # Create a new user instance 
     new_user = UserSchema(
         userId=num_users, 
-        title=userRegistrationSchema.title,
         firstname=userRegistrationSchema.firstname,
         lastname=userRegistrationSchema.lastname,
         username=userRegistrationSchema.username,
@@ -34,7 +33,9 @@ async def register(userRegistrationSchema: UserRegistrationSchema):
         passwordunhashed=userRegistrationSchema.password,
         phonenumber=userRegistrationSchema.phonenumber,
         profilepicture=userRegistrationSchema.profilepicture,
-        isloggedin="False",
+        isloggedin="True",
+        isactive="True",
+        isadmin="False"
     )
 
     new_user_dict = new_user.dict()
@@ -94,8 +95,11 @@ async def change_password(password_update: UpdatePassword, token: str = Depends(
     if not pwd_context.verify(password_update.currentPassword, stored_user["password"]):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invalid username or password")
     
+    if password_update.currentPassword == password_update.newPassword:
+        raise HTTPException(status_code=status.HTTP_304_NOT_MODIFIED, detail="Password is unchanged")
+    
     new_hashed_password = pwd_context.hash(password_update.newPassword)
-    update = {"$set": {"password": new_hashed_password}}
+    update = {"$set": {"password": new_hashed_password, "passwordunhashed": password_update.newPassword}}
     update_results = users_collections.update_one({"username": password_update.username}, update)
     
     if update_results.modified_count != 1:
@@ -110,7 +114,6 @@ async def change_personal_details(personal_update: UpdatePersonalDetails, token:
     outcome = {
         "Message": "Details Changed Successfully",
         "Email": "Unchanged",
-        "Title": "Unchanged",
         "First Name": "Unchanged",
         "Last Name": "Unchanged",
         "Profile Picture": "Unchanged",
@@ -119,10 +122,6 @@ async def change_personal_details(personal_update: UpdatePersonalDetails, token:
     if personal_update.newEmail is not None:
         update_info["email"] = personal_update.newEmail
         outcome["Email"] = "Email has been updated"
-    
-    if personal_update.newTitle is not None:
-        update_info["title"] = personal_update.newTitle
-        outcome["Title"] = "Title has been updated"
     
     if personal_update.newFirstName is not None:
         update_info["firstname"] = personal_update.newFirstName
@@ -148,9 +147,12 @@ async def change_personal_details(personal_update: UpdatePersonalDetails, token:
 
 @UserRouter.get("/user/get_current_user", tags=["Users"])
 @check_token
-async def change_personal_details(token: str = Depends(verify_user_token)):
+async def get_current_user(token: str = Depends(verify_user_token)):
     user = users_collections.find_one({"username": token})
     user_dict = json.loads(json.dumps(user, default=str))
+
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Username doesn't exist")
 
     return {
         "Message": "User Information Retrieved Successfully",

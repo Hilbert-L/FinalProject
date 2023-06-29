@@ -38,6 +38,8 @@ async def register(userRegistrationSchema: UserRegistrationSchema):
         profilepicture=userRegistrationSchema.profilepicture,
         isloggedin="False",
         passwordunhashed=str(userRegistrationSchema.password),
+        isactive="True",
+        isadmin="True"
     )
 
     new_user_dict = new_user.dict()

@@ -80,7 +80,7 @@ class CarSpaceSchema(BaseModel):
     FirstName: str = Field(default=None)
     LastName: str = Field(default=None)
     Email: EmailStr = Field(default=None)
-    PhoneNumber: str = Field(default=None)
+    PhoneNumber: Optional[int] = Field(default=None)
     Address: str = Field(default=None)
     Suburb: str = Field(default=None)
     Postcode: str = Field(default=None)
@@ -100,11 +100,11 @@ class CarSpaceSchema(BaseModel):
                 "username": "test",
                 "carspaceid": "10",
                 "datecreated": "2000-01-01 15:54:53.845417",
-                "title": "Mr",
+                "title": "Car space title",
                 "firstname": "test",
                 "lastname": "test",
                 "email": "test@hotmail.com",
-                "phonenumber": "test",
+                "phonenumber": 00000000000,
                 "address": "test",
                 "suburb": "test",
                 "postcode": "1234",
