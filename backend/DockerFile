@@ -1,0 +1,28 @@
+# Use the official Python base image with Python 3.9.6
+FROM python:3.9.6-slim-buster
+
+# Set the working directory in the container
+WORKDIR /app
+
+# Copy the requirements.txt file to the container
+COPY requirements.txt .
+
+# Install the project dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the rest of the project files to the container
+COPY . .
+
+# Expose the port on which the FastAPI server will run (change if needed)
+EXPOSE 8000
+
+# Set the environment variables
+ENV SECRET=2ea7e571df496b58d0cd8cc4c0a329a8 \
+    ALGORITHM=HS256 \
+    MONGODB_USER=GenericUser \
+    MONGODB_PASSWORD=$Gdaymate123 \
+    MONGODB_CLUSTER_NAME=atlascluster \
+    PROJECT_NAME=CarSpaceReservations
+
+# Start the FastAPI server with Uvicorn
+CMD ["uvicorn", "main:app", "--host", "127.0.0.1", "--port", "8000", "--reload"]
