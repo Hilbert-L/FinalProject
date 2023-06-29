@@ -1,11 +1,11 @@
 #!/usr/bin/python3
 from pymongo import MongoClient
-from decouple import config
+import os 
 import click 
 
-MongoDBUser = config("mongodbUser")
-MongoDBPassword = config("mongodbPassword")
-MongoDBCluster = config("mongodbClusterName")
+MongoDBUser = os.getenv("MONGODB_USER")
+MongoDBPassword = "$Gdaymate123"
+MongoDBCluster = os.getenv("MONGODB_CLUSTER_NAME")
 connectionString = f"mongodb+srv://{MongoDBUser}:{MongoDBPassword}@{MongoDBCluster}.ksdmto3.mongodb.net/?retryWrites=true"
 client = MongoClient(connectionString)
 

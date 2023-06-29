@@ -8,7 +8,6 @@ from models.CreateCarSpace import CarSpaceReview, CarSpaceSchema, CreateCarSpace
 from models.UpdateCarSpace import UpdateCarSpace, AddImage
 from wrappers.wrappers import check_token
 from passlib.context import CryptContext
-from decouple import config
 from datetime import datetime
 from base64 import b64encode
 from authentication.authentication import generate_token, verify_user_token

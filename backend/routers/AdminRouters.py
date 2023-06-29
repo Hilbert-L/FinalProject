@@ -4,7 +4,6 @@ from models.UserAuthentication import UserRegistrationSchema, UserSchema, LoginS
 from models.UpdateUserInfo import UpdatePassword, UpdatePersonalDetails
 from wrappers.wrappers import check_token
 from passlib.context import CryptContext
-from decouple import config
 from datetime import datetime
 from authentication.authentication import generate_token, verify_admin_token, pwd_context
 
