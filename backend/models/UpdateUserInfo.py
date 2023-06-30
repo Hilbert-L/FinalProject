@@ -45,7 +45,7 @@ class UpdatePersonalDetails(BaseModel):
     newEmail: Optional[EmailStr] = Field(default=None)
     newFirstName: Optional[str] = Field(default=None)
     newLastName: Optional[str] = Field(default=None)
-    newProfilePic: Optional[str] = Field(default=None)
+    newPhoneNumber: Optional[int] = Field(default=None) 
 
     class Config:
         schema = {
@@ -54,6 +54,6 @@ class UpdatePersonalDetails(BaseModel):
                 "newemail": "test2@hotmail.com",
                 "newfirstname": "test2",
                 "newlastname": "test2",
-                "newprofilepic": "test2"
+                "newPhoneNumber": 0000000,
             }
         }

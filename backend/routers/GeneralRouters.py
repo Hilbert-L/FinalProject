@@ -1,7 +1,9 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from models.UserAuthentication import UserSchema
 from mongodbconnect.mongodb_connect import users_collections, admin_collections, car_space_review_collections, car_space_collections
 import json
+from wrappers.wrappers import check_token
+from authentication.authentication import verify_admin_token
 
 GeneralRouter = APIRouter()
 
@@ -9,8 +11,9 @@ GeneralRouter = APIRouter()
 async def test():
     return {"Message": "Test Route"}
 
-@GeneralRouter.get("/users", tags=["Information"])
-async def get_users():
+@GeneralRouter.get("/users", tags=["Admin Information"])
+@check_token
+async def get_users(token: str = Depends(verify_admin_token)):
     # users = list(users_collections.find())
     user_cursor = users_collections.find({})
     users = []
@@ -20,8 +23,9 @@ async def get_users():
         users.append(document_dict)
     return {"users": users}
 
-@GeneralRouter.get("/admins", tags=["Information"])
-async def get_admins():
+@GeneralRouter.get("/admins", tags=["Admin Information"])
+@check_token
+async def get_admins(token: str = Depends(verify_admin_token)):
     admin_cursor = admin_collections.find({})
     admins = []
     for document in admin_cursor:
@@ -30,8 +34,9 @@ async def get_admins():
         admins.append(document_dict)
     return {"admins": admins}
 
-@GeneralRouter.get("/carspace", tags=["Information"])
-async def get_car_spaces():
+@GeneralRouter.get("/carspace", tags=["Admin Information"])
+@check_token
+async def get_car_spaces(token: str = Depends(verify_admin_token)):
     carspace_cursor = car_space_collections.find({})
     carspaces = []
     for document in carspace_cursor:
@@ -40,8 +45,9 @@ async def get_car_spaces():
         carspaces.append(document_dict)
     return {"car_spaces": carspaces}
 
-@GeneralRouter.get("/carspacereviews", tags=["Information"])
-async def get_car_space_reviews():
+@GeneralRouter.get("/carspacereviews", tags=["Admin Information"])
+@check_token
+async def get_car_space_reviews(token: str = Depends(verify_admin_token)):
     carspace_review_cursor = car_space_review_collections.find()
     carspace_reviews = []
     for document in carspace_review_cursor:
