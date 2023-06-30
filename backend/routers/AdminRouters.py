@@ -1,11 +1,12 @@
-from fastapi import APIRouter, Depends, status, HTTPException, Header
-from mongodbconnect.mongodb_connect import admin_collections
+from fastapi import APIRouter, Depends, status, HTTPException, Header, UploadFile, File
+from mongodbconnect.mongodb_connect import admin_collections, users_collections
 from models.UserAuthentication import UserRegistrationSchema, UserSchema, LoginSchema
 from models.UpdateUserInfo import UpdatePassword, UpdatePersonalDetails
 from wrappers.wrappers import check_token
-from passlib.context import CryptContext
-from datetime import datetime
 from authentication.authentication import generate_token, verify_admin_token, pwd_context
+import os
+from typing import Optional
+import json 
 
 AdminRouter = APIRouter()
 
@@ -27,24 +28,24 @@ async def register(userRegistrationSchema: UserRegistrationSchema):
 
     # # Create a new user instance 
     new_user = UserSchema(
-        userId=num_users, 
+        userid=num_users, 
         firstname=userRegistrationSchema.firstname,
         lastname=userRegistrationSchema.lastname,
         username=userRegistrationSchema.username,
         email=userRegistrationSchema.email,
         password=hashed_password,
         phonenumber=userRegistrationSchema.phonenumber,
-        profilepicture=userRegistrationSchema.profilepicture,
-        isloggedin="False",
+        isloggedin=True,
         passwordunhashed=str(userRegistrationSchema.password),
-        isactive="True",
-        isadmin="True"
+        isactive=True,
+        isadmin=True
     )
 
     new_user_dict = new_user.dict()
     admin_collections.insert_one(new_user_dict)
     token = generate_token(new_user.username)
     return {"Message": "Admin Registered Successfully", "token": token, "user": new_user}
+
 
 
 @AdminRouter.post("/admin/auth/login", tags=["Administrators"])
@@ -60,10 +61,13 @@ async def login(AdminLogin: LoginSchema):
     if not pwd_context.verify(AdminLogin.password, stored_user["password"]):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invalid user name or password")
     
-    if stored_user["isloggedin"] == "True":
+    if stored_user["isloggedin"]:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="User is already logged in")
 
-    updateLoginStatus = {"$set": {"isloggedin": "True"}}
+    if not stored_user["isactive"]:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User has been deactivated")
+
+    updateLoginStatus = {"$set": {"isloggedin": True}}
 
     admin_collections.update_one(filter, updateLoginStatus)
 
@@ -83,7 +87,7 @@ async def logout(token: str = Header(...)):
     if stored_user is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing authorization token")
 
-    updateLogoutStatus = {"$set": {"isloggedin": "False"}}
+    updateLogoutStatus = {"$set": {"isloggedin": False}}
 
     # Updated user login status
     admin_collections.update_one({"username": username}, updateLogoutStatus)
@@ -113,6 +117,37 @@ async def change_password(password_update: UpdatePassword, token: str = Depends(
     return {"Message": "Password Changed Successfully"}
 
      
+@AdminRouter.post("/admin.upload_profile_picture", tags=["Administrators"])
+@check_token
+async def upload_profile_picture(token: str = Depends(verify_admin_token), image: UploadFile = File(..., exclude=True)):
+    filter = {"username": token}
+    admin = admin_collections.find_one(filter)
+
+    if admin is None:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Admin doesn't exist")
+
+    update_info = {}
+    if image:
+        image_file_types = {'.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff', '.tif', '.webp', '.svg', '.ico'}
+        contents = await image.read()
+        file_extension = os.path.splitext(image.filename)[1].lower()
+
+        if file_extension not in image_file_types:
+            raise HTTPException(status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, detail="Invalid image file type")
+        
+        update_info["imagename"] = image.filename
+        update_info["imagedata"] = contents 
+        update_info["imageextension"] = file_extension
+
+    update_results = admin_collections.update_one(filter, {"$set" : update_info})
+
+    if update_results.modified_count < 1:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Cannot update profile picture")
+
+    return {
+        "Message": "Admin Profile Picture Updated",
+    }
+
 
 @AdminRouter.put("/admin/update_personal_details", tags=["Administrators"])
 @check_token
@@ -123,7 +158,6 @@ async def change_personal_details(personal_update: UpdatePersonalDetails, token:
         "Email": "Unchanged",
         "First Name": "Unchanged",
         "Last Name": "Unchanged",
-        "Profile Picture": "Unchanged",
     }
 
     if personal_update.newEmail is not None:
@@ -139,9 +173,10 @@ async def change_personal_details(personal_update: UpdatePersonalDetails, token:
         outcome["Last Name"] = "Last Name has been updated"
 
 
-    if personal_update.newProfilePic is not None:
-        update_info["profilepicture"] = personal_update.newProfilePic
-        outcome["Profile Picture"] = "Profile Picture has been updated"
+    if personal_update.newPhoneNumber is not None:
+        update_info["phonenumber"] = personal_update.newPhoneNumber
+        outcome["Phone Number"] = "Phone number has been updated"
+
 
     filter = {"username" : personal_update.username}
     update = {"$set": update_info}
@@ -151,3 +186,30 @@ async def change_personal_details(personal_update: UpdatePersonalDetails, token:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Cannot update user information")
 
     return outcome
+
+@AdminRouter.put("/admin/deactivate_user/{username}", tags=["Administrators"])
+@check_token
+async def deactivate_user(username: str, token: str = Depends(verify_admin_token)):
+    filter = {"username": username}
+    user = users_collections.find_one(filter)
+
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Username does not exist")
+
+    update = {"$set": {"isactive": False}}
+    users_collections.update_one(filter, update)
+    return {"Message", f"User {username} has been deactivated"}
+
+
+@AdminRouter.put("/admin/activate_user/{username}", tags=["Administrators"])
+@check_token
+async def activate_user(username: str, token: str = Depends(verify_admin_token)):
+    filter = {"username": username}
+    user = users_collections.find_one(filter)
+
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Username does not exist")
+
+    update = {"$set": {"isactive": True}}
+    users_collections.update_one(filter, update)
+    return {"Message", f"User {username} has been activated"}

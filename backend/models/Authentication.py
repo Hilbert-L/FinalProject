@@ -11,7 +11,6 @@ class UserRegistrationSchema(BaseModel):
     email: EmailStr = Field(default=None)
     password: constr(min_length=8) = Field(default=None)
     phonenumber: Optional[int] = Field(default=None)
-    profilepicture: Optional[str] = Field(default=None)
     
     @validator('password')
     def validate_password(cls, password):
@@ -30,14 +29,12 @@ class UserRegistrationSchema(BaseModel):
                 "Email": "test@hotmail.com",
                 "Password": "$Test1234",
                 "PhoneNumber": 00000000,
-                "ProfilePicture": "test",
             }
         }
 
 class UserSchema(UserRegistrationSchema):
-    userId: int = Field(default=None)
+    userid: int = Field(default=None)
     isloggedin: bool = Field(default=None)
-    DateCreated: datetime = datetime.now()
     Reviews: List[CarSpaceReview] = Field(default=None)
     class Config:
             schema = {
@@ -47,10 +44,8 @@ class UserSchema(UserRegistrationSchema):
                     "Username": "test",
                     "Email": "test@hotmail.com",
                     "Password": "$Test1234",
-                    "ProfilePicture": "test",
                     "userId": "1",
                     "isLoggedin": False,
-                    "DateCreated": "2000-01-01 15:54:53.845417",
                     "Reviews": []
                 }
             }

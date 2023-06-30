@@ -1,5 +1,4 @@
 from pydantic import BaseModel, Field, EmailStr
-from datetime import datetime
 from typing import Optional, List
 from pymongo import MongoClient
 from fastapi import FastAPI
@@ -11,15 +10,15 @@ db = client['CarSpace']
 app=FastAPI()
 
 class CarSpaceReview(BaseModel):
-    OwnerUserName: str = Field(default=None)
-    CarSpaceId: str = Field(default=None)
-    ReviewerUserName: str = Field(default=None)
-    Overall: str = Field(default=None)
-    Location: str = Field(default=None)
-    Cleanliness: str = Field(default=None)
-    EaseOfAccess: str = Field(default=None)
-    Communication: str = Field(default=None)
-    WrittenFeedback: Optional[str] = Field(default=None)
+    ownerusername: str = Field(default=None)
+    carspaceid: str = Field(default=None)
+    reviewerusername: str = Field(default=None)
+    overall: str = Field(default=None)
+    location: str = Field(default=None)
+    cleanliness: str = Field(default=None)
+    easeofaccess: str = Field(default=None)
+    communication: str = Field(default=None)
+    writtenfeedback: Optional[str] = Field(default=None)
     class Config:
         schema = {
             "sample": {
@@ -37,24 +36,22 @@ class CarSpaceReview(BaseModel):
 
 
 class CreateCarSpaceSchema(BaseModel):
-    DateCreated: datetime = datetime.now()
-    Title: str = Field(default=None)
-    Address: str = Field(default=None)
-    Suburb: str = Field(default=None)
-    Postcode: str = Field(default=None)
-    Width: Optional[str] = Field(default=None)
-    Breadth: Optional[str] = Field(default=None)
-    SpaceType: Optional[str] = Field(default=None)
-    AccessKeyRequired: Optional[str] = Field(default=None)
-    VehicleSize: Optional[str] = Field(default=None)
-    Currency: str = Field(default=None)
-    Price: str = Field(default=None)
-    Frequency: str = Field(default=None)
-    Pictures: List[str] = Field(default=None)
+    title: str = Field(default=None)
+    address: str = Field(default=None)
+    suburb: str = Field(default=None)
+    postcode: str = Field(default=None)
+    width: Optional[str] = Field(default=None)
+    breadth: Optional[str] = Field(default=None)
+    spacetype: Optional[str] = Field(default=None)
+    accesskeyrequired: Optional[bool] = Field(default=None)
+    vehiclesize: Optional[str] = Field(default=None)
+    currency: str = Field(default=None)
+    price: str = Field(default=None)
+    frequency: str = Field(default=None)
+    pictures: List[str] = Field(default=None)
     class Config:
         schema = {
             "sample": {
-                "datecreated": "2000-01-01 15:54:53.845417",
                 "title": "test",
                 "address": "test",
                 "suburb": "test",
@@ -62,7 +59,7 @@ class CreateCarSpaceSchema(BaseModel):
                 "width": "test",
                 "breadth": "test",
                 "spacetype": "test",
-                "accesskeyrequired": "False",
+                "accesskeyrequired": False,
                 "vehiclesize": "Large",
                 "currency": "AUD",
                 "price": "100",
@@ -73,27 +70,26 @@ class CreateCarSpaceSchema(BaseModel):
 
 
 class CarSpaceSchema(BaseModel):
-    UserName: str = Field(default=None)
-    CarSpaceId: str = Field(default=None)
-    DateCreated: datetime = datetime.now()
-    Title: str = Field(default=None)
-    FirstName: str = Field(default=None)
-    LastName: str = Field(default=None)
-    Email: EmailStr = Field(default=None)
-    PhoneNumber: Optional[int] = Field(default=None)
-    Address: str = Field(default=None)
-    Suburb: str = Field(default=None)
-    Postcode: str = Field(default=None)
-    Width: Optional[str] = Field(default=None)
-    Breadth: Optional[str] = Field(default=None)
-    SpaceType: Optional[str] = Field(default=None)
-    AccessKeyRequired: Optional[str] = Field(default=None)
-    VehicleSize: Optional[str] = Field(default=None)
-    Currency: str = Field(default=None)
-    Price: str = Field(default=None)
-    Frequency: str = Field(default=None)
-    Pictures: List[str] = Field(default=None)
-    Reviews: List[CarSpaceReview] = Field(default=None)
+    username: str = Field(default=None)
+    carspaceid: str = Field(default=None)
+    title: str = Field(default=None)
+    firstname: str = Field(default=None)
+    lastname: str = Field(default=None)
+    email: EmailStr = Field(default=None)
+    phonenumber: Optional[int] = Field(default=None)
+    address: str = Field(default=None)
+    suburb: str = Field(default=None)
+    postcode: str = Field(default=None)
+    width: Optional[str] = Field(default=None)
+    breadth: Optional[str] = Field(default=None)
+    spacetype: Optional[str] = Field(default=None)
+    accesskeyrequired: Optional[bool] = Field(default=False)
+    vehiclesize: Optional[str] = Field(default=None)
+    currency: str = Field(default=None)
+    price: str = Field(default=None)
+    frequency: str = Field(default=None)
+    pictures: List[str] = Field(default=None)
+    reviews: List[CarSpaceReview] = Field(default=None)
     class Config:
         schema = {
             "sample" : {
@@ -111,7 +107,7 @@ class CarSpaceSchema(BaseModel):
                 "width": "test",
                 "breadth": "test",
                 "spacetype": "test",
-                "accesskeyrequired": "False",
+                "accesskeyrequired": False,
                 "vehiclesize": "Large",
                 "currency": "AUD",
                 "price": "100",

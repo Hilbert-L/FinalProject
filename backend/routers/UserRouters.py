@@ -1,10 +1,12 @@
-from fastapi import APIRouter, Depends, status, HTTPException, Header
-from mongodbconnect.mongodb_connect import users_collections
+from fastapi import APIRouter, Depends, status, HTTPException, Header, UploadFile, File
+from mongodbconnect.mongodb_connect import users_collections, car_space_collections
 from models.UserAuthentication import UserRegistrationSchema, UserSchema, LoginSchema
 from models.UpdateUserInfo import UpdatePassword, UpdatePersonalDetails
 from wrappers.wrappers import check_token
 from authentication.authentication import generate_token, verify_user_token, pwd_context
 import json 
+import os 
+from typing import Optional
 
 UserRouter = APIRouter()
 
@@ -24,7 +26,7 @@ async def register(userRegistrationSchema: UserRegistrationSchema):
 
     # # Create a new user instance 
     new_user = UserSchema(
-        userId=num_users, 
+        userid=num_users, 
         firstname=userRegistrationSchema.firstname,
         lastname=userRegistrationSchema.lastname,
         username=userRegistrationSchema.username,
@@ -32,16 +34,16 @@ async def register(userRegistrationSchema: UserRegistrationSchema):
         password=hashed_password,
         passwordunhashed=userRegistrationSchema.password,
         phonenumber=userRegistrationSchema.phonenumber,
-        profilepicture=userRegistrationSchema.profilepicture,
-        isloggedin="True",
-        isactive="True",
-        isadmin="False"
+        isloggedin=True,
+        isactive=True,
+        isadmin=False
     )
 
     new_user_dict = new_user.dict()
     users_collections.insert_one(new_user_dict)
     token = generate_token(new_user.username)
     return {"Message": "User Registered Successfully", "token": token, "user": new_user}
+
 
 
 @UserRouter.post("/user/auth/login", tags=["Users"])
@@ -56,11 +58,13 @@ async def login(UserLogin: LoginSchema):
     if not pwd_context.verify(UserLogin.password, stored_user["password"]):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invalid user name or password")
     
-    if stored_user["isloggedin"] == "True":
+    if stored_user["isloggedin"]:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="User is already logged in")
 
+    if not stored_user["isactive"]:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User has been deactivated")
 
-    users_collections.update_one(filter, {"$set": {"isloggedin": "True"}})
+    users_collections.update_one(filter, {"$set": {"isloggedin": True}})
 
     # Generate and return a JWT token
     token = generate_token(UserLogin.username)
@@ -79,7 +83,7 @@ async def logout(token: str = Header(...)):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing authorization token")
 
     # Updated user login status
-    users_collections.update_one({"username": username}, {"$set": {"isloggedin": "False"}})
+    users_collections.update_one({"username": username}, {"$set": {"isloggedin": False}})
 
     return {"Message": "Logout Successfully"}
 
@@ -116,7 +120,7 @@ async def change_personal_details(personal_update: UpdatePersonalDetails, token:
         "Email": "Unchanged",
         "First Name": "Unchanged",
         "Last Name": "Unchanged",
-        "Profile Picture": "Unchanged",
+        "Phone Number": "Unchanged",
     }
 
     if personal_update.newEmail is not None:
@@ -131,9 +135,10 @@ async def change_personal_details(personal_update: UpdatePersonalDetails, token:
         update_info["lastname"] = personal_update.newLastName
         outcome["Last Name"] = "Last Name has been updated"
 
-    if personal_update.newProfilePic is not None:
-        update_info["profilepicture"] = personal_update.newProfilePic
-        outcome["Profile Picture"] = "Profile Picture has been updated"
+    if personal_update.newPhoneNumber is not None:
+        update_info["phonenumber"] = personal_update.newPhoneNumber
+        outcome["Phone Number"] = "Phone number has been updated"
+
 
     update = {"$set": update_info}
     update_results = users_collections.update_many({"username": personal_update.username}, update)
@@ -141,9 +146,42 @@ async def change_personal_details(personal_update: UpdatePersonalDetails, token:
     if update_results.modified_count < 1:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Cannot update user information")
 
+    carspace_update = {"$set": update_info}
+    update_car_spaces = car_space_collections.update_many({"username": personal_update.username}, carspace_update)
+    outcome["Car Spaces Updated"] = update_car_spaces.modified_count
+
     return outcome
 
+@UserRouter.post("/user/upload_profile_picture", tags=["Users"])
+@check_token
+async def upload_profile_picture(token: str = Depends(verify_user_token), image: UploadFile = File(..., exclude=True)):
+    filter = {"username": token}
+    user = users_collections.find_one(filter)
 
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Username doesn't exist")
+
+    update_info = {}
+    if image:
+        image_file_types = {'.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff', '.tif', '.webp', '.svg', '.ico'}
+        contents = await image.read()
+        file_extension = os.path.splitext(image.filename)[1].lower()
+
+        if file_extension not in image_file_types:
+            raise HTTPException(status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, detail="Invalid image file type")
+        
+        update_info["imagename"] = image.filename
+        update_info["imagedata"] = contents 
+        update_info["imageextension"] = file_extension
+
+    update_results = users_collections.update_one(filter, {"$set" : update_info})
+
+    if update_results.modified_count < 1:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Cannot update profile picture")
+
+    return {
+        "Message": "User Profile Picture Updated",
+    }
 
 @UserRouter.get("/user/get_current_user", tags=["Users"])
 @check_token

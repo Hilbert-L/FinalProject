@@ -4,7 +4,7 @@ from typing import Optional, List
 
 class Search(BaseModel):
     limit: str = Field(default=None)
-    sort: str = Field(default="False")
+    sort: bool = Field(default=False)
 
 class SearchByPostcode(Search):
     postcode: str = Field(default=None)
@@ -13,7 +13,7 @@ class SearchByPostcode(Search):
             "sample" : {
                 "postcode" : "2000",
                 "limit" : "10",
-                "sort" : "False"
+                "sort" : False
             }
         }
     
@@ -24,7 +24,7 @@ class SearchBySuburb(Search):
             "sample" : {
                 "suburb" : "Kensington",
                 "limit" : "10",
-                "sort" : "False"
+                "sort" : False
             }
         }
     
@@ -36,7 +36,7 @@ class SearchByAddress(Search):
             "sample" : {
                 "Address" : "123 Fake Street",
                 "limit" : "10",
-                "sort" : "False"
+                "sort" : False
             }
         }
     

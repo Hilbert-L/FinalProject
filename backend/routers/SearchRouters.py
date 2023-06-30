@@ -9,7 +9,7 @@ SearchRouter = APIRouter()
 
 @SearchRouter.get("/search/postcode", tags=["Search Car Spaces"])
 async def search_by_postcode(postcode_search: SearchByPostcode):
-    filter = {"Postcode": postcode_search.postcode}
+    filter = {"postcode": postcode_search.postcode}
     car_space_cursor = car_space_collections.find(filter)
 
     car_spaces = []
@@ -32,7 +32,7 @@ async def search_by_postcode(postcode_search: SearchByPostcode):
 
 @SearchRouter.get("/search/suburb", tags=["Search Car Spaces"])
 async def search_by_suburb(suburb_search: SearchBySuburb):
-    filter = {"Suburb": suburb_search.suburb}
+    filter = {"suburb": suburb_search.suburb}
     car_space_cursor = car_space_collections.find(filter)
 
     car_spaces = []
@@ -55,7 +55,7 @@ async def search_by_suburb(suburb_search: SearchBySuburb):
 
 @SearchRouter.get("/search/address", tags=["Search Car Spaces"])
 async def search_by_address(address_search: SearchByAddress):
-    filter = {"Address": address_search.address}
+    filter = {"address": address_search.address}
     car_space_cursor = car_space_collections.find(filter)
 
     car_spaces = []

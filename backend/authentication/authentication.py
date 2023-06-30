@@ -30,7 +30,7 @@ async def verify_user_token(token: str = Header(...)):
         username = payload.get("username")
 
         user = users_collections.find_one({"username": username})
-        if user is not None and user["isloggedin"] == "True":
+        if user is not None and user["isloggedin"] and user["isactive"]:
             return username 
         return None 
     
@@ -43,11 +43,11 @@ async def verify_admin_token(token: str = Header(...)):
     try:
         payload = jwt.decode(
             token, JWT_SECRET, 
-            algorithm=JWT_ALGORITHM)
+            algorithms=[JWT_ALGORITHM])
         username = payload.get("username")
 
         user = admin_collections.find_one({"username": username})
-        if user is not None and user["isloggedin"] == "True":
+        if user is not None and user["isloggedin"] and user["isactive"]:
             return username 
         return None 
     

@@ -26,34 +26,33 @@ async def create_car_space(create_car_space: CreateCarSpaceSchema, token: str = 
     
     num_car_spaces = car_space_collections.count_documents({})
 
-    if create_car_space.Pictures:
+    if create_car_space.pictures:
         carspace_pictures = [b64encode(base64_str.encode("utf-8")) for base64_str in create_car_space.Pictures]
 
     else:
         carspace_pictures = None
 
     new_car_space = CarSpaceSchema(
-        UserName=stored_user["username"],
-        CarSpaceId=num_car_spaces,
-        DateCreated=datetime.now(),
-        Title=create_car_space.Title,
-        FirstName=stored_user["firstname"],
-        LastName=stored_user["lastname"],
-        Email=stored_user["email"],
-        PhoneNumber=stored_user["phonenumber"],
-        Address=create_car_space.Address,
-        Suburb=create_car_space.Suburb,
-        Postcode=create_car_space.Postcode,
-        Width=create_car_space.Width,
-        Breadth=create_car_space.Breadth,
-        SpaceType=create_car_space.SpaceType,
-        AccessKeyRequired=create_car_space.AccessKeyRequired,
-        VehicleSize=create_car_space.VehicleSize,
-        Currency=create_car_space.Currency,
-        Price=create_car_space.Price,
-        Frequency=create_car_space.Frequency,
-        Pictures=carspace_pictures,
-        Reviews=[]
+        username=stored_user["username"],
+        carspaceid=num_car_spaces,
+        title=create_car_space.title,
+        firstname=stored_user["firstname"],
+        lastname=stored_user["lastname"],
+        email=stored_user["email"],
+        phonenumber=stored_user["phonenumber"],
+        address=create_car_space.address,
+        suburb=create_car_space.suburb,
+        postcode=create_car_space.postcode,
+        width=create_car_space.width,
+        breadth=create_car_space.breadth,
+        spacetype=create_car_space.spacetype,
+        accesskeyrequired=create_car_space.accesskeyrequired,
+        vehiclesize=create_car_space.vehiclesize,
+        currency=create_car_space.currency,
+        price=create_car_space.price,
+        frequency=create_car_space.frequency,
+        pictures=carspace_pictures,
+        reviews=[]
     )
     
     new_car_space_dict = new_car_space.dict()
@@ -71,13 +70,15 @@ async def create_car_space_review(car_space_review: CarSpaceReview, token: str =
 @check_token
 async def update_car_space(update_car_space: UpdateCarSpace, token: str = Depends(verify_user_token)):
     filter = {
-        "UserName" : str(token),
-        "CarSpaceId" : str(update_car_space.CarSpaceId),
+        "username" : str(token),
+        "carspaceid" : str(update_car_space.carspaceid),
     }
 
     update_info = {}
     Outcome = {}
     for key, value in update_car_space.dict().items():
+        if key == "carspaceid":
+            continue
         if value is None:
             Outcome[key] = key + " is unchanged"
         else:
@@ -99,15 +100,15 @@ async def update_car_space(update_car_space: UpdateCarSpace, token: str = Depend
 @check_token
 async def add_car_space_image(data: AddImage, token: str = Depends(verify_user_token)):
     filter = {
-        "UserName": str(token),
-        "CarSpaceId": str(data.CarSpaceId),
+        "username": str(token),
+        "carspaceid": str(data.CarSpaceId),
     }
     file = data.CarSpaceImage
     contents = await file.read()
     # Convert file to base64 string
     base64_str = b64encode(contents).decode("utf-8")
 
-    update_results = car_space_collections.update_one(filter, {"$push": {"Pictures": base64_str}})
+    update_results = car_space_collections.update_one(filter, {"$push": {"pictures": base64_str}})
 
     if update_results.modified_count < 1:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Image could not be added")
