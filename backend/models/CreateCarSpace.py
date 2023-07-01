@@ -11,7 +11,7 @@ app=FastAPI()
 
 class CarSpaceReview(BaseModel):
     ownerusername: str = Field(default=None)
-    carspaceid: str = Field(default=None)
+    carspaceid: int = Field(default=None)
     reviewerusername: str = Field(default=None)
     overall: str = Field(default=None)
     location: str = Field(default=None)
@@ -22,8 +22,8 @@ class CarSpaceReview(BaseModel):
     class Config:
         schema = {
             "sample": {
-                "carspaceowner": "test",
-                "carspaceid": "1",
+                "ownerusername": "test",
+                "carspaceid": 10,
                 "reviewerusername": "test",
                 "overall": "10",
                 "location": "10",
@@ -48,7 +48,6 @@ class CreateCarSpaceSchema(BaseModel):
     currency: str = Field(default=None)
     price: str = Field(default=None)
     frequency: str = Field(default=None)
-    pictures: List[str] = Field(default=None)
     class Config:
         schema = {
             "sample": {
@@ -64,14 +63,13 @@ class CreateCarSpaceSchema(BaseModel):
                 "currency": "AUD",
                 "price": "100",
                 "frequency": "Daily",
-                "pictures":"test"
             }
         }
 
 
 class CarSpaceSchema(BaseModel):
     username: str = Field(default=None)
-    carspaceid: str = Field(default=None)
+    carspaceid: int = Field(default=None)
     title: str = Field(default=None)
     firstname: str = Field(default=None)
     lastname: str = Field(default=None)
@@ -88,13 +86,11 @@ class CarSpaceSchema(BaseModel):
     currency: str = Field(default=None)
     price: str = Field(default=None)
     frequency: str = Field(default=None)
-    pictures: List[str] = Field(default=None)
-    reviews: List[CarSpaceReview] = Field(default=None)
     class Config:
         schema = {
             "sample" : {
                 "username": "test",
-                "carspaceid": "10",
+                "carspaceid": 10,
                 "datecreated": "2000-01-01 15:54:53.845417",
                 "title": "Car space title",
                 "firstname": "test",
@@ -112,6 +108,5 @@ class CarSpaceSchema(BaseModel):
                 "currency": "AUD",
                 "price": "100",
                 "frequency": "Daily",
-                "pictures":[]
             }
         }

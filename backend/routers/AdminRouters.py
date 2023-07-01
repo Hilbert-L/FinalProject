@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, status, HTTPException, Header, UploadFile, File
-from mongodbconnect.mongodb_connect import admin_collections, users_collections
+from mongodbconnect.mongodb_connect import admin_collections, users_collections, car_space_image_collections, car_space_review_collections
 from models.UserAuthentication import UserRegistrationSchema, UserSchema, LoginSchema
 from models.UpdateUserInfo import UpdatePassword, UpdatePersonalDetails
 from wrappers.wrappers import check_token
@@ -47,7 +47,6 @@ async def register(userRegistrationSchema: UserRegistrationSchema):
     return {"Message": "Admin Registered Successfully", "token": token, "user": new_user}
 
 
-
 @AdminRouter.post("/admin/auth/login", tags=["Administrators"])
 async def login(AdminLogin: LoginSchema):
      
@@ -74,6 +73,7 @@ async def login(AdminLogin: LoginSchema):
     # Generate and return a JWT token
     token = generate_token(AdminLogin.username)
     return {"Message": "User Login Successfully", "token": token}
+
 
 @AdminRouter.post("/admin/auth/logout", tags=["Administrators"])
 async def logout(token: str = Header(...)):
@@ -187,6 +187,7 @@ async def change_personal_details(personal_update: UpdatePersonalDetails, token:
 
     return outcome
 
+
 @AdminRouter.put("/admin/deactivate_user/{username}", tags=["Administrators"])
 @check_token
 async def deactivate_user(username: str, token: str = Depends(verify_admin_token)):
@@ -213,3 +214,79 @@ async def activate_user(username: str, token: str = Depends(verify_admin_token))
     update = {"$set": {"isactive": True}}
     users_collections.update_one(filter, update)
     return {"Message", f"User {username} has been activated"}
+
+
+@AdminRouter.delete("/admin/carspacereview/consumer/{username}", tags=["Administrators"])
+@check_token
+async def delete_car_space_reviews_for_consumer(username: str, token: str = Depends(verify_admin_token)):
+    result = car_space_review_collections.delete_many({"reviewerusername": username})
+
+    if result.deleted_count < 1:
+        return {"Message": f"Could not find username: {username}"}
+    else:
+        return {"Message": f"Reviews successfully deleted for user: {username}"}
+    
+
+@AdminRouter.delete("/admin/carspacereview/consumer/{username}/{carspaceid}", tags=["Administrators"])
+@check_token
+async def delete_car_space_reviews_for_consumer_carspace(username: str, carspaceid: int, token: str = Depends(verify_admin_token)):
+    result = car_space_review_collections.delete_many({"reviewerusername": username, "carspaceid": carspaceid})
+
+    if result.deleted_count < 1:
+        return {"Message": f"Could not find username: {username} review for carspace: {carspaceid}"}
+    else:
+        return {"Message": f"Reviews successfully deleted for user: {username} for carspace: {carspaceid}"}
+    
+
+@AdminRouter.delete("/admin/carspacereview/producer/{username}", tags=["Administrators"])
+@check_token
+async def delete_car_space_reviews_for_producer(username: str, token: str = Depends(verify_admin_token)):
+    result = car_space_review_collections.delete_many({"ownerusername": username})
+
+    if result.deleted_count < 1:
+        return {"Message": f"Could not find username: {username}"}
+    else:
+        return {"Message": f"Reviews successfully deleted for user: {username}"}
+
+
+@AdminRouter.delete("/admin/carspacereview/producer/{username}/{carspaceid}", tags=["Administrators"])
+@check_token
+async def delete_car_space_reviews_for_producer_carspace(username: str, carspaceid: int, token: str = Depends(verify_admin_token)):
+    result = car_space_review_collections.delete_many({"ownerusername": username, "carspaceid": carspaceid})
+
+    if result.deleted_count < 1:
+        return {"Message": f"Could not find username: {username} review for carspace: {carspaceid}"}
+    else:
+        return {"Message": f"Reviews successfully deleted for user: {username} for carspace: {carspaceid}"}
+    
+
+@AdminRouter.delete("/admin/carspaceimage/{username}", tags=["Adminstrators"])
+@check_token
+async def delete_car_space_image_for_producer(username: str, token: str = Depends(verify_admin_token)):
+    result = car_space_image_collections.delete_many({"username": username})
+
+    if result.deleted_count > 0:
+        return {"message": "Car Space Image(s) deleted successfully"}
+    else:
+        return {"message": "Car Space Image not found"}
+
+@AdminRouter.delete("/admin/carspaceimage/{username}/{carspaceid}", tags=["Adminstrators"])
+@check_token
+async def delete_car_space_image_for_producer_carspace(username: str, carspaceid: int, token: str = Depends(verify_admin_token)):
+    result = car_space_image_collections.delete_many({"username": username, "carspaceid": carspaceid})
+
+    if result.deleted_count > 0:
+        return {"message": "Car Space Image(s) deleted successfully"}
+    else:
+        return {"message": "Car Space Image not found"}
+
+
+@AdminRouter.delete("/admin/carspaceimage/{username}/{carspaceid}/{image}", tags=["Adminstrators"])
+@check_token
+async def delete_car_space_image_for_producer_carspace(username: str, carspaceid: int, image: str, token: str = Depends(verify_admin_token)):
+    result = car_space_image_collections.delete_many({"username": username, "carspaceid": carspaceid, "imagename": image})
+
+    if result.deleted_count > 0:
+        return {"message": "Car Space Image(s) deleted successfully"}
+    else:
+        return {"message": "Car Space Image not found"}
