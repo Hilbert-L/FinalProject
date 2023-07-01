@@ -281,7 +281,7 @@ async def delete_car_space_image_for_producer_carspace(username: str, carspaceid
         return {"message": "Car Space Image not found"}
 
 
-@AdminRouter.delete("/admin/carspaceimage/{username}/{carspaceid}/{image}", tags=["Adminstrators"])
+@AdminRouter.delete("/admin/carspaceimage/{username}/{carspaceid}/{image}", tags=["Adminstrators"], description="Delete car space a producerfor a particular image")
 @check_token
 async def delete_car_space_image_for_producer_carspace(username: str, carspaceid: int, image: str, token: str = Depends(verify_admin_token)):
     result = car_space_image_collections.delete_many({"username": username, "carspaceid": carspaceid, "imagename": image})
