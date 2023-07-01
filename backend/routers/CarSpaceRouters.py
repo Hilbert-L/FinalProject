@@ -1,17 +1,18 @@
 from mongodbconnect.mongodb_connect import car_reservations_db, users_collections, admin_collections, car_space_review_collections, car_space_collections
-from fastapi import APIRouter, Depends, status, HTTPException
+from fastapi import APIRouter, Depends, status, HTTPException, File, UploadFile
 from models.UserAuthentication import UserSchema
-from mongodbconnect.mongodb_connect import car_reservations_db, users_collections, admin_collections, car_space_review_collections, car_space_collections
+from mongodbconnect.mongodb_connect import users_collections, car_space_review_collections, car_space_collections, car_space_image_collections
 from fastapi.security import HTTPBearer, OAuth2PasswordBearer
 from typing import Optional, List
 from models.CreateCarSpace import CarSpaceReview, CarSpaceSchema, CreateCarSpaceSchema
-from models.UpdateCarSpace import UpdateCarSpace, AddImage
+from models.UpdateCarSpace import UpdateCarSpace
 from wrappers.wrappers import check_token
 from passlib.context import CryptContext
 from datetime import datetime
 from base64 import b64encode
 from authentication.authentication import generate_token, verify_user_token
 import json 
+import os 
 
 CarSpaceRouter = APIRouter()
 
@@ -25,12 +26,6 @@ async def create_car_space(create_car_space: CreateCarSpaceSchema, token: str = 
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invalid user")
     
     num_car_spaces = car_space_collections.count_documents({})
-
-    if create_car_space.pictures:
-        carspace_pictures = [b64encode(base64_str.encode("utf-8")) for base64_str in create_car_space.Pictures]
-
-    else:
-        carspace_pictures = None
 
     new_car_space = CarSpaceSchema(
         username=stored_user["username"],
@@ -51,19 +46,11 @@ async def create_car_space(create_car_space: CreateCarSpaceSchema, token: str = 
         currency=create_car_space.currency,
         price=create_car_space.price,
         frequency=create_car_space.frequency,
-        pictures=carspace_pictures,
-        reviews=[]
     )
-    
+
     new_car_space_dict = new_car_space.dict()
     car_space_collections.insert_one(dict(new_car_space_dict))
     return {"Message": "Car Space Added Successfully", "Car Space": new_car_space_dict}
-
-@CarSpaceRouter.post("/carspace/create_review", tags=["Car Spaces"])
-@check_token
-async def create_car_space_review(car_space_review: CarSpaceReview, token: str = Depends(verify_user_token)):
-    car_space_review_collections.insert_one(car_space_review.dict())
-    return {"Message": "Car Space Review Added Successfully"}
 
 
 @CarSpaceRouter.put("/carspace/updatecarspace", tags=["Car Spaces"])
@@ -71,7 +58,7 @@ async def create_car_space_review(car_space_review: CarSpaceReview, token: str =
 async def update_car_space(update_car_space: UpdateCarSpace, token: str = Depends(verify_user_token)):
     filter = {
         "username" : str(token),
-        "carspaceid" : str(update_car_space.carspaceid),
+        "carspaceid" : update_car_space.carspaceid,
     }
 
     update_info = {}
@@ -96,21 +83,101 @@ async def update_car_space(update_car_space: UpdateCarSpace, token: str = Depend
 
     return Outcome
 
-@CarSpaceRouter.post("/carspace/add_image", tags=["Car Spaces"])
+
+@CarSpaceRouter.post("/carspace/create_review", tags=["Car Spaces"])
 @check_token
-async def add_car_space_image(data: AddImage, token: str = Depends(verify_user_token)):
-    filter = {
-        "username": str(token),
-        "carspaceid": str(data.CarSpaceId),
-    }
-    file = data.CarSpaceImage
-    contents = await file.read()
-    # Convert file to base64 string
-    base64_str = b64encode(contents).decode("utf-8")
+async def create_car_space_review(car_space_review: CarSpaceReview, token: str = Depends(verify_user_token)):
+    car_space_review_collections.insert_one(car_space_review.dict())
+    return {"Message": "Car Space Review Added Successfully"}
 
-    update_results = car_space_collections.update_one(filter, {"$push": {"pictures": base64_str}})
 
-    if update_results.modified_count < 1:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Image could not be added")
+@CarSpaceRouter.get("/carspace/reviews/get_all_reviews_for_consumer/{username}")
+@check_token
+async def get_car_space_reviews_for_consumer(username: str, token: str = Depends(verify_user_token)):
+    review_cursor = car_space_review_collections.find({"reviewerusername": username})
+    reviews = []
+    for document in review_cursor:
+        document_str = json.dumps(document, default=str)
+        document_dict = json.loads(document_str)
+        reviews.append(document_dict)
+    return {f"Reviews made by user: {username}": reviews}
 
-    return {"Car Space Image Added Successfully": file.filename}
+@CarSpaceRouter.get("/carspace/reviews/get_all_reviews_for_producer/{username}")
+@check_token
+async def get_car_space_reviews_for_producer(username: str, token: str = Depends(verify_user_token)):
+    review_cursor = car_space_review_collections.find({"ownerusername": username})
+    reviews = []
+    for document in review_cursor:
+        document_str = json.dumps(document, default=str)
+        document_dict = json.loads(document_str)
+        reviews.append(document_dict)
+    return {f"Reviews received by user: {username}": reviews}
+
+@CarSpaceRouter.get("/carspace/reviews/get_all_reviews_for_producer/{username}/{carspaceid}")
+@check_token
+async def get_car_space_reviews_for_producer(username: str, carspaceid: int, token: str = Depends(verify_user_token)):
+    review_cursor = car_space_review_collections.find({"ownerusername": username, "carspaceid": carspaceid})
+    reviews = []
+    for document in review_cursor:
+        document_str = json.dumps(document, default=str)
+        document_dict = json.loads(document_str)
+        reviews.append(document_dict)
+    return {f"Reviews received by user: {username} and carspace: {carspaceid}": reviews}
+
+@CarSpaceRouter.post("/carspace/upload_image/{username}/{carspaceid}", tags=["Car Spaces"])
+@check_token
+async def upload_car_space_image(username: str, carspaceid: int, image: UploadFile = File(..., exclude=True), token: str = Depends(verify_user_token)):
+    carspace_image_info = {}
+    if image:
+        image_file_types = {'.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff', '.tif', '.webp', '.svg', '.ico'}
+        contents = await image.read()
+        file_extension = os.path.splitext(image.filename)[1].lower()
+
+        if file_extension not in image_file_types:
+            raise HTTPException(status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, detail="Invalid image file type")
+        
+        carspace_image_info["imagename"] = image.filename
+        carspace_image_info["imagedata"] = contents 
+        carspace_image_info["imageextension"] = file_extension
+
+    else: 
+        return {"Message": "No car space image uploaded"}
+    
+    carspace_image_info["carspaceid"] = carspaceid 
+    carspace_image_info["username"] = username
+    car_space_image_collections.insert_one(carspace_image_info)
+
+    return {"Message": f"Car Space Image uploaded for user: {username} and carspaceid: {carspaceid}"}
+
+@CarSpaceRouter.get("/carspace/get_all_images/{username}/{carspaceid}", tags=["Car Spaces"])
+@check_token
+async def get_all_car_space_images(username: str, carspaceid: int, token: str = Depends(verify_user_token)):
+    carspace_images_cursor = car_space_image_collections.find({"carspaceid": carspaceid, "username": username})
+    images = []
+    for document in carspace_images_cursor:
+        document_str = json.dumps(document, default=str)
+        document_dict = json.loads(document_str)
+        images.append(document_dict)
+    return {"carspace_images": images}
+
+@CarSpaceRouter.delete("/carspace/delete_image/{username}/{carspaceid}/{imagename}", tags=["Car Spaces"])
+@check_token
+async def delete_single_car_space_image_for_user_carspace(username: str, carspaceid: int, imagename: str, token: str = Depends(verify_user_token)):
+    result = car_space_image_collections.delete_one({"imagename": imagename, "carspaceid": carspaceid, "username": username})
+
+    if result.deleted_count == 1:
+        return {"message": "Car Space Image deleted successfully"}
+    else:
+        return {"message": "Car Space Image not found"}
+    
+
+@CarSpaceRouter.delete("/carspace/delete_all_images/{username}/{carspaceid}", tags=["Car Spaces"])
+@check_token
+async def delete_all_car_space_images_for_carspace(username: str, carspaceid: int, token: str = Depends(verify_user_token)):
+    result = car_space_image_collections.delete_many({"carspaceid": carspaceid, "username": username})
+
+    if result.deleted_count > 0:
+        return {"message": "Car Space Images deleted successfully"}
+    else:
+        return {"message": "Car Space Image not found"}
+    

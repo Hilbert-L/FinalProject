@@ -3,7 +3,7 @@ from pydantic import BaseModel, Field
 
 
 class UpdateCarSpace(BaseModel):
-    carspaceid: str = Field(default=None)# CarSpaceID may not be modified by providers
+    carspaceid: int = Field(default=None)# CarSpaceID may not be modified by providers
     address: Optional[str] = Field(default=None) 
     suburb: Optional[str] = Field(default=None) 
     postcode: Optional[str] = Field(default=None) 
@@ -19,7 +19,7 @@ class UpdateCarSpace(BaseModel):
     class Config:
         schema = {
             "sample" : {
-                "carspaceid": "11",
+                "carspaceid": 11,
                 "address": "test2",
                 "suburb": "test2",
                 "postcode": "test2",
@@ -34,16 +34,3 @@ class UpdateCarSpace(BaseModel):
             }
         }
 
-
-class AddImage(BaseModel):
-    UserName: str = Field(default=None)
-    CarSpaceId: str = Field(default=None)
-    CarSpaceImage: str = Field(default=None)
-    class Config:
-        schema = {
-            "sample" : {
-                "username": "test",
-                "carspaceid": "10",
-                "carspaceimage": "test"
-            }
-        }

@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, status, HTTPException, Header, UploadFile, File
-from mongodbconnect.mongodb_connect import admin_collections, users_collections
+from mongodbconnect.mongodb_connect import admin_collections, users_collections, car_space_image_collections, car_space_review_collections
 from models.UserAuthentication import UserRegistrationSchema, UserSchema, LoginSchema
 from models.UpdateUserInfo import UpdatePassword, UpdatePersonalDetails
 from wrappers.wrappers import check_token
@@ -47,7 +47,6 @@ async def register(userRegistrationSchema: UserRegistrationSchema):
     return {"Message": "Admin Registered Successfully", "token": token, "user": new_user}
 
 
-
 @AdminRouter.post("/admin/auth/login", tags=["Administrators"])
 async def login(AdminLogin: LoginSchema):
      
@@ -75,6 +74,7 @@ async def login(AdminLogin: LoginSchema):
     token = generate_token(AdminLogin.username)
     return {"Message": "User Login Successfully", "token": token}
 
+
 @AdminRouter.post("/admin/auth/logout", tags=["Administrators"])
 async def logout(token: str = Header(...)):
     username = await verify_admin_token(token)
@@ -94,30 +94,8 @@ async def logout(token: str = Header(...)):
 
     return {"Message": "Logout Successfully"}
 
-
-@AdminRouter.put("/admin/change_password", tags=["Administrators"])
-@check_token
-async def change_password(password_update: UpdatePassword, token: str = Depends(verify_admin_token)):
-    filter = {"username": password_update.username}
-    stored_user = admin_collections.find_one(filter)
-
-    if stored_user is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invalid username or password")
-
-    if not pwd_context.verify(password_update.currentPassword, stored_user["password"]):
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invalid username or password")
-    
-    new_hashed_password = pwd_context.hash(password_update.newPassword)
-    update = {"$set": {"password": new_hashed_password}}
-    update_results = admin_collections.update_one(filter, update)
-    
-    if update_results.modified_count != 1:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Cannot update password")
-
-    return {"Message": "Password Changed Successfully"}
-
      
-@AdminRouter.post("/admin.upload_profile_picture", tags=["Administrators"])
+@AdminRouter.post("/admin/upload_profile_picture", tags=["Administrators"])
 @check_token
 async def upload_profile_picture(token: str = Depends(verify_admin_token), image: UploadFile = File(..., exclude=True)):
     filter = {"username": token}
@@ -147,6 +125,28 @@ async def upload_profile_picture(token: str = Depends(verify_admin_token), image
     return {
         "Message": "Admin Profile Picture Updated",
     }
+
+
+@AdminRouter.put("/admin/change_password", tags=["Administrators"])
+@check_token
+async def change_password(password_update: UpdatePassword, token: str = Depends(verify_admin_token)):
+    filter = {"username": password_update.username}
+    stored_user = admin_collections.find_one(filter)
+
+    if stored_user is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invalid username or password")
+
+    if not pwd_context.verify(password_update.currentPassword, stored_user["password"]):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invalid username or password")
+    
+    new_hashed_password = pwd_context.hash(password_update.newPassword)
+    update = {"$set": {"password": new_hashed_password}}
+    update_results = admin_collections.update_one(filter, update)
+    
+    if update_results.modified_count != 1:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Cannot update password")
+
+    return {"Message": "Password Changed Successfully"}
 
 
 @AdminRouter.put("/admin/update_personal_details", tags=["Administrators"])
@@ -187,6 +187,7 @@ async def change_personal_details(personal_update: UpdatePersonalDetails, token:
 
     return outcome
 
+
 @AdminRouter.put("/admin/deactivate_user/{username}", tags=["Administrators"])
 @check_token
 async def deactivate_user(username: str, token: str = Depends(verify_admin_token)):
@@ -213,3 +214,79 @@ async def activate_user(username: str, token: str = Depends(verify_admin_token))
     update = {"$set": {"isactive": True}}
     users_collections.update_one(filter, update)
     return {"Message", f"User {username} has been activated"}
+
+
+@AdminRouter.delete("/admin/carspacereview/consumer/{username}", tags=["Administrators"])
+@check_token
+async def delete_car_space_reviews_for_consumer(username: str, token: str = Depends(verify_admin_token)):
+    result = car_space_review_collections.delete_many({"reviewerusername": username})
+
+    if result.deleted_count < 1:
+        return {"Message": f"Could not find username: {username}"}
+    else:
+        return {"Message": f"Reviews successfully deleted for user: {username}"}
+    
+
+@AdminRouter.delete("/admin/carspacereview/consumer/{username}/{carspaceid}", tags=["Administrators"])
+@check_token
+async def delete_car_space_reviews_for_consumer_carspace(username: str, carspaceid: int, token: str = Depends(verify_admin_token)):
+    result = car_space_review_collections.delete_many({"reviewerusername": username, "carspaceid": carspaceid})
+
+    if result.deleted_count < 1:
+        return {"Message": f"Could not find username: {username} review for carspace: {carspaceid}"}
+    else:
+        return {"Message": f"Reviews successfully deleted for user: {username} for carspace: {carspaceid}"}
+    
+
+@AdminRouter.delete("/admin/carspacereview/producer/{username}", tags=["Administrators"])
+@check_token
+async def delete_car_space_reviews_for_producer(username: str, token: str = Depends(verify_admin_token)):
+    result = car_space_review_collections.delete_many({"ownerusername": username})
+
+    if result.deleted_count < 1:
+        return {"Message": f"Could not find username: {username}"}
+    else:
+        return {"Message": f"Reviews successfully deleted for user: {username}"}
+
+
+@AdminRouter.delete("/admin/carspacereview/producer/{username}/{carspaceid}", tags=["Administrators"])
+@check_token
+async def delete_car_space_reviews_for_producer_carspace(username: str, carspaceid: int, token: str = Depends(verify_admin_token)):
+    result = car_space_review_collections.delete_many({"ownerusername": username, "carspaceid": carspaceid})
+
+    if result.deleted_count < 1:
+        return {"Message": f"Could not find username: {username} review for carspace: {carspaceid}"}
+    else:
+        return {"Message": f"Reviews successfully deleted for user: {username} for carspace: {carspaceid}"}
+    
+
+@AdminRouter.delete("/admin/carspaceimage/{username}", tags=["Administrators"], description="Delete car space a producer for a particular producer")
+@check_token
+async def delete_car_space_image_for_producer(username: str, token: str = Depends(verify_admin_token)):
+    result = car_space_image_collections.delete_many({"username": username})
+
+    if result.deleted_count > 0:
+        return {"message": "Car Space Image(s) deleted successfully"}
+    else:
+        return {"message": "Car Space Image not found"}
+
+@AdminRouter.delete("/admin/carspaceimage/{username}/{carspaceid}", tags=["Administrators"], description="Delete car space a producer for a carspace owned by a particular producer")
+@check_token
+async def delete_car_space_image_for_producer_carspace(username: str, carspaceid: int, token: str = Depends(verify_admin_token)):
+    result = car_space_image_collections.delete_many({"username": username, "carspaceid": carspaceid})
+
+    if result.deleted_count > 0:
+        return {"message": "Car Space Image(s) deleted successfully"}
+    else:
+        return {"message": "Car Space Image not found"}
+
+
+@AdminRouter.delete("/admin/carspaceimage/{username}/{carspaceid}/{image}", tags=["Administrators"], description="Delete car space a producer for a particular image in a carspace owned by a particular producer")
+@check_token
+async def delete_car_space_image_for_producer_carspace(username: str, carspaceid: int, image: str, token: str = Depends(verify_admin_token)):
+    result = car_space_image_collections.delete_many({"username": username, "carspaceid": carspaceid, "imagename": image})
+
+    if result.deleted_count > 0:
+        return {"message": "Car Space Image(s) deleted successfully"}
+    else:
+        return {"message": "Car Space Image not found"}
