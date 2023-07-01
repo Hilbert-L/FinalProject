@@ -95,7 +95,7 @@ async def logout(token: str = Header(...)):
     return {"Message": "Logout Successfully"}
 
      
-@AdminRouter.post("/admin.upload_profile_picture", tags=["Administrators"])
+@AdminRouter.post("/admin/upload_profile_picture", tags=["Administrators"])
 @check_token
 async def upload_profile_picture(token: str = Depends(verify_admin_token), image: UploadFile = File(..., exclude=True)):
     filter = {"username": token}
