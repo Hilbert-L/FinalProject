@@ -127,38 +127,46 @@ async def get_car_space_reviews_for_producer(username: str, carspaceid: int, tok
 
 @CarSpaceRouter.post("/carspace/upload_image/{username}/{carspaceid}", tags=["Car Spaces"])
 @check_token
-async def upload_car_space_image(username: str, carspaceid: int, image: Union[str, UploadFile] = Depends(), token: str = Depends(verify_user_token)):
+async def upload_car_space_image(username: str, carspaceid: int, image: Optional[UploadFile] = File(None),
+                                 base64_image: str = None, token: str = Depends(verify_user_token)):
+    if not image and not base64_image:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No image provided")
+
     carspace_image_info = {}
+
     if image:
+        image_file_types = {'.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff', '.tif', '.webp', '.svg', '.ico'}
+        contents = await image.read()
+        file_extension = os.path.splitext(image.filename)[1].lower()
+
+        if file_extension not in image_file_types:
+            raise HTTPException(status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, detail="Invalid image file type")
+
+        carspace_image_info["carSpaceImage"] = image.filename
+        carspace_image_info["carSpaceImagedata"] = contents
+        carspace_image_info["carSpaceImageextension"] = file_extension
+
+    elif base64_image:
         try:
-            # try to decode as base64 image
-            carspace_image_info["imagename"] = image.filename
-            carspace_image_info["imagedata"] = base64.b64decode(image)
-        except base64.binascii.Error:
-            # If not a base64 image
-            try:
-                image_file_types = {'.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff', '.tif', '.webp', '.svg', '.ico'}
-                contents = await image.read()
-                file_extension = os.path.splitext(image.filename)[1].lower()
+            carspace_image_info["carSpaceImage"] = image.filename
+            carspace_image_info["carSpaceImagedata"] = base64.b64decode(base64_image)
+        except Exception:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid base64 image")
 
-                if file_extension not in image_file_types:
-                    raise HTTPException(status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-                                        detail="Invalid image file type")
-
-                carspace_image_info["imagename"] = image.filename
-                carspace_image_info["imagedata"] = contents
-                carspace_image_info["imageextension"] = file_extension
-            except Exception:
-                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid image data")
-
-    else: 
-        return {"Message": "No car space image uploaded"}
-    
-    carspace_image_info["carspaceid"] = carspaceid 
+    carspace_image_info["carspaceid"] = carspaceid
     carspace_image_info["username"] = username
     car_space_image_collections.insert_one(carspace_image_info)
-
+    if users_collections.find_one({"username": username}):
+        carSpace = users_collections.find_one_and_update(
+        {"username": username},
+        {"$set": {"carSpaceImage":carspace_image_info["carSpaceImage"],"carSpaceImagedata": carspace_image_info["carSpaceImagedata"]}}
+    )
+        if carSpace is None:
+            raise HTTPException(status_code=400, detail="Unable to update image data")
+    else:
+        raise HTTPException(status_code=404, detail=f"No user found with username: {username}")
     return {"Message": f"Car Space Image uploaded for user: {username} and carspaceid: {carspaceid}"}
+
 
 @CarSpaceRouter.get("/carspace/get_all_images/{username}/{carspaceid}", tags=["Car Spaces"])
 @check_token

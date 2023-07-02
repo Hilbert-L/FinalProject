@@ -1,3 +1,5 @@
+import base64
+
 from fastapi import APIRouter, Depends, status, HTTPException, Header, UploadFile, File
 from mongodbconnect.mongodb_connect import users_collections, car_space_collections
 from models.UserAuthentication import UserRegistrationSchema, UserSchema, LoginSchema
@@ -154,12 +156,16 @@ async def change_personal_details(personal_update: UpdatePersonalDetails, token:
 
 @UserRouter.post("/user/upload_profile_picture", tags=["Users"])
 @check_token
-async def upload_profile_picture(token: str = Depends(verify_user_token), image: UploadFile = File(..., exclude=True)):
+async def upload_profile_picture(token: str = Depends(verify_user_token), image: Optional[UploadFile] = File(None),
+                                 base64_image: str = None):
     filter = {"username": token}
     user = users_collections.find_one(filter)
 
     if user is None:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Username doesn't exist")
+
+    if not image and not base64_image:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No image provided")
 
     update_info = {}
     if image:
@@ -170,9 +176,15 @@ async def upload_profile_picture(token: str = Depends(verify_user_token), image:
         if file_extension not in image_file_types:
             raise HTTPException(status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, detail="Invalid image file type")
         
-        update_info["imagename"] = image.filename
-        update_info["imagedata"] = contents 
-        update_info["imageextension"] = file_extension
+        update_info["profileImage"] = image.filename
+        update_info["profileImagedata"] = contents
+        update_info["profileImageextension"] = file_extension
+    elif base64_image:
+        try:
+            update_info["profileImage"] = image.filename
+            update_info["profileImagedata"] = base64.b64decode(base64_image)
+        except Exception:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid base64 image")
 
     update_results = users_collections.update_one(filter, {"$set" : update_info})
 
