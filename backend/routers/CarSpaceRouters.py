@@ -3,13 +3,14 @@ from fastapi import APIRouter, Depends, status, HTTPException, File, UploadFile
 from models.UserAuthentication import UserSchema
 from mongodbconnect.mongodb_connect import users_collections, car_space_review_collections, car_space_collections, car_space_image_collections
 from fastapi.security import HTTPBearer, OAuth2PasswordBearer
-from typing import Optional, List
+from typing import Optional, List, Union
 from models.CreateCarSpace import CarSpaceReview, CarSpaceSchema, CreateCarSpaceSchema
 from models.UpdateCarSpace import UpdateCarSpace
 from wrappers.wrappers import check_token
 from passlib.context import CryptContext
 from datetime import datetime
 from base64 import b64encode
+import base64
 from authentication.authentication import generate_token, verify_user_token
 import json 
 import os 
@@ -126,19 +127,29 @@ async def get_car_space_reviews_for_producer(username: str, carspaceid: int, tok
 
 @CarSpaceRouter.post("/carspace/upload_image/{username}/{carspaceid}", tags=["Car Spaces"])
 @check_token
-async def upload_car_space_image(username: str, carspaceid: int, image: UploadFile = File(..., exclude=True), token: str = Depends(verify_user_token)):
+async def upload_car_space_image(username: str, carspaceid: int, image: Union[str, UploadFile] = Depends(), token: str = Depends(verify_user_token)):
     carspace_image_info = {}
     if image:
-        image_file_types = {'.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff', '.tif', '.webp', '.svg', '.ico'}
-        contents = await image.read()
-        file_extension = os.path.splitext(image.filename)[1].lower()
+        try:
+            # try to decode as base64 image
+            carspace_image_info["imagename"] = image.filename
+            carspace_image_info["imagedata"] = base64.b64decode(image)
+        except base64.binascii.Error:
+            # If not a base64 image
+            try:
+                image_file_types = {'.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff', '.tif', '.webp', '.svg', '.ico'}
+                contents = await image.read()
+                file_extension = os.path.splitext(image.filename)[1].lower()
 
-        if file_extension not in image_file_types:
-            raise HTTPException(status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, detail="Invalid image file type")
-        
-        carspace_image_info["imagename"] = image.filename
-        carspace_image_info["imagedata"] = contents 
-        carspace_image_info["imageextension"] = file_extension
+                if file_extension not in image_file_types:
+                    raise HTTPException(status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+                                        detail="Invalid image file type")
+
+                carspace_image_info["imagename"] = image.filename
+                carspace_image_info["imagedata"] = contents
+                carspace_image_info["imageextension"] = file_extension
+            except Exception:
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid image data")
 
     else: 
         return {"Message": "No car space image uploaded"}
