@@ -1,5 +1,7 @@
 from pymongo import MongoClient
 import os 
+from dotenv import load_dotenv
+load_dotenv()# Load .env file from directory
 
 MongoDBUser = os.getenv("MONGODB_USER")
 MongoDBPassword = "$Gdaymate123"

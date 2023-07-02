@@ -14,7 +14,7 @@ from dotenv import load_dotenv
 # Add the project root directory to the Python path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-load_dotenv()
+load_dotenv()# Load .env file from directory
 app = FastAPI(title=os.getenv("PROJECT_NAME"))
 
 origins = [
