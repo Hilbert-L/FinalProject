@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, status, HTTPException, File, UploadFile
 from models.UserAuthentication import UserSchema
 from mongodbconnect.mongodb_connect import users_collections, car_space_review_collections, car_space_collections, car_space_image_collections
 from fastapi.security import HTTPBearer, OAuth2PasswordBearer
-from typing import Optional, List, Union
+from typing import Optional, List
 from models.CreateCarSpace import CarSpaceReview, CarSpaceSchema, CreateCarSpaceSchema
 from models.UpdateCarSpace import UpdateCarSpace
 from wrappers.wrappers import check_token
@@ -127,14 +127,13 @@ async def get_car_space_reviews_for_producer(username: str, carspaceid: int, tok
 
 @CarSpaceRouter.post("/carspace/upload_image/{username}/{carspaceid}", tags=["Car Spaces"])
 @check_token
-async def upload_car_space_image(username: str, carspaceid: int, image: Optional[UploadFile] = File(None),
+async def upload_car_space_image(username: str, carspaceid: int, image: UploadFile = File(None),
                                  base64_image: str = None, token: str = Depends(verify_user_token)):
     if not image and not base64_image:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No image provided")
-
-    carspace_image_info = {}
-
+    carspace_image_info_list = []
     if image:
+        carspace_image_info = {}
         image_file_types = {'.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff', '.tif', '.webp', '.svg', '.ico'}
         contents = await image.read()
         file_extension = os.path.splitext(image.filename)[1].lower()
@@ -142,29 +141,44 @@ async def upload_car_space_image(username: str, carspaceid: int, image: Optional
         if file_extension not in image_file_types:
             raise HTTPException(status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, detail="Invalid image file type")
 
-        carspace_image_info["carSpaceImage"] = image.filename
+        carspace_image_info["carSpaceImage"] = f"{username}_{image.filename}"
+        carspace_image_info["carSpaceID"] = carspaceid
         carspace_image_info["carSpaceImagedata"] = contents
         carspace_image_info["carSpaceImageextension"] = file_extension
+        carspace_image_info_list.append(carspace_image_info)
 
-    elif base64_image:
+    if base64_image:
         try:
-            carspace_image_info["carSpaceImage"] = image.filename
+            carspace_image_info = {}
+            carspace_image_info["carSpaceImage"] = f"{username}_{image.filename}"
+            carspace_image_info["carSpaceID"] = carspaceid
             carspace_image_info["carSpaceImagedata"] = base64.b64decode(base64_image)
+            carspace_image_info_list.append(carspace_image_info)
         except Exception:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid base64 image")
 
-    carspace_image_info["carspaceid"] = carspaceid
-    carspace_image_info["username"] = username
-    car_space_image_collections.insert_one(carspace_image_info)
-    if users_collections.find_one({"username": username}):
-        carSpace = users_collections.find_one_and_update(
-        {"username": username},
-        {"$set": {"carSpaceImage":carspace_image_info["carSpaceImage"],"carSpaceImagedata": carspace_image_info["carSpaceImagedata"]}}
-    )
-        if carSpace is None:
-            raise HTTPException(status_code=400, detail="Unable to update image data")
+    existing_document = car_space_image_collections.find_one({"username": username, "carspaceid": carspaceid})
+
+    if existing_document:
+        # If a document for this user and carspaceid already exists, append new images to the existing list
+        car_space_image_collections.update_one(
+            {"username": username},
+            {"$push": {"images": {"$each": carspace_image_info_list}}}
+        )
     else:
-        raise HTTPException(status_code=404, detail=f"No user found with username: {username}")
+        # If no such document exists, create a new one
+        car_space_image_collections.insert_one({
+            "username": username,
+            "carspaceid": carspaceid,
+            "images": carspace_image_info_list
+        })
+
+    # Update the images in the users_collections
+    users_collections.update_one(
+        {"username": username},
+        {"$push": {"carSpaceImages": {"$each": carspace_image_info_list}}}
+    )
+
     return {"Message": f"Car Space Image uploaded for user: {username} and carspaceid: {carspaceid}"}
 
 
