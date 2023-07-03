@@ -1,7 +1,7 @@
 import base64
 
 from fastapi import APIRouter, Depends, status, HTTPException, Header, UploadFile, File
-from mongodbconnect.mongodb_connect import users_collections, car_space_collections
+from mongodbconnect.mongodb_connect import users_collections, car_space_collections, bank_information_collections, transaction_information_collections
 from models.UserAuthentication import UserRegistrationSchema, UserSchema, LoginSchema
 from models.UpdateUserInfo import UpdatePassword, UpdatePersonalDetails
 from wrappers.wrappers import check_token
@@ -204,7 +204,31 @@ async def get_current_user(token: str = Depends(verify_user_token)):
     if user is None:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Username doesn't exist")
 
+    bank_accounts_cursor = bank_information_collections.find({"username": token})
+    bank_accounts = []
+    for document in bank_accounts_cursor:
+        document_str = json.dumps(document, default=str)
+        document_dict = json.loads(document_str)
+        bank_accounts.append(document_dict)
+    
+    payments_received_cursor = transaction_information_collections.find({"payerusername": token})
+    payments = []
+    for document in payments_received_cursor:
+        document_str = json.dumps(document, default=str)
+        document_dict = json.loads(document_str)
+        payments.append(document_dict)
+    
+    receiver_received_cursor = transaction_information_collections.find({"receiverusername": token})
+    money_received = []
+    for document in receiver_received_cursor:
+            document_str = json.dumps(document, default=str)
+            document_dict = json.loads(document_str)
+            money_received.append(document_dict)
+        
     return {
         "Message": "User Information Retrieved Successfully",
-        "User Info": user_dict
+        "User Info": user_dict,
+        "Bank Accounts": bank_accounts,
+        "Payments": payments,
+        "Money Received": money_received
     }

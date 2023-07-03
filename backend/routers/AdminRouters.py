@@ -1,9 +1,9 @@
 import base64
-
 from fastapi import APIRouter, Depends, status, HTTPException, Header, UploadFile, File
-from mongodbconnect.mongodb_connect import admin_collections, users_collections, car_space_image_collections, car_space_review_collections
+from mongodbconnect.mongodb_connect import admin_collections, users_collections, car_space_image_collections, car_space_review_collections, car_space_collections
 from models.UserAuthentication import UserRegistrationSchema, UserSchema, LoginSchema
 from models.UpdateUserInfo import UpdatePassword, UpdatePersonalDetails
+from models.UpdateCarSpace import UpdateCarSpace
 from wrappers.wrappers import check_token
 from authentication.authentication import generate_token, verify_admin_token, pwd_context
 import os
@@ -302,3 +302,141 @@ async def delete_car_space_image_for_producer_carspace(username: str, carspaceid
         return {"message": "Car Space Image(s) deleted successfully"}
     else:
         return {"message": "Car Space Image not found"}
+    
+
+@AdminRouter.get("/admin/carspace/getcarspace/{username}", tags=["Administrators"])
+@check_token
+async def get_car_spaces_by_user(username: str, token: str = Depends(verify_admin_token)):
+    filter = {"username": username}
+    carspace_cursor = car_space_collections.find({filter})
+    carspaces = []
+    []
+    for document in carspace_cursor:
+        document_str = json.dumps(document, default=str)
+        document_dict = json.loads(document_str)
+        carspaces.append(document_dict)
+    return {f"carspaces for user: {username}": carspaces}
+
+@AdminRouter.get("/admin/carspace/getcarspace/{username}/{carspaceid}", tags=["Administrators"])
+@check_token
+async def get_car_space_by_id(username: str, carspaceid: int, token: str = Depends(verify_admin_token)):
+    filter = {"username": username, "carspaceid": carspaceid}
+    carspace_cursor = car_space_collections.find({filter})
+    carspaces = []
+    []
+    for document in carspace_cursor:
+        document_str = json.dumps(document, default=str)
+        document_dict = json.loads(document_str)
+        carspaces.append(document_dict)
+    return {f"carspaces for user: {username} and carspaceid: {carspaceid}": carspaces}
+    
+
+
+@AdminRouter.delete("/admin/carspace/deletecarspace/{username}", tags=["Administrators"])
+@check_token
+async def delete_car_spaces_by_user(username: str, token: str = Depends(verify_admin_token)):
+    filter = {"username": username}
+    
+    result = car_space_collections.delete_many(filter)
+    car_space_image_collections.delete_many(filter)
+    car_space_review_collections.delete_many(filter)
+    
+    if result.deleted_count > 0:
+        return {"message": "Car Space deleted successfully"}
+    else:
+        return {"message": "Car Space not found"}
+
+
+@AdminRouter.delete("/admin/carspace/deletecarspace/{username}/{carspaceid}", tags=["Administrators"])
+@check_token
+async def delete_car_space_by_id(username: str, carspaceid: int, token: str = Depends(verify_admin_token)):
+    filter = {"username": username, "carspaceid": carspaceid}
+
+    result = car_space_collections.delete_many(filter)
+    car_space_image_collections.delete_many(filter)
+    car_space_review_collections.delete_many(filter)
+    
+    if result.deleted_count > 0:
+        return {"message": "Car Space deleted successfully"}
+    else:
+        return {"message": "Car Space not found"}
+    
+
+@AdminRouter.put("/admin/carspace/updatecarspace/{username}", tags=["Administrators"])
+@check_token
+async def update_car_spaces_by_user(username: str, update_car_space: UpdateCarSpace, token: str = Depends(verify_admin_token)):
+    filter = {"username": username}
+    update_info = {}
+    Outcome = {}
+    for key, value in update_car_space.dict().items():
+        if key == "carspaceid":
+            continue
+        if value is None:
+            Outcome[key] = key + " is unchanged"
+        else:
+            update_info[key] = value
+            Outcome[key] = key + " has been updated"
+
+    update = {
+        "$set": update_info
+    }
+
+    update_results = car_space_collections.update_one(filter, update)
+
+    if update_results.modified_count < 1:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Car space cannot be updated")
+
+    return Outcome
+
+
+@AdminRouter.put("/admin/carspace/updatecarspace/{username}/{carspaceid}", tags=["Administrators"])
+@check_token
+async def update_car_space_by_id(username: str, carspaceid: int, update_car_space: UpdateCarSpace, token: str = Depends(verify_admin_token)):
+    filter = {"username": username, "carspaceid": carspaceid}
+    update_info = {}
+    Outcome = {}
+    for key, value in update_car_space.dict().items():
+        if key == "carspaceid":
+            continue
+        if value is None:
+            Outcome[key] = key + " is unchanged"
+        else:
+            update_info[key] = value
+            Outcome[key] = key + " has been updated"
+
+    update = {
+        "$set": update_info
+    }
+
+    update_results = car_space_collections.update_one(filter, update)
+
+    if update_results.modified_count < 1:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Car space cannot be updated")
+
+    return Outcome
+
+
+@AdminRouter.get("/admin/carspace/getcarspacereviews/{username}", tags=["Administrators"])
+@check_token
+async def get_car_spaces_reviews_by_user(username: str, token: str = Depends(verify_admin_token)):
+    filter = {"username": username}
+    carspace_cursor = car_space_review_collections.find({filter})
+    carspaces = []
+    []
+    for document in carspace_cursor:
+        document_str = json.dumps(document, default=str)
+        document_dict = json.loads(document_str)
+        carspaces.append(document_dict)
+    return {f"carspaces for user: {username}": carspaces}
+
+@AdminRouter.get("/admin/carspace/getcarspacereviews/{username}/{carspaceid}", tags=["Administrators"])
+@check_token
+async def get_car_space_reviews_by_id(username: str, carspaceid: int, token: str = Depends(verify_admin_token)):
+    filter = {"username": username, "carspaceid": carspaceid}
+    carspace_cursor = car_space_review_collections.find({filter})
+    carspaces = []
+    for document in carspace_cursor:
+        document_str = json.dumps(document, default=str)
+        document_dict = json.loads(document_str)
+        carspaces.append(document_dict)
+    return {f"carspaces for user: {username} and carspaceid: {carspaceid}": carspaces}

@@ -4,11 +4,6 @@ from pymongo import MongoClient
 from fastapi import FastAPI
 from base64 import b64encode
 
-# Change this to connect to MongoDB
-client = MongoClient("mongodb://localhost:27017/")
-db = client['CarSpace']
-app=FastAPI()
-
 class CarSpaceReview(BaseModel):
     ownerusername: str = Field(default=None)
     carspaceid: int = Field(default=None)

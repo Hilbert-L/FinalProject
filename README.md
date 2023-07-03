@@ -14,8 +14,11 @@ python-decouple==3.8
 python-jose==3.3.0
 pymongo==4.3.3
 requests==2.31.0
-bcrypt
-click" >> requirements.txt
+bcrypt==4.0.1
+click==8.1.3
+email-validator==2.0.0.post2
+passlib==1.7.4
+python-multipart==0.0.5" >> requirements.txt
 touch .env 
 touch main.py
 cd .. 
