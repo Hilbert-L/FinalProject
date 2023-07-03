@@ -6,6 +6,7 @@ from routers.UserRouters import UserRouter
 from routers.CarSpaceRouters import CarSpaceRouter
 from routers.AdminRouters import AdminRouter
 from routers.SearchRouters import SearchRouter
+from routers.BankTransactionRouters import TransactionRouter
 from fastapi.middleware.cors import CORSMiddleware
 import sys
 import os
@@ -37,3 +38,4 @@ app.include_router(UserRouter)
 app.include_router(CarSpaceRouter)
 app.include_router(SearchRouter)
 app.include_router(AdminRouter)
+app.include_router(TransactionRouter)
