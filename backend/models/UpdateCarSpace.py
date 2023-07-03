@@ -30,7 +30,7 @@ class UpdateCarSpace(BaseModel):
                 "vehiclesize": "Medium2",
                 "currency" : "AUD2",
                 "price" : "101",
-                "frequency" :"Weekly"
+                "frequency" :"Weekly",
             }
         }
 
