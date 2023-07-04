@@ -1,11 +1,11 @@
 #!/usr/bin/python3
 from pymongo import MongoClient
-from decouple import config
+import os 
 import click 
 
-MongoDBUser = config("mongodbUser")
-MongoDBPassword = config("mongodbPassword")
-MongoDBCluster = config("mongodbClusterName")
+MongoDBUser = "GenericUser"
+MongoDBPassword = "$Gdaymate123"
+MongoDBCluster = "atlascluster"
 connectionString = f"mongodb+srv://{MongoDBUser}:{MongoDBPassword}@{MongoDBCluster}.ksdmto3.mongodb.net/?retryWrites=true"
 client = MongoClient(connectionString)
 
@@ -44,7 +44,7 @@ def database_modifications(logout_users, get_passwords, delete_admins, delete_us
 
     if logout_users:
         try:
-            users_collections.update_many({}, {"$set": {"isloggedin": "False"}})
+            users_collections.update_many({}, {"$set": {"isloggedin": False}})
             print("Successfully Logged out all users!!!")
 
         except Exception as e:
@@ -97,7 +97,7 @@ def database_modifications(logout_users, get_passwords, delete_admins, delete_us
             print(f"Could not drop the database due to error: {e}")
     
     if logout_user:
-        users_collections.update_one({"username": logout_user}, {"$set": {"isloggedin": "False"}})
+        users_collections.update_one({"username": logout_user}, {"$set": {"isloggedin": False}})
         print(f"successfully logged out user {logout_user}!!!")
 
 if __name__ == '__main__':

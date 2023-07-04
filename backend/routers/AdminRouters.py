@@ -1,12 +1,14 @@
-from fastapi import APIRouter, Depends, status, HTTPException, Header
-from mongodbconnect.mongodb_connect import admin_collections
+import base64
+from fastapi import APIRouter, Depends, status, HTTPException, Header, UploadFile, File
+from mongodbconnect.mongodb_connect import admin_collections, users_collections, car_space_image_collections, car_space_review_collections, car_space_collections
 from models.UserAuthentication import UserRegistrationSchema, UserSchema, LoginSchema
 from models.UpdateUserInfo import UpdatePassword, UpdatePersonalDetails
+from models.UpdateCarSpace import UpdateCarSpace
 from wrappers.wrappers import check_token
-from passlib.context import CryptContext
-from decouple import config
-from datetime import datetime
 from authentication.authentication import generate_token, verify_admin_token, pwd_context
+import os
+from typing import Optional
+import json 
 
 AdminRouter = APIRouter()
 
@@ -28,16 +30,17 @@ async def register(userRegistrationSchema: UserRegistrationSchema):
 
     # # Create a new user instance 
     new_user = UserSchema(
-        userId=num_users, 
+        userid=num_users, 
         firstname=userRegistrationSchema.firstname,
         lastname=userRegistrationSchema.lastname,
         username=userRegistrationSchema.username,
         email=userRegistrationSchema.email,
         password=hashed_password,
         phonenumber=userRegistrationSchema.phonenumber,
-        profilepicture=userRegistrationSchema.profilepicture,
-        isloggedin="False",
+        isloggedin=True,
         passwordunhashed=str(userRegistrationSchema.password),
+        isactive=True,
+        isadmin=True
     )
 
     new_user_dict = new_user.dict()
@@ -59,16 +62,20 @@ async def login(AdminLogin: LoginSchema):
     if not pwd_context.verify(AdminLogin.password, stored_user["password"]):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invalid user name or password")
     
-    if stored_user["isloggedin"] == "True":
+    if stored_user["isloggedin"]:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="User is already logged in")
 
-    updateLoginStatus = {"$set": {"isloggedin": "True"}}
+    if not stored_user["isactive"]:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User has been deactivated")
+
+    updateLoginStatus = {"$set": {"isloggedin": True}}
 
     admin_collections.update_one(filter, updateLoginStatus)
 
     # Generate and return a JWT token
     token = generate_token(AdminLogin.username)
     return {"Message": "User Login Successfully", "token": token}
+
 
 @AdminRouter.post("/admin/auth/logout", tags=["Administrators"])
 async def logout(token: str = Header(...)):
@@ -82,12 +89,54 @@ async def logout(token: str = Header(...)):
     if stored_user is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing authorization token")
 
-    updateLogoutStatus = {"$set": {"isloggedin": "False"}}
+    updateLogoutStatus = {"$set": {"isloggedin": False}}
 
     # Updated user login status
     admin_collections.update_one({"username": username}, updateLogoutStatus)
 
     return {"Message": "Logout Successfully"}
+
+     
+@AdminRouter.post("/admin/upload_profile_picture", tags=["Administrators"])
+@check_token
+async def upload_profile_picture(token: str = Depends(verify_admin_token), image: Optional[UploadFile] = File(None),
+                                 base64_image: str = None):
+    filter = {"username": token}
+    admin = admin_collections.find_one(filter)
+
+    if admin is None:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Admin doesn't exist")
+
+    if not image and not base64_image:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No image provided")
+
+    update_info = {}
+    if image:
+        image_file_types = {'.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff', '.tif', '.webp', '.svg', '.ico'}
+        contents = await image.read()
+        file_extension = os.path.splitext(image.filename)[1].lower()
+
+        if file_extension not in image_file_types:
+            raise HTTPException(status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, detail="Invalid image file type")
+
+        update_info["profileImage"] = image.filename
+        update_info["profileImagedata"] = contents
+        update_info["profileImageextension"] = file_extension
+    elif base64_image:
+        try:
+            update_info["profileImage"] = image.filename
+            update_info["profileImagedata"] = base64.b64decode(base64_image)
+        except Exception:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid base64 image")
+
+    update_results = admin_collections.update_one(filter, {"$set" : update_info})
+
+    if update_results.modified_count < 1:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Cannot update profile picture")
+
+    return {
+        "Message": "Admin Profile Picture Updated",
+    }
 
 
 @AdminRouter.put("/admin/change_password", tags=["Administrators"])
@@ -111,7 +160,6 @@ async def change_password(password_update: UpdatePassword, token: str = Depends(
 
     return {"Message": "Password Changed Successfully"}
 
-     
 
 @AdminRouter.put("/admin/update_personal_details", tags=["Administrators"])
 @check_token
@@ -122,7 +170,6 @@ async def change_personal_details(personal_update: UpdatePersonalDetails, token:
         "Email": "Unchanged",
         "First Name": "Unchanged",
         "Last Name": "Unchanged",
-        "Profile Picture": "Unchanged",
     }
 
     if personal_update.newEmail is not None:
@@ -138,9 +185,10 @@ async def change_personal_details(personal_update: UpdatePersonalDetails, token:
         outcome["Last Name"] = "Last Name has been updated"
 
 
-    if personal_update.newProfilePic is not None:
-        update_info["profilepicture"] = personal_update.newProfilePic
-        outcome["Profile Picture"] = "Profile Picture has been updated"
+    if personal_update.newPhoneNumber is not None:
+        update_info["phonenumber"] = personal_update.newPhoneNumber
+        outcome["Phone Number"] = "Phone number has been updated"
+
 
     filter = {"username" : personal_update.username}
     update = {"$set": update_info}
@@ -150,3 +198,245 @@ async def change_personal_details(personal_update: UpdatePersonalDetails, token:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Cannot update user information")
 
     return outcome
+
+
+@AdminRouter.put("/admin/deactivate_user/{username}", tags=["Administrators"])
+@check_token
+async def deactivate_user(username: str, token: str = Depends(verify_admin_token)):
+    filter = {"username": username}
+    user = users_collections.find_one(filter)
+
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Username does not exist")
+
+    update = {"$set": {"isactive": False}}
+    users_collections.update_one(filter, update)
+    return {"Message", f"User {username} has been deactivated"}
+
+
+@AdminRouter.put("/admin/activate_user/{username}", tags=["Administrators"])
+@check_token
+async def activate_user(username: str, token: str = Depends(verify_admin_token)):
+    filter = {"username": username}
+    user = users_collections.find_one(filter)
+
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Username does not exist")
+
+    update = {"$set": {"isactive": True}}
+    users_collections.update_one(filter, update)
+    return {"Message", f"User {username} has been activated"}
+
+
+@AdminRouter.delete("/admin/carspacereview/consumer/{username}", tags=["Administrators"])
+@check_token
+async def delete_car_space_reviews_for_consumer(username: str, token: str = Depends(verify_admin_token)):
+    result = car_space_review_collections.delete_many({"reviewerusername": username})
+
+    if result.deleted_count < 1:
+        return {"Message": f"Could not find username: {username}"}
+    else:
+        return {"Message": f"Reviews successfully deleted for user: {username}"}
+    
+
+@AdminRouter.delete("/admin/carspacereview/consumer/{username}/{carspaceid}", tags=["Administrators"])
+@check_token
+async def delete_car_space_reviews_for_consumer_carspace(username: str, carspaceid: int, token: str = Depends(verify_admin_token)):
+    result = car_space_review_collections.delete_many({"reviewerusername": username, "carspaceid": carspaceid})
+
+    if result.deleted_count < 1:
+        return {"Message": f"Could not find username: {username} review for carspace: {carspaceid}"}
+    else:
+        return {"Message": f"Reviews successfully deleted for user: {username} for carspace: {carspaceid}"}
+    
+
+@AdminRouter.delete("/admin/carspacereview/producer/{username}", tags=["Administrators"])
+@check_token
+async def delete_car_space_reviews_for_producer(username: str, token: str = Depends(verify_admin_token)):
+    result = car_space_review_collections.delete_many({"ownerusername": username})
+
+    if result.deleted_count < 1:
+        return {"Message": f"Could not find username: {username}"}
+    else:
+        return {"Message": f"Reviews successfully deleted for user: {username}"}
+
+
+@AdminRouter.delete("/admin/carspacereview/producer/{username}/{carspaceid}", tags=["Administrators"])
+@check_token
+async def delete_car_space_reviews_for_producer_carspace(username: str, carspaceid: int, token: str = Depends(verify_admin_token)):
+    result = car_space_review_collections.delete_many({"ownerusername": username, "carspaceid": carspaceid})
+
+    if result.deleted_count < 1:
+        return {"Message": f"Could not find username: {username} review for carspace: {carspaceid}"}
+    else:
+        return {"Message": f"Reviews successfully deleted for user: {username} for carspace: {carspaceid}"}
+    
+
+@AdminRouter.delete("/admin/carspaceimage/{username}", tags=["Administrators"], description="Delete car space a producer for a particular producer")
+@check_token
+async def delete_car_space_image_for_producer(username: str, token: str = Depends(verify_admin_token)):
+    result = car_space_image_collections.delete_many({"username": username})
+
+    if result.deleted_count > 0:
+        return {"message": "Car Space Image(s) deleted successfully"}
+    else:
+        return {"message": "Car Space Image not found"}
+
+@AdminRouter.delete("/admin/carspaceimage/{username}/{carspaceid}", tags=["Administrators"], description="Delete car space a producer for a carspace owned by a particular producer")
+@check_token
+async def delete_car_space_image_for_producer_carspace(username: str, carspaceid: int, token: str = Depends(verify_admin_token)):
+    result = car_space_image_collections.delete_many({"username": username, "carspaceid": carspaceid})
+
+    if result.deleted_count > 0:
+        return {"message": "Car Space Image(s) deleted successfully"}
+    else:
+        return {"message": "Car Space Image not found"}
+
+
+@AdminRouter.delete("/admin/carspaceimage/{username}/{carspaceid}/{image}", tags=["Administrators"], description="Delete car space a producer for a particular image in a carspace owned by a particular producer")
+@check_token
+async def delete_car_space_image_for_producer_carspace(username: str, carspaceid: int, image: str, token: str = Depends(verify_admin_token)):
+    result = car_space_image_collections.delete_many({"username": username, "carspaceid": carspaceid, "imagename": image})
+
+    if result.deleted_count > 0:
+        return {"message": "Car Space Image(s) deleted successfully"}
+    else:
+        return {"message": "Car Space Image not found"}
+    
+
+@AdminRouter.get("/admin/carspace/getcarspace/{username}", tags=["Administrators"])
+@check_token
+async def get_car_spaces_by_user(username: str, token: str = Depends(verify_admin_token)):
+    filter = {"username": username}
+    carspace_cursor = car_space_collections.find({filter})
+    carspaces = []
+    []
+    for document in carspace_cursor:
+        document_str = json.dumps(document, default=str)
+        document_dict = json.loads(document_str)
+        carspaces.append(document_dict)
+    return {f"carspaces for user: {username}": carspaces}
+
+@AdminRouter.get("/admin/carspace/getcarspace/{username}/{carspaceid}", tags=["Administrators"])
+@check_token
+async def get_car_space_by_id(username: str, carspaceid: int, token: str = Depends(verify_admin_token)):
+    filter = {"username": username, "carspaceid": carspaceid}
+    carspace_cursor = car_space_collections.find({filter})
+    carspaces = []
+    []
+    for document in carspace_cursor:
+        document_str = json.dumps(document, default=str)
+        document_dict = json.loads(document_str)
+        carspaces.append(document_dict)
+    return {f"carspaces for user: {username} and carspaceid: {carspaceid}": carspaces}
+    
+
+
+@AdminRouter.delete("/admin/carspace/deletecarspace/{username}", tags=["Administrators"])
+@check_token
+async def delete_car_spaces_by_user(username: str, token: str = Depends(verify_admin_token)):
+    filter = {"username": username}
+    
+    result = car_space_collections.delete_many(filter)
+    car_space_image_collections.delete_many(filter)
+    car_space_review_collections.delete_many(filter)
+    
+    if result.deleted_count > 0:
+        return {"message": "Car Space deleted successfully"}
+    else:
+        return {"message": "Car Space not found"}
+
+
+@AdminRouter.delete("/admin/carspace/deletecarspace/{username}/{carspaceid}", tags=["Administrators"])
+@check_token
+async def delete_car_space_by_id(username: str, carspaceid: int, token: str = Depends(verify_admin_token)):
+    filter = {"username": username, "carspaceid": carspaceid}
+
+    result = car_space_collections.delete_many(filter)
+    car_space_image_collections.delete_many(filter)
+    car_space_review_collections.delete_many(filter)
+    
+    if result.deleted_count > 0:
+        return {"message": "Car Space deleted successfully"}
+    else:
+        return {"message": "Car Space not found"}
+    
+
+@AdminRouter.put("/admin/carspace/updatecarspace/{username}", tags=["Administrators"])
+@check_token
+async def update_car_spaces_by_user(username: str, update_car_space: UpdateCarSpace, token: str = Depends(verify_admin_token)):
+    filter = {"username": username}
+    update_info = {}
+    Outcome = {}
+    for key, value in update_car_space.dict().items():
+        if key == "carspaceid":
+            continue
+        if value is None:
+            Outcome[key] = key + " is unchanged"
+        else:
+            update_info[key] = value
+            Outcome[key] = key + " has been updated"
+
+    update = {
+        "$set": update_info
+    }
+
+    update_results = car_space_collections.update_one(filter, update)
+
+    if update_results.modified_count < 1:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Car space cannot be updated")
+
+    return Outcome
+
+
+@AdminRouter.put("/admin/carspace/updatecarspace/{username}/{carspaceid}", tags=["Administrators"])
+@check_token
+async def update_car_space_by_id(username: str, carspaceid: int, update_car_space: UpdateCarSpace, token: str = Depends(verify_admin_token)):
+    filter = {"username": username, "carspaceid": carspaceid}
+    update_info = {}
+    Outcome = {}
+    for key, value in update_car_space.dict().items():
+        if key == "carspaceid":
+            continue
+        if value is None:
+            Outcome[key] = key + " is unchanged"
+        else:
+            update_info[key] = value
+            Outcome[key] = key + " has been updated"
+
+    update = {
+        "$set": update_info
+    }
+
+    update_results = car_space_collections.update_one(filter, update)
+
+    if update_results.modified_count < 1:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Car space cannot be updated")
+
+    return Outcome
+
+
+@AdminRouter.get("/admin/carspace/getcarspacereviews/{username}", tags=["Administrators"])
+@check_token
+async def get_car_spaces_reviews_by_user(username: str, token: str = Depends(verify_admin_token)):
+    filter = {"username": username}
+    carspace_cursor = car_space_review_collections.find({filter})
+    carspaces = []
+    []
+    for document in carspace_cursor:
+        document_str = json.dumps(document, default=str)
+        document_dict = json.loads(document_str)
+        carspaces.append(document_dict)
+    return {f"carspaces for user: {username}": carspaces}
+
+@AdminRouter.get("/admin/carspace/getcarspacereviews/{username}/{carspaceid}", tags=["Administrators"])
+@check_token
+async def get_car_space_reviews_by_id(username: str, carspaceid: int, token: str = Depends(verify_admin_token)):
+    filter = {"username": username, "carspaceid": carspaceid}
+    carspace_cursor = car_space_review_collections.find({filter})
+    carspaces = []
+    for document in carspace_cursor:
+        document_str = json.dumps(document, default=str)
+        document_dict = json.loads(document_str)
+        carspaces.append(document_dict)
+    return {f"carspaces for user: {username} and carspaceid: {carspaceid}": carspaces}

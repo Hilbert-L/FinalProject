@@ -14,8 +14,11 @@ python-decouple==3.8
 python-jose==3.3.0
 pymongo==4.3.3
 requests==2.31.0
-bcrypt
-click" >> requirements.txt
+bcrypt==4.0.1
+click==8.1.3
+email-validator==2.0.0.post2
+passlib==1.7.4
+python-multipart==0.0.5" >> requirements.txt
 touch .env 
 touch main.py
 cd .. 
@@ -39,12 +42,11 @@ cd frontend
 npx prettier --write .
 ```
 
-## From project root, activate python virtual environment and install requirements
+## From project backend directory, build the docker image with the following and start the application this will enable you to run the backend on http://0.0.0.0:8000
 ```
 cd backend
-source .venv/bin/activate
-pip3 install -r requirements.txt 
-uvicorn main:app --reload
+docker-compose build
+docker run -p 8000:8000 backend-app
 ```
 
 # Docker Container for backend
