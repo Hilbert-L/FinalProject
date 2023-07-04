@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from pydantic import BaseModel, Field, constr, validator
 from pydantic.networks import EmailStr
 from authentication.password_validator import PasswordValidator
-from models.UserAuthentication import BankAccountSchema
+from models.UserAuthentication import BankAccountSchemaAPI
 class UpdatePassword(BaseModel):
     username: str = Field(default=None)
     currentPassword: constr(min_length=8) = Field(default=None)
@@ -60,13 +60,15 @@ class UpdatePersonalDetails(BaseModel):
 
 class UpdateBankAccount(BaseModel):
     username: str = Field(default=None)
-    newbankaccount: BankAccountSchema = Field(default=None)
+    id: int = Field(default=None)
+    newbankaccount: BankAccountSchemaAPI = Field(default=None)
 
     class Config:
         schema = {
             "sample": {
                 "username": "test",
-                "newBankAccount": {
+                "id": 1,
+                "bankaccount": {
                     "bsb": "123-456",
                     "account_number": "1234 5678",
                     "expiry_date": "01/25",

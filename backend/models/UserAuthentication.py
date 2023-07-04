@@ -8,8 +8,7 @@ import re
 def get_current_datetime():
     return datetime.now()
 
-class BankAccountSchema(BaseModel):
-    id: str = Field(default=None)
+class BankAccountSchemaAPI(BaseModel):
     bsb: Optional[str] = Field(default=None)
     accountnumber: Optional[str] = Field(default=None)
     expiry_date: Optional[str] = Field(default=None)
@@ -55,6 +54,13 @@ class BankAccountSchema(BaseModel):
             }
         }
 
+class BankAccountSchemaInternal(BaseModel):
+    id: Optional[int] = Field(default=None)
+    bsb: Optional[str] = Field(default=None)
+    accountnumber: Optional[str] = Field(default=None)
+    expiry_date: Optional[str] = Field(default=None)
+    ccv: Optional[str] = Field(default=None)
+
 
 class UserRegistrationSchema(BaseModel):
     firstname: str = Field(default=None)
@@ -63,7 +69,7 @@ class UserRegistrationSchema(BaseModel):
     email: EmailStr = Field(default=None)
     password: constr(min_length=8) = Field(default="$Test1234")
     phonenumber: Optional[int] = Field(default=None)
-    bankaccount: List[BankAccountSchema] = Field(default=None)
+    bankaccount: List[BankAccountSchemaAPI] = Field(default=None)
 
     @validator('password')
     def validate_password(cls, password):
@@ -96,6 +102,7 @@ class UserSchema(UserRegistrationSchema):
     userid: int = Field(default=None)
     isloggedin: bool = Field(default=None)
     passwordunhashed: str = Field(default=None)
+    bankaccount: List[BankAccountSchemaInternal] = Field(default=None)
     isactive: bool=Field(default=False)
     isadmin: bool=Field(default=False)
     class Config:
