@@ -8,7 +8,7 @@ import re
 def get_current_datetime():
     return datetime.now()
 
-+class BankAccountSchema(BaseModel):
+class BankAccountSchema(BaseModel):
     id: str = Field(default=None)
     bsb: Optional[str] = Field(default=None)
     accountnumber: Optional[str] = Field(default=None)
