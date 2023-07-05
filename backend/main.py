@@ -8,6 +8,7 @@ from routers.AdminRouters import AdminRouter
 from routers.SearchRouters import SearchRouter
 from routers.BankTransactionRouters import TransactionRouter
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 import sys
 import os
 from dotenv import load_dotenv
@@ -31,6 +32,9 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PUT", "DELETE"],
     allow_headers=["*"],
 )
+# add GZip middleware
+app.add_middleware(GZipMiddleware, minimum_size=1000)
+
 
 app.include_router(GeneralRouter)
 app.include_router(ProtectedRouter)

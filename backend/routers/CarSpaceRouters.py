@@ -13,7 +13,9 @@ from base64 import b64encode
 import base64
 from authentication.authentication import generate_token, verify_user_token
 import json 
-import os 
+import os
+import io
+from PIL import Image
 
 CarSpaceRouter = APIRouter()
 
@@ -125,6 +127,19 @@ async def get_car_space_reviews_for_producer(username: str, carspaceid: int, tok
         reviews.append(document_dict)
     return {f"Reviews received by user: {username} and carspace: {carspaceid}": reviews}
 
+def is_valid_image(base64_img_str):
+    # Check if this is a "data URL"
+    if base64_img_str.startswith('data:image'):
+        # Find the start of the actual image data
+        base64_img_str = base64_img_str.split(',', 1)[1]
+    try:
+        img_data = base64.b64decode(base64_img_str)
+        img = Image.open(io.BytesIO(img_data))
+        img.verify()  # verify that it is, in fact, an image
+        return True
+    except Exception:
+        return False
+
 @CarSpaceRouter.post("/carspace/upload_image/{username}/{carspaceid}", tags=["Car Spaces"])
 @check_token
 async def upload_car_space_image(username: str, carspaceid: int, image: UploadFile = File(None),
@@ -147,14 +162,15 @@ async def upload_car_space_image(username: str, carspaceid: int, image: UploadFi
         carspace_image_info["carSpaceImageextension"] = file_extension
         carspace_image_info_list.append(carspace_image_info)
 
-    if base64_image:
-        try:
+    elif base64_image:
+        base64_image = base64_image + '=' * (-len(base64_image) % 4)
+        if is_valid_image(base64_image):
             carspace_image_info = {}
-            carspace_image_info["carSpaceImage"] = f"{username}_{image.filename}"
+            carspace_image_info["carSpaceImage"] = f"{username}_{base64_image}"
             carspace_image_info["carSpaceID"] = carspaceid
             carspace_image_info["carSpaceImagedata"] = base64.b64decode(base64_image)
             carspace_image_info_list.append(carspace_image_info)
-        except Exception:
+        else:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid base64 image")
 
     existing_document = car_space_image_collections.find_one({"username": username, "carspaceid": carspaceid})
