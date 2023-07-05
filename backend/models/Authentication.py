@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field, EmailStr, constr, validator
 from typing import Optional, List
 from datetime import datetime
 from .CreateCarSpace import CarSpaceReview
-from authentication.password_validator import PasswordValidator
+from validators.PasswordValidator import PasswordValidator
 
 class UserRegistrationSchema(BaseModel):
     firstname: str = Field(default=None)

@@ -1,14 +1,15 @@
 import base64
-
 from fastapi import APIRouter, Depends, status, HTTPException, Header, UploadFile, File
 from mongodbconnect.mongodb_connect import users_collections, car_space_collections, bank_information_collections, transaction_information_collections
-from models.UserAuthentication import UserRegistrationSchema, UserSchema, LoginSchema
-from models.UpdateUserInfo import UpdatePassword, UpdatePersonalDetails
+from models.UserAuthentication import UserRegistrationSchema, UserSchema, LoginSchema, BankAccountSchemaAPI,BankAccountSchemaInternal
+from models.UpdateUserInfo import UpdatePassword, UpdatePersonalDetails, UpdateBankAccount
 from wrappers.wrappers import check_token
 from authentication.authentication import generate_token, verify_user_token, pwd_context
 import json 
 import os 
 from typing import Optional
+import io
+from PIL import Image
 
 UserRouter = APIRouter()
 
@@ -25,7 +26,6 @@ async def register(userRegistrationSchema: UserRegistrationSchema):
     hashed_password = pwd_context.hash(userRegistrationSchema.password)
     
     num_users = users_collections.count_documents({})
-
     # # Create a new user instance 
     new_user = UserSchema(
         userid=num_users, 
@@ -154,6 +154,20 @@ async def change_personal_details(personal_update: UpdatePersonalDetails, token:
 
     return outcome
 
+
+def is_valid_image(base64_img_str):
+    # Check if this is a "data URL"
+    if base64_img_str.startswith('data:image'):
+        # Find the start of the actual image data
+        base64_img_str = base64_img_str.split(',', 1)[1]
+    try:
+        img_data = base64.b64decode(base64_img_str)
+        img = Image.open(io.BytesIO(img_data))
+        img.verify()  # verify that it is, in fact, an image
+        return True
+    except Exception:
+        return False
+
 @UserRouter.post("/user/upload_profile_picture", tags=["Users"])
 @check_token
 async def upload_profile_picture(token: str = Depends(verify_user_token), image: Optional[UploadFile] = File(None),
@@ -180,10 +194,11 @@ async def upload_profile_picture(token: str = Depends(verify_user_token), image:
         update_info["profileImagedata"] = contents
         update_info["profileImageextension"] = file_extension
     elif base64_image:
-        try:
-            update_info["profileImage"] = image.filename
+        base64_image = base64_image + '=' * (-len(base64_image) % 4)
+        if is_valid_image(base64_image):
+            update_info["profileImage"] = "base64_image"
             update_info["profileImagedata"] = base64.b64decode(base64_image)
-        except Exception:
+        else:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid base64 image")
 
     update_results = users_collections.update_one(filter, {"$set" : update_info})

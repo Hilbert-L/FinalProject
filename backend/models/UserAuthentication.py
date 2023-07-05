@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field, EmailStr, constr, validator
 from typing import Optional, List
 from datetime import datetime
 from .CreateCarSpace import CarSpaceReview
-from authentication.password_validator import PasswordValidator
+from validators.PasswordValidator import PasswordValidator
 
 def get_current_datetime():
     return datetime.now()
@@ -14,7 +14,6 @@ class UserRegistrationSchema(BaseModel):
     email: EmailStr = Field(default=None)
     password: constr(min_length=8) = Field(default="$Test1234")
     phonenumber: Optional[int] = Field(default=None)
-    
     @validator('password')
     def validate_password(cls, password):
         if not PasswordValidator.validate_password(password):

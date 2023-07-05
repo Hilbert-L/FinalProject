@@ -8,7 +8,9 @@ from wrappers.wrappers import check_token
 from authentication.authentication import generate_token, verify_admin_token, pwd_context
 import os
 from typing import Optional
-import json 
+import json
+import io
+from PIL import Image
 
 AdminRouter = APIRouter()
 
@@ -96,7 +98,19 @@ async def logout(token: str = Header(...)):
 
     return {"Message": "Logout Successfully"}
 
-     
+def is_valid_image(base64_img_str):
+    # Check if this is a "data URL"
+    if base64_img_str.startswith('data:image'):
+        # Find the start of the actual image data
+        base64_img_str = base64_img_str.split(',', 1)[1]
+    try:
+        img_data = base64.b64decode(base64_img_str)
+        img = Image.open(io.BytesIO(img_data))
+        img.verify()  # verify that it is, in fact, an image
+        return True
+    except Exception:
+        return False
+
 @AdminRouter.post("/admin/upload_profile_picture", tags=["Administrators"])
 @check_token
 async def upload_profile_picture(token: str = Depends(verify_admin_token), image: Optional[UploadFile] = File(None),
@@ -123,10 +137,11 @@ async def upload_profile_picture(token: str = Depends(verify_admin_token), image
         update_info["profileImagedata"] = contents
         update_info["profileImageextension"] = file_extension
     elif base64_image:
-        try:
+        base64_image = base64_image + '=' * (-len(base64_image) % 4)
+        if is_valid_image(base64_image):
             update_info["profileImage"] = image.filename
             update_info["profileImagedata"] = base64.b64decode(base64_image)
-        except Exception:
+        else:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid base64 image")
 
     update_results = admin_collections.update_one(filter, {"$set" : update_info})
