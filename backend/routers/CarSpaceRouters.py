@@ -49,13 +49,16 @@ async def create_car_space(create_car_space: CreateCarSpaceSchema, token: str = 
         currency=create_car_space.currency,
         price=create_car_space.price,
         frequency=create_car_space.frequency,
+        leasing=create_car_space.leasing,
+        booking=create_car_space.booking,
+        using=create_car_space.using,
     )
 
     new_car_space_dict = new_car_space.dict()
     car_space_collections.insert_one(dict(new_car_space_dict))
     return {"Message": "Car Space Added Successfully", "Car Space": new_car_space_dict}
 
-
+# Will add three attributes: leasing, using and booking
 @CarSpaceRouter.put("/carspace/updatecarspace", tags=["Car Spaces"])
 @check_token
 async def update_car_space(update_car_space: UpdateCarSpace, token: str = Depends(verify_user_token)):
@@ -212,9 +215,12 @@ async def get_all_car_space_images(username: str, carspaceid: int, token: str = 
 @CarSpaceRouter.delete("/carspace/delete_image/{username}/{carspaceid}/{imagename}", tags=["Car Spaces"])
 @check_token
 async def delete_single_car_space_image_for_user_carspace(username: str, carspaceid: int, imagename: str, token: str = Depends(verify_user_token)):
-    result = car_space_image_collections.delete_one({"imagename": imagename, "carspaceid": carspaceid, "username": username})
+    result = car_space_image_collections.update_one(
+        {"username": username, "carspaceid": carspaceid},
+        {"$pull": {"images": {"carSpaceImage": imagename}}}
+    )
 
-    if result.deleted_count == 1:
+    if result.modified_count == 1:
         return {"message": "Car Space Image deleted successfully"}
     else:
         return {"message": "Car Space Image not found"}
