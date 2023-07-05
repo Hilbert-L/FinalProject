@@ -36,6 +36,7 @@ async def register(userRegistrationSchema: UserRegistrationSchema):
         password=hashed_password,
         passwordunhashed=userRegistrationSchema.password,
         phonenumber=userRegistrationSchema.phonenumber,
+        bankaccount=[bank_account_internal],
         isloggedin=True,
         isactive=True,
         isadmin=False

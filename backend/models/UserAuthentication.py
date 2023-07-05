@@ -4,9 +4,6 @@ from datetime import datetime
 from .CreateCarSpace import CarSpaceReview
 from validators.PasswordValidator import PasswordValidator
 
-def get_current_datetime():
-    return datetime.now()
-
 class UserRegistrationSchema(BaseModel):
     firstname: str = Field(default=None)
     lastname: str = Field(default=None)
@@ -14,7 +11,7 @@ class UserRegistrationSchema(BaseModel):
     email: EmailStr = Field(default=None)
     password: constr(min_length=8) = Field(default="$Test1234")
     phonenumber: Optional[int] = Field(default=None)
-    
+
     @validator('password')
     def validate_password(cls, password):
         if not PasswordValidator.validate_password(password):
