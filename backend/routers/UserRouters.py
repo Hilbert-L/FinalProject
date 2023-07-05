@@ -1,8 +1,8 @@
 import base64
 from fastapi import APIRouter, Depends, status, HTTPException, Header, UploadFile, File
 from mongodbconnect.mongodb_connect import users_collections, car_space_collections, bank_information_collections, transaction_information_collections
-from models.UserAuthentication import UserRegistrationSchema, UserSchema, LoginSchema, BankAccountSchemaAPI,BankAccountSchemaInternal
-from models.UpdateUserInfo import UpdatePassword, UpdatePersonalDetails, UpdateBankAccount
+from models.UserAuthentication import UserRegistrationSchema, UserSchema, LoginSchema
+from models.UpdateUserInfo import UpdatePassword, UpdatePersonalDetails
 from wrappers.wrappers import check_token
 from authentication.authentication import generate_token, verify_user_token, pwd_context
 import json 
@@ -26,10 +26,6 @@ async def register(userRegistrationSchema: UserRegistrationSchema):
     hashed_password = pwd_context.hash(userRegistrationSchema.password)
     
     num_users = users_collections.count_documents({})
-    bank_account = userRegistrationSchema.bankaccount[0]
-    bank_account_dict = bank_account.dict()
-    bank_account_dict['id'] = 1
-    bank_account_internal = BankAccountSchemaInternal(**bank_account_dict)
     # # Create a new user instance 
     new_user = UserSchema(
         userid=num_users, 
@@ -252,66 +248,3 @@ async def get_current_user(token: str = Depends(verify_user_token)):
         "Payments": payments,
         "Money Received": money_received
     }
-
-def check_bank_account_exists(user, bsb, account_number):
-    for bank_account in user["bankaccount"]:
-        if bank_account["bsb"] == bsb and bank_account["accountnumber"] == account_number:
-            return True
-    return False
-
-@UserRouter.put("/user/update_bank_account", tags=["Users"])
-@check_token
-async def update_bank_account(bankaccount_update: UpdateBankAccount, token: str = Depends(verify_user_token)):
-    # Retrieve user from the database using the username from the token.
-    filter = {"username": bankaccount_update.username}
-    user = users_collections.find_one(filter)
-    if user is None:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Username doesn't exist")
-
-    # Find the bank account to update
-    for bank_account in user["bankaccount"]:
-        if bank_account["id"] == bankaccount_update.id:
-            # Update the bank account information
-            new_bank_account = {k: v for k, v in bankaccount_update.newbankaccount.dict().items() if v is not None}
-            if check_bank_account_exists(user, new_bank_account["bsb"], new_bank_account["accountnumber"]):
-                raise HTTPException(status_code=400, detail="Bank account already exists")
-            bank_account.update(new_bank_account)
-            break
-    else:
-        raise HTTPException(status_code=404, detail="Bank account not found")
-
-    # Update the user's bank account information in the database.
-    update_results = users_collections.update_one(filter, {"$set": {"bankaccount": user["bankaccount"]}})
-    if update_results.modified_count < 1:
-        raise HTTPException(status_code=400, detail="Unable to update bank account")
-
-    return {"Message": "Bank account updated successfully"}
-
-@UserRouter.put("/user/add_bank_account", tags=["Users"])
-@check_token
-async def add_bank_account(add_bankaccount: UpdateBankAccount, token: str = Depends(verify_user_token)):
-    # Retrieve user from the database using the username from the token.
-    filter = {"username": add_bankaccount.username}
-    user = users_collections.find_one(filter)
-    if user is None:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Username doesn't exist")
-
-    num_accounts = len(user.get("bankaccount", []))
-
-    new_bank_account = add_bankaccount.newbankaccount.dict()  # Get new bank account from add_bankaccount.newbankaccount
-
-    if check_bank_account_exists(user, new_bank_account["bsb"], new_bank_account["accountnumber"]):
-        raise HTTPException(status_code=400, detail="Bank account already exists")
-
-    # Create a new dictionary with 'id' field at the beginning
-    new_bank_account_with_id = {"id": num_accounts + 1}
-    new_bank_account_with_id.update(new_bank_account)
-    if check_bank_account_exists(user, new_bank_account["bsb"], new_bank_account["accountnumber"]):
-        raise HTTPException(status_code=400, detail="Bank account already exists")
-
-    update_results = users_collections.update_one(filter, {"$push": {"bankaccount": new_bank_account_with_id}})
-
-    if update_results.modified_count < 1:
-        raise HTTPException(status_code=400, detail="Unable to add bank account")
-
-    return {"Message": "Bank account added successfully"}

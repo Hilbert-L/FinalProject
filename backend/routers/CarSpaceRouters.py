@@ -97,7 +97,7 @@ async def create_car_space_review(car_space_review: CarSpaceReview, token: str =
     return {"Message": "Car Space Review Added Successfully"}
 
 
-@CarSpaceRouter.get("/carspace/reviews/get_all_reviews_for_consumer/{username}")
+@CarSpaceRouter.get("/carspace/reviews/get_all_reviews_for_consumer/{username}", tags=["Car Spaces"])
 @check_token
 async def get_car_space_reviews_for_consumer(username: str, token: str = Depends(verify_user_token)):
     review_cursor = car_space_review_collections.find({"reviewerusername": username})
@@ -108,7 +108,7 @@ async def get_car_space_reviews_for_consumer(username: str, token: str = Depends
         reviews.append(document_dict)
     return {f"Reviews made by user: {username}": reviews}
 
-@CarSpaceRouter.get("/carspace/reviews/get_all_reviews_for_producer/{username}")
+@CarSpaceRouter.get("/carspace/reviews/get_all_reviews_for_producer/{username}", tags=["Car Spaces"])
 @check_token
 async def get_car_space_reviews_for_producer(username: str, token: str = Depends(verify_user_token)):
     review_cursor = car_space_review_collections.find({"ownerusername": username})
@@ -119,7 +119,7 @@ async def get_car_space_reviews_for_producer(username: str, token: str = Depends
         reviews.append(document_dict)
     return {f"Reviews received by user: {username}": reviews}
 
-@CarSpaceRouter.get("/carspace/reviews/get_all_reviews_for_producer/{username}/{carspaceid}")
+@CarSpaceRouter.get("/carspace/reviews/get_all_reviews_for_producer/{username}/{carspaceid}", tags=["Car Spaces"])
 @check_token
 async def get_car_space_reviews_for_producer(username: str, carspaceid: int, token: str = Depends(verify_user_token)):
     review_cursor = car_space_review_collections.find({"ownerusername": username, "carspaceid": carspaceid})
