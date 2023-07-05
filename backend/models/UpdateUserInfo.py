@@ -3,7 +3,6 @@ from fastapi import FastAPI
 from pydantic import BaseModel, Field, constr, validator
 from pydantic.networks import EmailStr
 from validators.PasswordValidator import PasswordValidator
-from models.UserAuthentication import BankAccountSchemaAPI
 
 class UpdatePassword(BaseModel):
     username: str = Field(default=None)
