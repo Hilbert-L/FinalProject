@@ -31,7 +31,7 @@ async def make_payment(payment: MakePayment, token: str = Depends(verify_user_to
         "accountnumber": payment.receiveraccountnumber
     }
 
-    payer_bank_info = bank_information_collections.find({**payer_bank_filter})
+    payer_bank_info = bank_information_collections.find_one({**payer_bank_filter})
     receiver_bank_info = bank_information_collections.find_one({**receiver_bank_filter})
 
     if payer_bank_info is None or receiver_bank_info is None:
@@ -49,6 +49,7 @@ async def make_payment(payment: MakePayment, token: str = Depends(verify_user_to
     transaction_dict = payment.dict()
     transaction_dict["id"] = num_transactions + 1
     transaction_dict["transaction_time"] = datetime.now().strftime("%Y/%m/%d-%H:%M:%S")
+    transaction_dict["status"] = "Confirmed"  # Add transaction status
     transaction_information_collections.insert_one(transaction_dict)
 
     return {"Message": "Payment added successfully"}
@@ -81,49 +82,43 @@ async def cancel_payment(transaction_id: int, token: str = Depends(verify_user_t
 
     payer_bank_filter = {
         "username": transaction_info["payerusername"],
-        "bankname": transaction_info["payerbankname"],
         "accountbsb": transaction_info["payeraccountbsb"],
         "accountnumber": transaction_info["payeraccountnumber"]
     }
-    print(payer_bank_filter)
     receiver_bank_filter = {
         "username": transaction_info["receiverusername"],
-        "bankname": transaction_info["receiverbankname"],
         "accountbsb": transaction_info["receiveraccountbsb"],
         "accountnumber": transaction_info["receiveraccountnumber"]
     }
 
-
-    payer_bank_info = bank_information_collections.find_one({**payer_bank_filter})
-    print(payer_bank_info)
-    receiver_bank_info = bank_information_collections.find_one({**receiver_bank_filter})
-    print(receiver_bank_info)
+    payer_bank_info = bank_information_collections.find_one(payer_bank_filter)
+    receiver_bank_info = bank_information_collections.find_one(receiver_bank_filter)
 
     if payer_bank_info is None or receiver_bank_info is None:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT,
                             detail="Payer or receiver bank details cannot be found")
 
-    payer_balance = payer_bank_info.get("balance", 0)
-    receiver_balance = receiver_bank_info.get("balance", 0)
-
-    # Update balances
     amount = transaction_info["amount"]
-    updated_payer_balance = payer_balance + amount
-    updated_receiver_balance = receiver_balance - amount
 
     # Update payer bank account balance
+    updated_payer_balance = payer_bank_info["balance"] + amount
     bank_information_collections.update_one(
-        {**payer_bank_filter},
+        payer_bank_filter,
         {"$set": {"balance": updated_payer_balance}}
     )
 
     # Update receiver bank account balance
+    updated_receiver_balance = receiver_bank_info["balance"] - amount
     bank_information_collections.update_one(
-        {**receiver_bank_filter},
+        receiver_bank_filter,
         {"$set": {"balance": updated_receiver_balance}}
     )
 
-    transaction_information_collections.delete_one({"id": transaction_id})
+    # Update transaction status to "Cancelled"
+    transaction_information_collections.update_one(
+        {"id": transaction_id},
+        {"$set": {"status": "Cancelled"}}
+    )
 
     return {"Message": "Payment cancelled successfully"}
 
@@ -131,8 +126,8 @@ async def cancel_payment(transaction_id: int, token: str = Depends(verify_user_t
 # not under Users 
 # it may make things too complicated further down the line for data processesing 
 # Please implement the following if you can
-# Cancel Payment 
+# Cancel Payment (Done)
 # Update Payment Method
-# Check balance for user for each account
-# Update Payment in AdminRouters.py
+# Check balance for user for each account (Done)
+# Update Payment in AdminRouters.py (Done)
 

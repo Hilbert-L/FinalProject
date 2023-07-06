@@ -100,3 +100,10 @@ class CancelPayment(BaseModel):
                 "receiveraccountnumber": "12345678",
             }
         }
+
+class UpdatePaymentMethod(BaseModel):
+    username: str = Field(default=None)
+    bankname: str = Field(default=None)
+    accountname: str = Field(default=None)
+    accountbsb: str = Field(default=None)
+    accountnumber: str = Field(default=None)

@@ -1,6 +1,6 @@
 import base64
 from fastapi import APIRouter, Depends, status, HTTPException, Header, UploadFile, File
-from mongodbconnect.mongodb_connect import admin_collections, users_collections, car_space_image_collections, car_space_review_collections, car_space_collections
+from mongodbconnect.mongodb_connect import admin_collections, users_collections, car_space_image_collections, car_space_review_collections, car_space_collections, transaction_information_collections
 from models.UserAuthentication import UserRegistrationSchema, UserSchema, LoginSchema
 from models.UpdateUserInfo import UpdatePassword, UpdatePersonalDetails
 from models.UpdateCarSpace import UpdateCarSpace
@@ -455,3 +455,48 @@ async def get_car_space_reviews_by_id(username: str, carspaceid: int, token: str
         document_dict = json.loads(document_str)
         carspaces.append(document_dict)
     return {f"carspaces for user: {username} and carspaceid: {carspaceid}": carspaces}
+
+@AdminRouter.get("/admin/carspace/get_transections/{username}", tags=["Administrators"])
+@check_token
+async def get_transections_by_user(username: str, token: str = Depends(verify_admin_token)):
+    transactions_cursor = transaction_information_collections.find({
+        "$or": [
+            {"payerusername": username},
+            {"receiverusername": username}
+        ]
+    })
+    transactions = []
+    for document in transactions_cursor:
+        document_str = json.dumps(document, default=str)
+        document_dict = json.loads(document_str)
+        transactions.append({
+            "transaction_title": document_dict.get("title"),
+            "transaction_id": document_dict.get("id"),
+            "payer_username": document_dict.get("payerusername"),
+            "receiver_username": document_dict.get("receiverusername"),
+            "transaction_time": document_dict.get("transaction_time"),
+            "transaction_amount": document_dict.get("amount"),
+            "transaction_status": document_dict.get("status"),
+        })
+    return {f"transactions for user: {username}": transactions}
+
+@AdminRouter.get("/admin/transactions/get_transactions/{transaction_id}", tags=["Administrators"])
+@check_token
+async def get_transaction_by_id(transaction_id: int, token: str = Depends(verify_admin_token)):
+    transaction_info = transaction_information_collections.find_one({"id": transaction_id})
+
+    if transaction_info is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Transaction not found")
+
+    transaction_str = json.dumps(transaction_info, default=str)
+    transaction_dict = json.loads(transaction_str)
+
+    return {
+        "transaction_title": transaction_dict.get("title"),
+        "transaction_id": transaction_dict.get("id"),
+        "payer_username": transaction_dict.get("payerusername"),
+        "receiver_username": transaction_dict.get("receiverusername"),
+        "transaction_time": transaction_dict.get("transaction_time"),
+        "transaction_amount": transaction_dict.get("amount"),
+        "transaction_status": transaction_dict.get("status"),
+    }

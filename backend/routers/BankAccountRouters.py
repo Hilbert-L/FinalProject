@@ -11,6 +11,11 @@ BankAccountRouter = APIRouter()
 @BankAccountRouter.post("/bankaccounts/create_account", tags=["User Bank Accounts"])
 @check_token
 async def create_account(create_account: BankAccount, token: str = Depends(verify_user_token)):
+    # Check if the user exists
+    user_info = users_collections.find_one({"username": create_account.username})
+    if user_info is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not exist")
+
     details = {
         "username": create_account.username, 
         "bankname": create_account.bankname,
