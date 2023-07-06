@@ -67,3 +67,36 @@ class MakePayment(BaseModel):
         }
 
 
+class CancelPayment(BaseModel):
+    title: str = Field(default=None)
+    receiverusername: str = Field(default=None)
+    receiverbankname: str = Field(default=None)
+    receiveraccountbsb: str = Field(default=None)
+    receiveraccountnumber: str = Field(default=None)
+
+    @validator('receiveraccountbsb')
+    def validate_receiver_bsb(cls, receiveraccountbsb):
+        # BSB should be in the format XXX-XXX
+        if receiveraccountbsb and not BankAccountValidator.validate_bsb(receiveraccountbsb):
+            raise ValueError('Invalid receiver BSB format. It should be XXX-XXX.')
+        return receiveraccountbsb
+
+    @validator('receiveraccountnumber')
+    def validate_receiver_account_number(cls, receiveraccountnumber):
+        # Australian bank accounts have the following formats:
+        # Cannot start with 0, 00 or 000
+        # Contains 6 to 10 digits
+        if receiveraccountnumber and not BankAccountValidator.validate_account_number(receiveraccountnumber):
+            raise ValueError('Invalid receiver account number format. It should be be a 6-10 digit string with no leading zeros.')
+        return receiveraccountnumber
+
+    class config:
+        schema = {
+            "sample": {
+                "title": "Test Payment",
+                "receiverusername": "Test123",
+                "receiverbankname": "Bank Name 2",
+                "receiveraccountbsb": "123-456",
+                "receiveraccountnumber": "12345678",
+            }
+        }

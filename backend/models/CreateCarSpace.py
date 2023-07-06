@@ -45,7 +45,7 @@ class CreateCarSpaceSchema(BaseModel):
     frequency: str = Field(default=None)
     leasing: bool = Field(default=None)
     booking: bool = Field(default=None)
-    using: Obool = Field(default=None)
+    using: bool = Field(default=None)
     class Config:
         schema = {
             "sample": {

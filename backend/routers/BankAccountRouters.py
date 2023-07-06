@@ -23,8 +23,9 @@ async def create_account(create_account: BankAccount, token: str = Depends(verif
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Bank is already registered for this user")
 
     new_account = create_account.dict()
-    num_accounts_for_user = len(bank_information_collections.find({"username": create_account.username}))
-    new_account["id"] = num_accounts_for_user
+    num_accounts_for_user = bank_information_collections.count_documents({"username": create_account.username})
+    new_account["id"] = num_accounts_for_user + 1
+    new_account["balance"] = 0
     bank_information_collections.insert_one({**new_account})
 
     return {"Message": "Bank details added successfully"}
@@ -81,3 +82,12 @@ async def delete_account(create_account: BankAccount,token: str = Depends(verify
 
     return {"Message": "Bank account deleted successfully"}
 
+@BankAccountRouter.get("/bankaccounts/balance/{username}", tags=["User Bank Accounts"])
+@check_token
+async def get_balance(username: str, token: str = Depends(verify_user_token)):
+    bank_account = bank_information_collections.find_one({"username": username})
+
+    if bank_account is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Bank account not found")
+
+    return {"Balance": bank_account["balance"]}

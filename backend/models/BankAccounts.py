@@ -6,18 +6,19 @@ class BankAccount(BaseModel):
     username: str = Field(default=None)
     bankname: str = Field(default=None)
     accountname: str = Field(default=None)
-    accountbsb: str = Field(default=None)
-    accountnumber: str = Field(default=None)
+    accountbsb: Optional[str] = Field(default=None)
+    accountnumber: Optional[str] = Field(default=None)
     cardtitle: Optional[str] = Field(default=None)
-    cardnumber: Optional[str] = Field(default=None)
-    cardexpirydate: Optional[str] = Field(default=None)
-    cardccv: Optional[str] = Field(default=None)
-    
+    cardnumber: str = Field(default=None)
+    cardexpirydate: str = Field(default=None)
+    cardccv: str = Field(default=None)
+
     @validator('cardnumber')
     def validate_bank_card_number(cls, cardnumber):
         # Bank Card Number should be in the format XXXX-XXXX-XXXX-XXXX
         if cardnumber and not BankAccountValidator.validate_card_number(cardnumber):
             raise ValueError('Invalid Card number format. It should be XXXX-XXXX-XXXX-XXXX')
+        return cardnumber
 
     @validator('accountbsb')
     def validate_bsb(cls, accountbsb):
@@ -25,7 +26,7 @@ class BankAccount(BaseModel):
         if accountbsb and not BankAccountValidator.validate_bsb(accountbsb):
             raise ValueError('Invalid BSB format. It should be XXX-XXX.')
         return accountbsb
-    
+
     @validator('accountnumber')
     def validate_account_number(cls, accountnumber):
         # Australian bank accounts have the following formats:
@@ -41,7 +42,7 @@ class BankAccount(BaseModel):
         if cardexpirydate and not BankAccountValidator.validate_expiry_date(cardexpirydate):
             raise ValueError('Invalid expiry date format. It should be MM/YY.')
         return cardexpirydate
-    
+
     @validator('cardccv')
     def validate_ccv(cls, cardccv):
         # CCV should be a 3 digits string
