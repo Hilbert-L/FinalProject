@@ -4,6 +4,7 @@ from routers.GeneralRouters import GeneralRouter
 from routers.ProtectedEndpoints import ProtectedRouter
 from routers.UserRouters import UserRouter
 from routers.CarSpaceRouters import CarSpaceRouter
+from routers.BookingRouters import BookingRouter
 from routers.AdminRouters import AdminRouter
 from routers.SearchRouters import SearchRouter
 from routers.BankAccountRouters import BankAccountRouter
@@ -44,4 +45,5 @@ app.include_router(CarSpaceRouter)
 app.include_router(SearchRouter)
 app.include_router(AdminRouter)
 app.include_router(BankAccountRouter)
+app.include_router(BookingRouter)
 app.include_router(TransactionRouter)
