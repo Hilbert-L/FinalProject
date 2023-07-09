@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useJsApiLoader, GoogleMap, Autocomplete, Marker } from '@react-google-maps/api';
 import 'bootstrap/dist/css/bootstrap.css';
 import axios from 'axios';
+import { makeRequest } from '../helpers';
 
 const libraries: ("places")[] = ['places'];
 
@@ -47,6 +48,11 @@ export const SearchPage = (props: any) => {
     const [showModal, setShowModal] = useState(false);
     const [address, setAddress] = useState('');
     const [showList, setShowList] = useState(false);
+    const [carSpaces, setCarSpaces] = useState([
+      {id: 1, lat: -33.86819, lng: 151.22464},
+      {id: 2, lat: -33.87023, lng: 151.22411},
+      {id: 3, lat: -33.87071, lng: 151.22299}
+    ]);
 
     // Finds the coordinates of the given location
     const handleSearch = () => {
@@ -118,14 +124,33 @@ export const SearchPage = (props: any) => {
     }
 
     React.useEffect(() => {
+
+      async function retrieveCarSpaces(postcode: string) {
+        let token = localStorage.getItem('authToken') || '';
+        let headers = {
+          'accept': 'application/json',
+          'token': token,
+          'Content-Type': 'application/json',
+        }
+        let body = {
+          "limit": "10",
+          "sort": false,
+          "postcode": postcode,
+        }
+        let response = await makeRequest("/search/postcode", "PUT", body, headers);
+        let carSpaces = response.resp;
+        return carSpaces['Postcode Search Results'];
+      }
         // TODO
         // Add markers for all of the search results in this area
-        extractSuburb(searchValue)
-        .then(result => {
-            console.log(result);
-            // DO API CALLS HERE WITH THE RESULT (contains suburb and postcode)
-        });
-        
+      async function addMarkers() {
+        let search = await extractSuburb(searchValue)
+        let carSpaceResults = await retrieveCarSpaces(search[1])
+        //setCarSpaces(carSpaceResults);
+        };
+
+      addMarkers();
+      console.log(carSpaces);
     }, [mapCenter]);
 
     const handleClose = () => setShowModal(false);
@@ -150,9 +175,12 @@ export const SearchPage = (props: any) => {
               </div>
           </Autocomplete>
           <GoogleMap center={mapCenter} zoom={15} options={{zoomControl: false, mapTypeControl: false, fullscreenControl: false}} mapContainerStyle={ {width: '100%', height: '100%'} }>
-            <Marker onClick={() => handleClick({position: { lat: -33.878057, lng: 151.099798 }})} position={{ lat: -33.878057, lng: 151.099798 }} />
+            {/* <Marker onClick={() => handleClick({position: { lat: -33.878057, lng: 151.099798 }})} position={{ lat: -33.878057, lng: 151.099798 }} />
             <Marker onClick={() => handleClick({position: { lat: -33.878608, lng: 151.105119 }})} position={{ lat: -33.878608, lng: 151.105119 }} />
-            <Marker onClick={() => handleClick({position: { lat: -33.875952, lng: 151.102872 }})} position={{ lat: -33.875952, lng: 151.102872 }} /> 
+            <Marker onClick={() => handleClick({position: { lat: -33.875952, lng: 151.102872 }})} position={{ lat: -33.875952, lng: 151.102872 }} />  */}
+            {carSpaces.map((carspace) => (
+              <Marker key={carspace.id} position={{ lat: carspace.lat, lng: carspace.lng }} />
+            ))}
           </GoogleMap>
           { showModal && <div style={modalBox}>
             <h4>{address}</h4>
@@ -171,18 +199,12 @@ export const SearchPage = (props: any) => {
           }   
 
           { showList && <div style={modalBox}>
-            <div style={{display: 'flex', justifyContent: 'left', gap: '20px'}}>
-              <img style={{ width: '75px', height: '75px' }} alt="Car Space Picture"></img>
-              <span>8 Conder St, Burwood NSW 2134, Australia</span>
-            </div><br/>
-            <div style={{display: 'flex', justifyContent: 'left', gap: '20px'}}>
-              <img style={{ width: '75px', height: '75px' }} alt="Car Space Picture"></img>
-              <span>11 Elizabeth St, Burwood NSW 2134, Australia</span>
-            </div><br/>
-            <div style={{display: 'flex', justifyContent: 'left', gap: '20px'}}>
-              <img style={{ width: '75px', height: '75px' }} alt="Car Space Picture"></img>
-              <span>Suite 3 Corner of George &, Elsie St, Burwood NSW 2134, Australia</span>
-            </div><br/>
+            {carSpaces.map((carspace) => (
+              <div key={carspace.id} style={{display: 'flex', justifyContent: 'left', gap: '20px'}}>
+                <img style={{ width: '75px', height: '75px' }} alt="Car Space Picture"></img>
+                <span>ID: {carspace.id} Latitude: {carspace.lat} Longitude: {carspace.lng}</span>
+              </div>
+            ))}
             <button style={{position: 'relative', left: '450px', width: '20%'}} onClick={() => setShowList(false)}>Close</button>
           </div>
           }   
