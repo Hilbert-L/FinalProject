@@ -34,6 +34,8 @@ type LisitngInfo = {
 
 export const ListingForm = () => {
   const [info, setInfo] = useState<LisitngInfo>({});
+  
+  const [photo, setPhoto] = useState<string>();
 
   const [error, setError] = useState<string>();
 
@@ -42,6 +44,7 @@ export const ListingForm = () => {
   const token = localStorage.getItem("authToken")!;
 
   const handleSubmit = () => {
+    // Need to add photo as info to send
     const body = {
       "Address": String(info.address),
       "SpaceType": String(info.spaceType),
@@ -56,6 +59,16 @@ export const ListingForm = () => {
         else setError(response.resp.detail);
       })
   }
+  const handlePhoto = (event) => {
+    if (event.target.files) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64 = reader.result as string;
+        setPhoto(base64)
+      };
+      reader.readAsDataURL(event.target.files[0]);
+    }
+  };
 
   const allFilledOut = info.address !== undefined
     && info.spaceType !== undefined
@@ -63,6 +76,7 @@ export const ListingForm = () => {
     && info.accessKey !== undefined
     && info.width !== undefined
     && info.length !== undefined
+    && photo !== undefined
   
   return (
     <FormContainer width="500px" top="50px">
@@ -107,7 +121,7 @@ export const ListingForm = () => {
           </FloatingLabel>
         </Form.Group>
         <Form.Group>
-          <Form.Label>What's the largest type of vehicle can it hold?</Form.Label>
+          <Form.Label>What's the largest type of vehicle it can hold?</Form.Label>
           <FloatingLabel controlId="floatingVehicleType" label="Vehicle Type" className="mb-3">
             <Form.Select
               value={info.vehicleType}
@@ -178,6 +192,15 @@ export const ListingForm = () => {
               </FloatingLabel>
             </Col>
           </Row>
+        </Form.Group>
+        <Form.Group>
+          <Form.Label>Please upload a photo of the car space</Form.Label>
+          <Form.Control
+                type="file"
+                value={info.photo}
+                accept="image/*"
+                onChange={(event) => handlePhoto(event)}
+              />
         </Form.Group>
         {error && <span style={{ color: "#D7504D", fontSize: "14px" }}>{error}</span>}
         <div className="d-grid gap-2" style={{ paddingTop: "10px" }}>

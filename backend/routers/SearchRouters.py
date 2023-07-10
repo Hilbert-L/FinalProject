@@ -7,7 +7,7 @@ import json
 
 SearchRouter = APIRouter()
 
-@SearchRouter.get("/search/postcode", tags=["Search Car Spaces"])
+@SearchRouter.put("/search/postcode", tags=["Search Car Spaces"])
 async def search_by_postcode(postcode_search: SearchByPostcode):
     filter = {"postcode": postcode_search.postcode}
     car_space_cursor = car_space_collections.find(filter)

@@ -1,13 +1,15 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { Button, Col, FloatingLabel, Form, Row } from "react-bootstrap";
 import 'bootstrap/dist/css/bootstrap.css';
 import { Modal } from 'react-bootstrap';
 import { makeRequest } from '../helpers';
 
 interface Profile {
-  name: string;
-  email: string;
-  password: string;
-  photo: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  password?: string;
+  photo?: string;
 }
 
 export const MyProfile = (props: any) => {
@@ -41,17 +43,36 @@ export const MyProfile = (props: any) => {
   };
 
   // These will initialised as whatever we get back from the API call
-  const [profile, setProfile] = useState<Profile>({
-    name: 'Osman Catal',
-    email: 'osman@email.com',
-    password: 'osman123',
-    photo: '',
-  });
-
+  const [profile, setProfile] = useState<Profile>({});
   const [showModal, setShowModal] = useState(false);
   const [modalContent, setModalContent] = useState('');
   const [detailChange, setDetailChange] = useState('');
   const [showError, setShowError] = useState(false);
+  const [username, setUsername] = useState('');
+  const oldPassword = null;
+
+  useEffect(() => {
+    async function retrieveUserInfo() {
+      let token = localStorage.getItem('authToken') || '';
+      let headers = {
+        'accept': 'application/json',
+        'token': token,
+        'Content-Type': 'application/json',
+      }
+      let response = await makeRequest("/user/get_current_user", "GET", undefined, headers);
+      let userInfo = response.resp['User Info'];
+      setUsername(userInfo.username)
+      setProfile(prevProfile => ({
+        ...prevProfile, // Copy the existing profile object
+        name: userInfo.firstname,
+        email: userInfo.email,
+        password: userInfo.passwordunhashed,
+        photo: userInfo.profileImagedata,
+      }));
+    }
+    retrieveUserInfo();
+  }, []);
+
 
   // Checks for changes in input then updates state variable
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -73,16 +94,21 @@ export const MyProfile = (props: any) => {
       setShowModal(false);
       return;
     }
-    setProfile({ ...profile, [modalContent]: detailChange });
+    if (modalContent === 'first name') {
+      setProfile({ ...profile, firstName: detailChange });
+    } else if (modalContent === 'last name') {
+      setProfile({ ...profile, lastName: detailChange });
+    } else {
+      setProfile({ ...profile, [modalContent]: detailChange });
+    }
     setShowModal(false);
-    console.log(detailChange)
 
     let token = localStorage.getItem('authToken') || '';
   
     if (modalContent === "password") {
       let body = {
-        'username': "osman123",// WE NEED TO CHANGE THESE FOR THE DEMO
-        "currentPassword": "osman",// THIS NEEDS TO BE UPDATED TOO
+        'username': username,// WE NEED TO CHANGE THESE FOR THE DEMO
+        "currentPassword": profile.password,// THIS NEEDS TO BE UPDATED TOO
         "newPassword": detailChange
       }
       let headers = {
@@ -103,12 +129,11 @@ export const MyProfile = (props: any) => {
         })
     } else {
       let body = {
-        'username': "osman123",// WE NEED TO CHANGE THESE FOR THE DEMO
-        "newEmail": detailChange,
-        "newTitle": "user@example.com",
-        "newFirstName": "hey",
-        "newLastName": "hey",
-        "newProfilePic": "hey"
+        'username': username,// WE NEED TO CHANGE THESE FOR THE DEMO
+        "newEmail": profile.email,
+        "newFirstName": profile.firstName,
+        "newLastName": profile.lastName,
+        "newPhoneNumber": 0,
       }
       let headers = {
         'accept': 'application/json',
@@ -158,17 +183,36 @@ export const MyProfile = (props: any) => {
         </div>
         <div style={profileDetailsContainer}>
           <div className="input-group">
-            <span className="input-group-text">name</span>
+            <span className="input-group-text">first name</span>
             <input
               type="text"
               aria-label="Full name"
-              value={profile.name}
+              value={profile.firstName}
               className="form-control"
               disabled
             />
             <button
               className="btn btn-primary"
-              onClick={() => handleShow('name')}
+              onClick={() => handleShow('first name')}
+              type="button"
+              id="button-addon2"
+            >
+              change
+            </button>
+          </div>
+          <br />
+          <div className="input-group">
+            <span className="input-group-text">last name</span>
+            <input
+              type="text"
+              aria-label="Full name"
+              value={profile.lastName}
+              className="form-control"
+              disabled
+            />
+            <button
+              className="btn btn-primary"
+              onClick={() => handleShow('last name')}
               type="button"
               id="button-addon2"
             >
@@ -264,4 +308,4 @@ export const MyProfile = (props: any) => {
   );
 };
 
-// eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VybmFtZSI6Im9zbWFuMTIzIn0.6RRMM5GOiywaGqq8Y40QBRxxquYqQR4A0_SipgNIpNQ
+// eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VybmFtZSI6InN0cmluZyJ9.8qE-7f6SOPTQH2RcKpDiO5pzsZiHP0HXxAS9YzFgG7E
