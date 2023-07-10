@@ -15,7 +15,7 @@ class UpdateCarSpace(BaseModel):
     currency: Optional[str] = Field(default=None)
     price: Optional[str] = Field(default=None)
     frequency: Optional[str] = Field(default=None)
-
+    leasing:Optional[bool] = Field(default=None)
     class Config:
         schema = {
             "sample" : {
@@ -31,6 +31,7 @@ class UpdateCarSpace(BaseModel):
                 "currency" : "AUD2",
                 "price" : "101",
                 "frequency" :"Weekly",
+                "leasing": True
             }
         }
 

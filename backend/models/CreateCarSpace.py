@@ -43,6 +43,9 @@ class CreateCarSpaceSchema(BaseModel):
     currency: str = Field(default=None)
     price: str = Field(default=None)
     frequency: str = Field(default=None)
+    leasing: bool = Field(default=None)
+    booking: bool = Field(default=None)
+    using: bool = Field(default=None)
     class Config:
         schema = {
             "sample": {
@@ -58,6 +61,9 @@ class CreateCarSpaceSchema(BaseModel):
                 "currency": "AUD",
                 "price": "100",
                 "frequency": "Daily",
+                "leasing": True,
+                "booking": False,
+                "using": False,
             }
         }
 
@@ -81,6 +87,9 @@ class CarSpaceSchema(BaseModel):
     currency: str = Field(default=None)
     price: str = Field(default=None)
     frequency: str = Field(default=None)
+    leasing: bool = Field(default=None)
+    booking: bool = Field(default=None)
+    using: bool = Field(default=None)
     class Config:
         schema = {
             "sample" : {
@@ -103,5 +112,8 @@ class CarSpaceSchema(BaseModel):
                 "currency": "AUD",
                 "price": "100",
                 "frequency": "Daily",
+                "leasing": True,
+                "booking": False,
+                "using": False,
             }
         }

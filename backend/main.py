@@ -4,10 +4,13 @@ from routers.GeneralRouters import GeneralRouter
 from routers.ProtectedEndpoints import ProtectedRouter
 from routers.UserRouters import UserRouter
 from routers.CarSpaceRouters import CarSpaceRouter
+from routers.BookingRouters import BookingRouter
 from routers.AdminRouters import AdminRouter
 from routers.SearchRouters import SearchRouter
-from routers.BankTransactionRouters import TransactionRouter
+from routers.BankAccountRouters import BankAccountRouter
+from routers.TransactionRouters import TransactionRouter
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 import sys
 import os
 from dotenv import load_dotenv
@@ -31,6 +34,9 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PUT", "DELETE"],
     allow_headers=["*"],
 )
+# add GZip middleware
+app.add_middleware(GZipMiddleware, minimum_size=1000)
+
 
 app.include_router(GeneralRouter)
 app.include_router(ProtectedRouter)
@@ -38,4 +44,6 @@ app.include_router(UserRouter)
 app.include_router(CarSpaceRouter)
 app.include_router(SearchRouter)
 app.include_router(AdminRouter)
+app.include_router(BankAccountRouter)
+app.include_router(BookingRouter)
 app.include_router(TransactionRouter)

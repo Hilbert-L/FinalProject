@@ -13,7 +13,9 @@ from base64 import b64encode
 import base64
 from authentication.authentication import generate_token, verify_user_token
 import json 
-import os 
+import os
+import io
+from PIL import Image
 
 CarSpaceRouter = APIRouter()
 
@@ -47,13 +49,16 @@ async def create_car_space(create_car_space: CreateCarSpaceSchema, token: str = 
         currency=create_car_space.currency,
         price=create_car_space.price,
         frequency=create_car_space.frequency,
+        leasing=create_car_space.leasing,
+        booking=create_car_space.booking,
+        using=create_car_space.using,
     )
 
     new_car_space_dict = new_car_space.dict()
     car_space_collections.insert_one(dict(new_car_space_dict))
     return {"Message": "Car Space Added Successfully", "Car Space": new_car_space_dict}
 
-
+# Will add three attributes: leasing, using and booking
 @CarSpaceRouter.put("/carspace/updatecarspace", tags=["Car Spaces"])
 @check_token
 async def update_car_space(update_car_space: UpdateCarSpace, token: str = Depends(verify_user_token)):
@@ -92,7 +97,7 @@ async def create_car_space_review(car_space_review: CarSpaceReview, token: str =
     return {"Message": "Car Space Review Added Successfully"}
 
 
-@CarSpaceRouter.get("/carspace/reviews/get_all_reviews_for_consumer/{username}")
+@CarSpaceRouter.get("/carspace/reviews/get_all_reviews_for_consumer/{username}", tags=["Car Spaces"])
 @check_token
 async def get_car_space_reviews_for_consumer(username: str, token: str = Depends(verify_user_token)):
     review_cursor = car_space_review_collections.find({"reviewerusername": username})
@@ -103,7 +108,7 @@ async def get_car_space_reviews_for_consumer(username: str, token: str = Depends
         reviews.append(document_dict)
     return {f"Reviews made by user: {username}": reviews}
 
-@CarSpaceRouter.get("/carspace/reviews/get_all_reviews_for_producer/{username}")
+@CarSpaceRouter.get("/carspace/reviews/get_all_reviews_for_producer/{username}", tags=["Car Spaces"])
 @check_token
 async def get_car_space_reviews_for_producer(username: str, token: str = Depends(verify_user_token)):
     review_cursor = car_space_review_collections.find({"ownerusername": username})
@@ -114,7 +119,7 @@ async def get_car_space_reviews_for_producer(username: str, token: str = Depends
         reviews.append(document_dict)
     return {f"Reviews received by user: {username}": reviews}
 
-@CarSpaceRouter.get("/carspace/reviews/get_all_reviews_for_producer/{username}/{carspaceid}")
+@CarSpaceRouter.get("/carspace/reviews/get_all_reviews_for_producer/{username}/{carspaceid}", tags=["Car Spaces"])
 @check_token
 async def get_car_space_reviews_for_producer(username: str, carspaceid: int, token: str = Depends(verify_user_token)):
     review_cursor = car_space_review_collections.find({"ownerusername": username, "carspaceid": carspaceid})
@@ -124,6 +129,19 @@ async def get_car_space_reviews_for_producer(username: str, carspaceid: int, tok
         document_dict = json.loads(document_str)
         reviews.append(document_dict)
     return {f"Reviews received by user: {username} and carspace: {carspaceid}": reviews}
+
+def is_valid_image(base64_img_str):
+    # Check if this is a "data URL"
+    if base64_img_str.startswith('data:image'):
+        # Find the start of the actual image data
+        base64_img_str = base64_img_str.split(',', 1)[1]
+    try:
+        img_data = base64.b64decode(base64_img_str)
+        img = Image.open(io.BytesIO(img_data))
+        img.verify()  # verify that it is, in fact, an image
+        return True
+    except Exception:
+        return False
 
 @CarSpaceRouter.post("/carspace/upload_image/{username}/{carspaceid}", tags=["Car Spaces"])
 @check_token
@@ -147,14 +165,15 @@ async def upload_car_space_image(username: str, carspaceid: int, image: UploadFi
         carspace_image_info["carSpaceImageextension"] = file_extension
         carspace_image_info_list.append(carspace_image_info)
 
-    if base64_image:
-        try:
+    elif base64_image:
+        base64_image = base64_image + '=' * (-len(base64_image) % 4)
+        if is_valid_image(base64_image):
             carspace_image_info = {}
-            carspace_image_info["carSpaceImage"] = f"{username}_{image.filename}"
+            carspace_image_info["carSpaceImage"] = f"{username}_{base64_image}"
             carspace_image_info["carSpaceID"] = carspaceid
             carspace_image_info["carSpaceImagedata"] = base64.b64decode(base64_image)
             carspace_image_info_list.append(carspace_image_info)
-        except Exception:
+        else:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid base64 image")
 
     existing_document = car_space_image_collections.find_one({"username": username, "carspaceid": carspaceid})
@@ -196,9 +215,12 @@ async def get_all_car_space_images(username: str, carspaceid: int, token: str = 
 @CarSpaceRouter.delete("/carspace/delete_image/{username}/{carspaceid}/{imagename}", tags=["Car Spaces"])
 @check_token
 async def delete_single_car_space_image_for_user_carspace(username: str, carspaceid: int, imagename: str, token: str = Depends(verify_user_token)):
-    result = car_space_image_collections.delete_one({"imagename": imagename, "carspaceid": carspaceid, "username": username})
+    result = car_space_image_collections.update_one(
+        {"username": username, "carspaceid": carspaceid},
+        {"$pull": {"images": {"carSpaceImage": imagename}}}
+    )
 
-    if result.deleted_count == 1:
+    if result.modified_count == 1:
         return {"message": "Car Space Image deleted successfully"}
     else:
         return {"message": "Car Space Image not found"}
