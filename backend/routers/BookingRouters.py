@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, status, HTTPException
 from datetime import datetime, timedelta
 from typing import List
+import pytz
 
 from mongodbconnect.mongodb_connect import (
     car_space_collections,
@@ -33,6 +34,15 @@ async def create_booking(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Invalid carspace"
         )
+
+
+    # convert start_date to UTC format
+    start_date_utc = carspace_booking.start_date.replace(tzinfo=pytz.UTC)
+    current_time_utc = datetime.now(pytz.UTC)
+    if start_date_utc < current_time_utc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Start date cannot be in the past")
+
+
 
     # Verify start_date is ealier than the end_date
     if carspace_booking.start_date >= carspace_booking.end_date:
@@ -73,20 +83,26 @@ async def create_booking(
 
     # Create a new booking instance
     booking = BookingCreateSchema(
-        consumer_username=consumer_user["username"],
-        provider_username=provider_username,
-        carspaceid=carspaceid,
         start_date=carspace_booking.start_date,
         end_date=carspace_booking.end_date,
-        duration_hours=duration,
     )
+
+    hour_price = carspace['price']
+    total_price = hour_price * duration
+
 
     # Create a new booking instance
     booking_count = booking_collections.count_documents({})
 
     # Convert booking instance to dictionary and insert into database
     booking_dict = booking.dict()
+    booking_dict["consumer_username"] = consumer_user["username"]
+    booking_dict["provider_username"] = provider_username
+    booking_dict["carspaceid"] = carspaceid
+    booking_dict["duration_hours"] = duration
+    booking_dict['total_price'] = total_price
     booking_dict["booking_id"] = booking_count + 1
+
     booking_collections.insert_one(dict(booking_dict))
 
     return {
@@ -94,7 +110,7 @@ async def create_booking(
         "Booking": booking_dict,
     }
 
-
+    
 
 @BookingRouter.delete("/booking/delete_booking/{booking_id}", tags=["Booking"])
 @check_token
