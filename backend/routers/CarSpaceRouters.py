@@ -49,9 +49,6 @@ async def create_car_space(create_car_space: CreateCarSpaceSchema, token: str = 
         currency=create_car_space.currency,
         price=create_car_space.price,
         frequency=create_car_space.frequency,
-        leasing=create_car_space.leasing,
-        booking=create_car_space.booking,
-        using=create_car_space.using,
     )
 
     new_car_space_dict = new_car_space.dict()
@@ -204,12 +201,21 @@ async def upload_car_space_image(username: str, carspaceid: int, image: UploadFi
 @CarSpaceRouter.get("/carspace/get_all_images/{username}/{carspaceid}", tags=["Car Spaces"])
 @check_token
 async def get_all_car_space_images(username: str, carspaceid: int, token: str = Depends(verify_user_token)):
-    carspace_images_cursor = car_space_image_collections.find({"carspaceid": carspaceid, "username": username})
+    users = users_collections.find_one({"username": username})
+
+    if users is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invalid username")
+
+    car_space_images_cursor = car_space_image_collections.find({"carspaceid": carspaceid, "username": username})
     images = []
-    for document in carspace_images_cursor:
+    for document in car_space_images_cursor:
         document_str = json.dumps(document, default=str)
         document_dict = json.loads(document_str)
         images.append(document_dict)
+
+    if not images:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No images found for the given username and carspaceid")
+
     return {"carspace_images": images}
 
 @CarSpaceRouter.delete("/carspace/delete_image/{username}/{carspaceid}/{imagename}", tags=["Car Spaces"])
