@@ -96,7 +96,7 @@ export const SearchPage = () => {
 		return [searchedSuburb, searchedPostcode];
 	}
 
-	const handleShowModal = (carspace) => {
+	const handleShowModal = (carspace: any) => {
 		console.log(carspace)
 		setShowModal(true);
 	}
