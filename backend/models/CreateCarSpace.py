@@ -41,11 +41,8 @@ class CreateCarSpaceSchema(BaseModel):
     accesskeyrequired: Optional[bool] = Field(default=None)
     vehiclesize: Optional[str] = Field(default=None)
     currency: str = Field(default=None)
-    price: str = Field(default=None)
+    price: int = Field(default=None)
     frequency: str = Field(default=None)
-    leasing: bool = Field(default=None)
-    booking: bool = Field(default=None)
-    using: bool = Field(default=None)
     class Config:
         schema = {
             "sample": {
@@ -59,11 +56,8 @@ class CreateCarSpaceSchema(BaseModel):
                 "accesskeyrequired": False,
                 "vehiclesize": "Large",
                 "currency": "AUD",
-                "price": "100",
+                "price": 100,
                 "frequency": "Daily",
-                "leasing": True,
-                "booking": False,
-                "using": False,
             }
         }
 
@@ -85,11 +79,8 @@ class CarSpaceSchema(BaseModel):
     accesskeyrequired: Optional[bool] = Field(default=False)
     vehiclesize: Optional[str] = Field(default=None)
     currency: str = Field(default=None)
-    price: str = Field(default=None)
+    price: int = Field(default=None)
     frequency: str = Field(default=None)
-    leasing: bool = Field(default=None)
-    booking: bool = Field(default=None)
-    using: bool = Field(default=None)
     class Config:
         schema = {
             "sample" : {
@@ -110,10 +101,7 @@ class CarSpaceSchema(BaseModel):
                 "accesskeyrequired": False,
                 "vehiclesize": "Large",
                 "currency": "AUD",
-                "price": "100",
+                "price": 100,
                 "frequency": "Daily",
-                "leasing": True,
-                "booking": False,
-                "using": False,
             }
         }

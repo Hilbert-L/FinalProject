@@ -1,4 +1,3 @@
-from models.Transaction import MakePayment
 from fastapi import APIRouter, Depends, status, HTTPException, Header, UploadFile, File
 from mongodbconnect.mongodb_connect import bank_information_collections, transaction_information_collections, users_collections
 from models.BankAccounts import BankAccount
