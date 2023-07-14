@@ -80,7 +80,6 @@ async def create_booking(
 
     # Calculate duration in hours
     duration= int((carspace_booking.end_date - carspace_booking.start_date).total_seconds() / 3600)
-
     # Create a new booking instance
     booking = BookingCreateSchema(
         start_date=carspace_booking.start_date,

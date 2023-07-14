@@ -34,12 +34,13 @@ async def make_payment(booking_id: int, token: str = Depends(verify_user_token))
     # Update consumer's balance
     Cnew_balance = consumer_info["balance"] - total_price
     # Check current balance of consumer
-
-
-    bank_information_collections.update_one(
-        {"username": consumer_info['username']},
-        {"$set": {"balance": Cnew_balance}}
-    )
+    if Cnew_balance < 0:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Insufficient balance to accomplish the transaction")
+    else:
+        bank_information_collections.update_one(
+            {"username": consumer_info['username']},
+            {"$set": {"balance": Cnew_balance}}
+        )
 
     num_transactions = transaction_information_collections.count_documents({})
 
@@ -60,6 +61,11 @@ async def make_payment(booking_id: int, token: str = Depends(verify_user_token))
 @TransactionRouter.get("/transactions/get_paymanet_detail/{transaction_id}", tags=["User Transactions"])
 @check_token
 async def get_payment_detail(transaction_id: int, token: str = Depends(verify_user_token)):
+    # Verify user
+    user = users_collections.find_one({"username": token})
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid user")
+
     transaction_info = transaction_information_collections.find_one({"TansactionID": transaction_id})
 
     if transaction_info is None:
@@ -67,10 +73,10 @@ async def get_payment_detail(transaction_id: int, token: str = Depends(verify_us
 
     PaymentDetail = {
         "Transaction ID": transaction_info["TansactionID"],
-        "Title": transaction_info["title"],
+        "Status": transaction_info["status"],
         "Created At": transaction_info["transaction_time"],
-        "Receiver": transaction_info["receiverusername"],
-        "Amount": transaction_info["amount"]
+        "Receiver": transaction_info["provider_name"],
+        "Amount": transaction_info["total_price"]
     }
 
     return PaymentDetail
@@ -81,7 +87,7 @@ async def get_all_transactions(username: str, token: str = Depends(verify_user_t
     # Verify user
     user = users_collections.find_one({"username": token})
     if user is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invalid user")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid user")
 
     # Check if the user is authorized to view the booking history
     if username != user["username"]:
@@ -108,7 +114,7 @@ async def cancel_payment(transaction_id: int, token: str = Depends(verify_user_t
     # Verify consumer
     consumer_user = users_collections.find_one({"username": token})
     if consumer_user is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invalid user")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid user")
 
     transaction_info = transaction_information_collections.find_one({"TansactionID": transaction_id})
 
@@ -143,15 +149,3 @@ async def cancel_payment(transaction_id: int, token: str = Depends(verify_user_t
     transaction_information_collections.delete_one({"TansactionID": transaction_id})
 
     return {"Message": "Payment cancelled successfully"}
-
-
-
-# TODO For Haoran we are creating separate collection for bank accounts and transaction
-# not under Users 
-# it may make things too complicated further down the line for data processesing 
-# Please implement the following if you can
-# Cancel Payment (Done)
-# Update Payment Method
-# Check balance for user for each account (Done)
-# Update Payment in AdminRouters.py (Done)
-

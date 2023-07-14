@@ -142,51 +142,49 @@ def is_valid_image(base64_img_str):
 
 @CarSpaceRouter.post("/carspace/upload_image/{username}/{carspaceid}", tags=["Car Spaces"])
 @check_token
-async def upload_car_space_image(username: str, carspaceid: int, image: UploadFile = File(None),
+async def upload_car_space_image(username: str, carspaceid: int,
                                  base64_image: str = None, token: str = Depends(verify_user_token)):
-    if not image and not base64_image:
+    # Verify user
+    user = users_collections.find_one({"username": token})
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid user")
+
+    if not base64_image:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No image provided")
+
     carspace_image_info_list = []
-    if image:
-        carspace_image_info = {}
-        image_file_types = {'.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff', '.tif', '.webp', '.svg', '.ico'}
-        contents = await image.read()
-        file_extension = os.path.splitext(image.filename)[1].lower()
-
-        if file_extension not in image_file_types:
-            raise HTTPException(status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, detail="Invalid image file type")
-
-        carspace_image_info["carSpaceImage"] = f"{username}_{image.filename}"
-        carspace_image_info["carSpaceID"] = carspaceid
-        carspace_image_info["carSpaceImagedata"] = contents
-        carspace_image_info["carSpaceImageextension"] = file_extension
-        carspace_image_info_list.append(carspace_image_info)
-
-    elif base64_image:
-        base64_image = base64_image + '=' * (-len(base64_image) % 4)
-        if is_valid_image(base64_image):
+    if base64_image:
+        verify_base64_image = base64_image + '=' * (-len(base64_image) % 4)
+        if is_valid_image(verify_base64_image):
             carspace_image_info = {}
-            carspace_image_info["carSpaceImage"] = f"{username}_{base64_image}"
-            carspace_image_info["carSpaceID"] = carspaceid
-            carspace_image_info["carSpaceImagedata"] = base64.b64decode(base64_image)
+            carspace_image_info["carSpaceImagedata"] = base64_image
             carspace_image_info_list.append(carspace_image_info)
         else:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid base64 image")
 
-    existing_document = car_space_image_collections.find_one({"username": username, "carspaceid": carspaceid})
+    existing_document = car_space_image_collections.find_one({"username": username, "carSpaceID": carspaceid})
 
     if existing_document:
         # If a document for this user and carspaceid already exists, append new images to the existing list
+        image_id = existing_document.get("next_image_id", 1)
+        for image_info in carspace_image_info_list:
+            image_info["image_id"] = image_id
+            image_id += 1
         car_space_image_collections.update_one(
-            {"username": username},
-            {"$push": {"images": {"$each": carspace_image_info_list}}}
+            {"username": username, "carSpaceID": carspaceid},
+            {"$push": {"images": {"$each": carspace_image_info_list}}, "$set": {"next_image_id": image_id}}
         )
     else:
         # If no such document exists, create a new one
+        image_id = 1
+        for image_info in carspace_image_info_list:
+            image_info["image_id"] = image_id
+            image_id += 1
         car_space_image_collections.insert_one({
             "username": username,
-            "carspaceid": carspaceid,
-            "images": carspace_image_info_list
+            "carSpaceID": carspaceid,
+            "images": carspace_image_info_list,
+            "next_image_id": image_id
         })
 
     # Update the images in the users_collections
@@ -206,7 +204,7 @@ async def get_all_car_space_images(username: str, carspaceid: int, token: str = 
     if users is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invalid username")
 
-    car_space_images_cursor = car_space_image_collections.find({"carspaceid": carspaceid, "username": username})
+    car_space_images_cursor = car_space_image_collections.find({"carSpaceID": carspaceid, "username": username})
     images = []
     for document in car_space_images_cursor:
         document_str = json.dumps(document, default=str)
@@ -218,24 +216,51 @@ async def get_all_car_space_images(username: str, carspaceid: int, token: str = 
 
     return {"carspace_images": images}
 
-@CarSpaceRouter.delete("/carspace/delete_image/{username}/{carspaceid}/{imagename}", tags=["Car Spaces"])
+
+
+@CarSpaceRouter.delete("/carspace/delete_image/{username}/{carspaceid}/{imageid}", tags=["Car Spaces"])
 @check_token
-async def delete_single_car_space_image_for_user_carspace(username: str, carspaceid: int, imagename: str, token: str = Depends(verify_user_token)):
-    result = car_space_image_collections.update_one(
-        {"username": username, "carspaceid": carspaceid},
-        {"$pull": {"images": {"carSpaceImage": imagename}}}
+async def delete_single_car_space_image_for_user_carspace(username: str, carspaceid: int, imageid: int, token: str = Depends(verify_user_token)):
+    # Verify user
+    user = users_collections.find_one({"username": token})
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid user")
+
+    existing_document = car_space_image_collections.find_one({"username": username, "carSpaceID": carspaceid})
+    if existing_document is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Document not found")
+
+    # Find the image with the given ID
+    image_to_delete = None
+    for image in existing_document["images"]:
+        if image["image_id"] == imageid:
+            image_to_delete = image
+            break
+
+    if image_to_delete is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Image not found")
+
+    # Remove the image from the images list
+    existing_document["images"].remove(image_to_delete)
+
+    # Update the document in the database
+    car_space_image_collections.update_one(
+        {"username": username, "carSpaceID": carspaceid},
+        {"$set": {"images": existing_document["images"]}}
     )
 
-    if result.modified_count == 1:
-        return {"message": "Car Space Image deleted successfully"}
-    else:
-        return {"message": "Car Space Image not found"}
+    return {"Message": f"Image with ID {imageid} deleted successfully"}
     
 
 @CarSpaceRouter.delete("/carspace/delete_all_images/{username}/{carspaceid}", tags=["Car Spaces"])
 @check_token
 async def delete_all_car_space_images_for_carspace(username: str, carspaceid: int, token: str = Depends(verify_user_token)):
-    result = car_space_image_collections.delete_many({"carspaceid": carspaceid, "username": username})
+    # Verify user
+    user = users_collections.find_one({"username": token})
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid user")
+
+    result = car_space_image_collections.delete_many({"carSpaceID": carspaceid, "username": username})
 
     if result.deleted_count > 0:
         return {"message": "Car Space Images deleted successfully"}
