@@ -21,14 +21,20 @@ WEEK 4
 - Added map with autocomplete search bar on front-end.
 
 WEEK 5
--
+- Worked on search functionality - still a bit buggy. Got map to work with dummy markers/data.
+- Worked on profile functionality - change user name/email/password/photo.
+- Got name and password changes to work. Backend needs some changes to implement name/photo changes.
+- Finalised demo presentation A and presented for the group.
 
 WEEK 6
-- Completed search functionality
+- Continued working on search and profile functionality.
 
 WEEK 7
-- Fixed up code for "my profile" section.
-- Split profile into various tabs, including "details", "listings" and "bookings".
+- Fixed up code for "my profile" section. Removed bank details from here.
+- Made frontend for profile/map look much more clean - no overlapping elements.
+- Split profile into various tabs, including "details", "payment", "listings" and "bookings".
+- Worked on the user stories associated with the "details" and "payment" tabs.
+- Added simple RegEx validation checks for bank detail inputs.
 
 WEEK 8
 

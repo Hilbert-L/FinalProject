@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Container, Row, Col, InputGroup, Form, Button, Modal, OverlayTrigger, Tooltip, Spinner } from 'react-bootstrap';
+import { Container, Row, Col, InputGroup, Form, Button, Modal, OverlayTrigger, Tooltip, Spinner, Alert } from 'react-bootstrap';
 import { makeRequest } from '../helpers';
 
 interface Profile {
@@ -8,6 +8,7 @@ interface Profile {
     email?: string;
     password?: string;
     photo?: string;
+	number?: string
   }
 
 // TODO
@@ -22,6 +23,7 @@ export const MyDetails = () => {
 	const [modalState, setModalState] = useState('password');
 	const [showModal, setShowModal] = useState(false);
 	const [username, setUsername] = useState('');
+	const [showError, setShowError] = useState(false);
 	const [errorMessage, setErrorMessage] = useState('');
 	const [triggerRender, setTriggerRender] = useState(true);
 
@@ -32,8 +34,6 @@ export const MyDetails = () => {
 	const [currentPassword, setCurrentPassword] = useState('');
 	const [passwordChange, setPasswordChange] = useState('');
 	const [photoChange, setPhotoChange] = useState('');
-	const [BSBChange, setBSBChange] = useState('');
-	const [accountNumberChange, setAccountNumberChange] = useState('');
 	
 	useEffect(() => {
 		async function retrieveUserInfo() {
@@ -50,6 +50,7 @@ export const MyDetails = () => {
 				email: profileInfo.email,
 				password: profileInfo.passwordunhashed,
 				photo: image,
+				number: profileInfo.phonenumber,
 			}));
 			setIsLoaded(true);
 		}
@@ -70,10 +71,10 @@ export const MyDetails = () => {
 		async function uploadDetails() {
 			let body = {
 					"username": username,
-					"newEmail": emailChange,
-					"newFirstName": firstNameChange,
-					"newLastName": lastNameChange,
-					"newPhoneNumber": "0",
+					"newEmail": emailChange === "" ? null : emailChange,
+					"newFirstName": firstNameChange === "" ? null : firstNameChange,
+					"newLastName": lastNameChange === "" ? null : lastNameChange,
+					"newPhoneNumber": null,
 			}
 			try {
 				const response = await makeRequest("/user/update_personal_details", "PUT", body, { token })
@@ -85,8 +86,21 @@ export const MyDetails = () => {
 				console.log(error)
 			}
 		}
+
+		// If there are no changes, close the modal and return
+		if (firstNameChange === "" && lastNameChange === "" && emailChange === "") {
+			setShowModal(false);
+			return;
+		};
+		if (firstNameChange === "" && lastNameChange === "" && emailChange === "") {
+			setShowModal(false);
+			return;
+		};
 		uploadDetails();
 		setTriggerRender(triggerRender === true ? false : true);
+		setFirstNameChange("");
+		setLastNameChange("");
+		setEmailChange("");
 		setShowModal(false);
 	}
 
@@ -107,36 +121,19 @@ export const MyDetails = () => {
 				console.log(error)
 			}
 		}
-		uploadPassword();
-		setTriggerRender(triggerRender === true ? false : true);
-		setShowModal(false);
-	}
 
-	// TODO
-	// API not working
-	// Handles changing bank details
-	const handleBankChange = () => {
-		async function uploadBank() {
-			let body = {
-					"username": username,
-					"id": 0,
-					"newbankaccount": {
-						"bsb": BSBChange,
-						"accountnumber": accountNumberChange,
-						"expiry_date": "",
-						"ccv": ""
-					}
-			}
-			try {
-				const response = await makeRequest("/user/add_bank_account", "PUT", body, { token })
-				if (response.status !== 200) {
-					setErrorMessage(response.resp.detail[0].msg);
-				} 
-			} catch (error) {
-				console.log(error)
-			}
+		// Checks if the current password entered matches
+		if (profile.password !== currentPassword) {
+			setErrorMessage("Current password entered does not match your current password 😔");
+			setShowError(true);
+			setTimeout(() => {
+				setShowError(false);
+			  }, 5000);
+			setShowModal(false);
+			return;
 		}
-		uploadBank();
+		
+		uploadPassword();
 		setTriggerRender(triggerRender === true ? false : true);
 		setShowModal(false);
 	}
@@ -150,6 +147,7 @@ export const MyDetails = () => {
       reader.onloadend = () => {
         const base64String = reader.result as string;
         setPhotoChange(base64String);
+		console.log(base64String);
       };
       reader.readAsDataURL(event.target.files[0]);
     }
@@ -166,6 +164,7 @@ export const MyDetails = () => {
 				const response = await makeRequest("/user/upload_profile_picture", "POST", body, { token })
 				if (response.status !== 200) {
 					setErrorMessage(response.resp.detail[0].msg);
+					console.log(response.resp.detail[0].msg);
 				} 
 			} catch (error) {
 				console.log(error)
@@ -221,8 +220,8 @@ export const MyDetails = () => {
 						<Form.Control type="password" disabled aria-label="Password" value={profile.password}/>
 					</InputGroup>
 					<InputGroup>
-						<InputGroup.Text style={{ width: '100px' }}>bank</InputGroup.Text>
-						<Form.Control disabled aria-label="Card" value='Hello'/>
+						<InputGroup.Text style={{ width: '100px' }}>number</InputGroup.Text>
+						<Form.Control disabled aria-label="Card" value={profile.number}/>
 					</InputGroup>
 				</Col>
 			</Row>
@@ -233,9 +232,6 @@ export const MyDetails = () => {
 				</Col>
 				<Col>
 					<Button style={{ width: '180px' }} onClick={() => handleShow('password')}>change password</Button>
-				</Col>
-				<Col>
-					<Button style={{ width: '180px' }} onClick={() => handleShow('bank')}>change bank details</Button>
 				</Col>
 			</Row>
 
@@ -248,17 +244,18 @@ export const MyDetails = () => {
 						<Form>
 							<Form.Group className="mb-3">
 								<Form.Label>new first name</Form.Label>
-								<Form.Control type="text" placeholder={profile.firstName} onChange={(event) => setFirstNameChange(event.target.value)}/>
+								<Form.Control type="text" placeholder={profile.firstName} onChange={(event) => setFirstNameChange(event.target.value.trim())}/>
 							</Form.Group>
 							<Form.Group className="mb-3">
 								<Form.Label>new last name</Form.Label>
-								<Form.Control type="text" placeholder={profile.lastName} onChange={(event) => setLastNameChange(event.target.value)}/>
+								<Form.Control type="text" placeholder={profile.lastName} onChange={(event) => setLastNameChange(event.target.value.trim())}/>
 							</Form.Group>
 							<Form.Group className="mb-3">
 								<Form.Label>new email address</Form.Label>
-								<Form.Control type="email" placeholder={profile.email} onChange={(event) => setEmailChange(event.target.value)}/>
+								<Form.Control type="email" placeholder={profile.email} onChange={(event) => setEmailChange(event.target.value.trim())}/>
 							</Form.Group>
-							<Button onClick={handleDetailChange}>save changes</Button>
+							<Button onClick={handleDetailChange}>save changes</Button>&nbsp;&nbsp;
+							<span className="text-muted" style={{ fontSize: "10pt" }}>Any fields left blank will not be updated</span>
 						</Form>
 					}
 					{ modalState === 'password' &&
@@ -274,19 +271,6 @@ export const MyDetails = () => {
 							<Button onClick={handlePasswordChange}>save changes</Button>
 						</Form>
 					}
-					{ modalState === 'bank' &&
-						<Form>
-							<Form.Group className="mb-3">
-								<Form.Label>new BSB</Form.Label>
-								<Form.Control type="number" required onChange={(event) => setBSBChange(event.target.value)}/>
-							</Form.Group>
-							<Form.Group className="mb-3">
-								<Form.Label>new account number</Form.Label>
-								<Form.Control type="number" required onChange={(event) => setAccountNumberChange(event.target.value)}/>
-							</Form.Group>
-							<Button onClick={handleBankChange}>save changes</Button>
-						</Form>
-					}
 					{ modalState === 'photo' &&
 						<Form>
 							<Form.Group className="mb-3">
@@ -298,6 +282,12 @@ export const MyDetails = () => {
 					}
 				</Modal.Body>
 			</Modal>
+
+			{ showError
+			? <><br /><Alert style={{ zIndex: "10" }} variant={"danger"}>{errorMessage}</Alert></>
+			: <></>
+			}
+			
 		</Container>
 	)
 }

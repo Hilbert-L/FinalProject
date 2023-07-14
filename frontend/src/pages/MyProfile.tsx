@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Container, Row, Nav, Spinner, Tab, Tabs } from 'react-bootstrap';
 import { MyDetails } from "./MyDetails";
+import { MyPaymentDetails } from "./MyPaymentDetails";
 import { MyListings } from "./MyListings";
 import { MyBookings } from "./MyBookings";
 import { makeRequest } from '../helpers';
@@ -45,6 +46,10 @@ export const MyProfile = () => {
           <Tab eventKey="details" title="my details">
             <br />
             <MyDetails />
+          </Tab>
+          <Tab eventKey="bank" title="payment details">
+            <br />
+            <MyPaymentDetails username={username}/>
           </Tab>
           <Tab eventKey="listings" title="my listings">
             <br />
