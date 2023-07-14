@@ -7,13 +7,14 @@ import json
 
 SearchRouter = APIRouter()
 
-@SearchRouter.put("/search/postcode", tags=["Search Car Spaces"])
+
+@SearchRouter.post("/search/postcode", tags=["Search Car Spaces"])
 async def search_by_postcode(postcode_search: SearchByPostcode):
     filter = {"postcode": postcode_search.postcode}
     car_space_cursor = car_space_collections.find(filter)
 
     car_spaces = []
-    
+
     for document in car_space_cursor:
         document_str = json.dumps(document, default=str)
         document_dict = json.loads(document_str)
@@ -22,8 +23,9 @@ async def search_by_postcode(postcode_search: SearchByPostcode):
     limit = int(postcode_search.limit)
 
     if len(car_spaces) == 0:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="No car spaces found")
-        
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail="No car spaces found")
+
     if limit < len(car_spaces):
         return {"Postcode Search Results": car_spaces[:limit]}
 
@@ -36,7 +38,7 @@ async def search_by_suburb(suburb_search: SearchBySuburb):
     car_space_cursor = car_space_collections.find(filter)
 
     car_spaces = []
-    
+
     for document in car_space_cursor:
         document_str = json.dumps(document, default=str)
         document_dict = json.loads(document_str)
@@ -45,8 +47,9 @@ async def search_by_suburb(suburb_search: SearchBySuburb):
     limit = int(suburb_search.limit)
 
     if len(car_spaces) == 0:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="No car spaces found")
-        
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail="No car spaces found")
+
     if limit < len(car_spaces):
         return {"Suburb Search Results": car_spaces[:limit]}\
 
@@ -59,7 +62,7 @@ async def search_by_address(address_search: SearchByAddress):
     car_space_cursor = car_space_collections.find(filter)
 
     car_spaces = []
-    
+
     for document in car_space_cursor:
         document_str = json.dumps(document, default=str)
         document_dict = json.loads(document_str)
@@ -68,16 +71,15 @@ async def search_by_address(address_search: SearchByAddress):
     limit = int(address_search.limit)
 
     if len(car_spaces) == 0:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="No car spaces found")
-        
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail="No car spaces found")
+
     if limit < len(car_spaces):
         return {"Address Search Results": car_spaces[:limit]}
 
     return {"Address Search Results": car_spaces}
 
-    
+
 # TODO General search without recommendor system
 # TODO continue with recommendor systems without filtered search
 # TODO continue with recommendation systems for filtered search
-
-

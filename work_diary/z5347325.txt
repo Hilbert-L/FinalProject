@@ -21,10 +21,14 @@ WEEK 4
 - Added map with autocomplete search bar on front-end.
 
 WEEK 5
+-
 
 WEEK 6
+- Completed search functionality
 
 WEEK 7
+- Fixed up code for "my profile" section.
+- Split profile into various tabs, including "details", "listings" and "bookings".
 
 WEEK 8
 
