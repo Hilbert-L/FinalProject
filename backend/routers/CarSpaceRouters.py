@@ -1,7 +1,7 @@
 from mongodbconnect.mongodb_connect import car_reservations_db, users_collections, admin_collections, car_space_review_collections, car_space_collections
 from fastapi import APIRouter, Depends, status, HTTPException, File, UploadFile
 from models.UserAuthentication import UserSchema
-from mongodbconnect.mongodb_connect import users_collections, car_space_review_collections, car_space_collections, car_space_image_collections
+from mongodbconnect.mongodb_connect import users_collections, car_space_review_collections, car_space_collections, car_space_image_collections, booking_collections
 from fastapi.security import HTTPBearer, OAuth2PasswordBearer
 from typing import Optional, List
 from models.CreateCarSpace import CarSpaceReview, CarSpaceSchema, CreateCarSpaceSchema
@@ -140,6 +140,52 @@ def is_valid_image(base64_img_str):
     except Exception:
         return False
 
+
+@CarSpaceRouter.get("/carspace/get_car_space_Info/{username}", tags=["Car Spaces"])
+@check_token
+async def get_car_space_info(username: str, token: str = Depends(verify_user_token)):
+    # Verify user
+    user = users_collections.find_one({"username": token})
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid user")
+
+    # Find all car spaces created by the user
+    car_spaces_cursor = car_space_collections.find({"username": username})
+
+    # Convert cursor to list
+    car_spaces = list(car_spaces_cursor)
+    result = []
+    # For each car space, find all bookings and determine availability
+    for car_space in car_spaces:
+        # Convert _id to string
+        car_space['_id'] = str(car_space['_id'])
+        bookings = booking_collections.find({"carspaceid": car_space['carspaceid']})
+        booking_times = []
+        for booking in bookings:
+            start_time = booking['start_date']
+            end_time = booking['end_date']
+            now = datetime.now()
+            if start_time <= now <= end_time:
+                car_space['availability'] = 'Not Available Now'
+            else:
+                car_space['availability'] = 'Available Now'
+
+            booking_times.append({"start_time": start_time, "end_time": end_time})
+
+        car_space_info = {
+            "carspaceid": car_space['carspaceid'],
+            "address": car_space['address'],
+            "suburb": car_space['suburb'],
+            "postcode": car_space['postcode'],
+            "price": car_space['price'],
+            "availability": car_space.get('availability', 'Available Now'),
+            "reservation": booking_times if booking_times else "No reservation"
+        }
+
+        result.append(car_space_info)
+
+    return result
+
 @CarSpaceRouter.post("/carspace/upload_image/{username}/{carspaceid}", tags=["Car Spaces"])
 @check_token
 async def upload_car_space_image(username: str, carspaceid: int,
@@ -162,7 +208,7 @@ async def upload_car_space_image(username: str, carspaceid: int,
         else:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid base64 image")
 
-    existing_document = car_space_image_collections.find_one({"username": username, "carSpaceID": carspaceid})
+    existing_document = car_space_image_collections.find_one({"username": username, "carspaceid": carspaceid})
 
     if existing_document:
         # If a document for this user and carspaceid already exists, append new images to the existing list
@@ -171,7 +217,7 @@ async def upload_car_space_image(username: str, carspaceid: int,
             image_info["image_id"] = image_id
             image_id += 1
         car_space_image_collections.update_one(
-            {"username": username, "carSpaceID": carspaceid},
+            {"username": username, "carspaceid": carspaceid},
             {"$push": {"images": {"$each": carspace_image_info_list}}, "$set": {"next_image_id": image_id}}
         )
     else:
@@ -182,7 +228,7 @@ async def upload_car_space_image(username: str, carspaceid: int,
             image_id += 1
         car_space_image_collections.insert_one({
             "username": username,
-            "carSpaceID": carspaceid,
+            "carspaceid": carspaceid,
             "images": carspace_image_info_list,
             "next_image_id": image_id
         })
@@ -204,7 +250,7 @@ async def get_all_car_space_images(username: str, carspaceid: int, token: str = 
     if users is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invalid username")
 
-    car_space_images_cursor = car_space_image_collections.find({"carSpaceID": carspaceid, "username": username})
+    car_space_images_cursor = car_space_image_collections.find({"carspaceid": carspaceid, "username": username})
     images = []
     for document in car_space_images_cursor:
         document_str = json.dumps(document, default=str)
@@ -226,7 +272,7 @@ async def delete_single_car_space_image_for_user_carspace(username: str, carspac
     if user is None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid user")
 
-    existing_document = car_space_image_collections.find_one({"username": username, "carSpaceID": carspaceid})
+    existing_document = car_space_image_collections.find_one({"username": username, "carspaceid": carspaceid})
     if existing_document is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Document not found")
 
@@ -245,7 +291,7 @@ async def delete_single_car_space_image_for_user_carspace(username: str, carspac
 
     # Update the document in the database
     car_space_image_collections.update_one(
-        {"username": username, "carSpaceID": carspaceid},
+        {"username": username, "carspaceid": carspaceid},
         {"$set": {"images": existing_document["images"]}}
     )
 
@@ -260,7 +306,7 @@ async def delete_all_car_space_images_for_carspace(username: str, carspaceid: in
     if user is None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid user")
 
-    result = car_space_image_collections.delete_many({"carSpaceID": carspaceid, "username": username})
+    result = car_space_image_collections.delete_many({"carspaceid": carspaceid, "username": username})
 
     if result.deleted_count > 0:
         return {"message": "Car Space Images deleted successfully"}
