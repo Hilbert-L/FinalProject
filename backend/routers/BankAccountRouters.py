@@ -34,16 +34,16 @@ async def create_account(create_account: BankAccount, token: str = Depends(verif
 
 @BankAccountRouter.put("/bankaccounts/update_account/{username}/{id}", tags=["User Bank Accounts"])
 @check_token
-async def update_account(username: str, id: int, new_accounts: BankAccount, token: str = Depends(verify_user_token)):
+async def update_account(username: str, new_accounts: BankAccount, token: str = Depends(verify_user_token)):
     # Verify user
     user = users_collections.find_one({"username": token})
     if user is None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid user")
 
-    if bank_information_collections.find_one({"username": username, "id": id}) is None:
+    if bank_information_collections.find_one({"username": username}) is None:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="No bank account to update")
 
-    bank_information_collections.update_one({"username": username, "id": id}, {"$set": {**new_accounts}})
+    bank_information_collections.update_one({"username": username}, {"$set": {**new_accounts.dict()}})
     
     return {"Message": "Bank details updated successfully"}
 
