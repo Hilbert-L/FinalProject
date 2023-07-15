@@ -1,5 +1,6 @@
-import { Button, Col, FloatingLabel, Form, Row } from "react-bootstrap";
+import { Button, Col, FloatingLabel, Form, Row, Container, Spinner } from "react-bootstrap";
 import { FormContainer } from "../components/StyledFormContainer";
+import { useJsApiLoader, Autocomplete } from '@react-google-maps/api';
 import { useState } from "react";
 import { makeRequest } from "../helpers";
 import { useNavigate } from "react-router-dom";
@@ -23,17 +24,22 @@ type VehicleType =
   | "van"
   | "bike"
 
-type LisitngInfo = {
+type ListingInfo = {
   address?: string;
+  latitude?: string;
+  longitude?: string;
   spaceType?: SpaceType;
   vehicleType?: VehicleType;
   accessKey?: boolean;
   length?: number;
   width?: number;
+  photo?: string;
 }
 
+const libraries: ("places")[] = ['places'];
+
 export const ListingForm = () => {
-  const [info, setInfo] = useState<LisitngInfo>({});
+  const [info, setInfo] = useState<ListingInfo>({});
   
   const [photo, setPhoto] = useState<string>();
 
@@ -43,7 +49,14 @@ export const ListingForm = () => {
 
   const token = localStorage.getItem("authToken")!;
 
+  const {isLoaded} = useJsApiLoader({
+    googleMapsApiKey: 'AIzaSyB4Bsp9jhz4i39NidfXExaaZV89o8jP5To',
+    libraries: libraries,
+  })
+
   const handleSubmit = () => {
+    console.log(info.latitude);
+    console.log(info.longitude);
     // Need to add photo as info to send
     const body = {
       "Address": String(info.address),
@@ -59,7 +72,7 @@ export const ListingForm = () => {
         else setError(response.resp.detail);
       })
   }
-  const handlePhoto = (event) => {
+  const handlePhoto = (event: any) => {
     if (event.target.files) {
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -70,6 +83,20 @@ export const ListingForm = () => {
     }
   };
 
+  // Takes the search input and converts it into coordinates
+	const findCoordinates = () => {
+		if (!info.address) return;
+		const geocoder = new window.google.maps.Geocoder();
+		geocoder.geocode({ address: info.address }, (results, status) => {
+			if (status === 'OK' && results && results.length > 0) {
+				const { lat, lng } = results[0].geometry.location;
+        setInfo({...info, latitude: lat().toString(), longitude: lng().toString()});
+			} else {
+				console.error('Could not find coordinates!', status);
+			}
+		});
+	};
+
   const allFilledOut = info.address !== undefined
     && info.spaceType !== undefined
     && info.vehicleType !== undefined
@@ -78,22 +105,34 @@ export const ListingForm = () => {
     && info.length !== undefined
     && photo !== undefined
   
+  if (!isLoaded) {
+    return (
+      <Container className="text-center">
+        <br />
+        <br />
+        <br />
+        <Spinner animation="grow" variant="dark" />
+      </Container>
+    )
+  }
+
   return (
     <FormContainer width="500px" top="50px">
       <div style={{ margin: "30px 15px" }}>
-        <h1 style={{textAlign: "center"}}>Add your car space</h1>
-        <Form.Group>
-          <br />
-          <Form.Label>What is the address?</Form.Label>
-            <FloatingLabel controlId="floatingAddress" label="Address" className="mb-3">
-              <Form.Control
-                type="text"
-                placeholder="Address"
-                value={info.address}
-                onChange={(event) => setInfo({...info, address: event.target.value})}
-              />
-            </FloatingLabel>
-        </Form.Group>
+        <h1 style={{textAlign: "center"}}>add your car space 🚗</h1>
+        <Autocomplete>
+          <Form.Group>
+            <br />
+            <Form.Label>What is the address?</Form.Label>
+              <FloatingLabel controlId="floatingAddress" label="Address" className="mb-3">
+                <Form.Control
+                  type="text"
+                  placeholder="Address"
+                  onBlur={(event) => setInfo({...info, address: event.target.value})}
+                />
+              </FloatingLabel>
+          </Form.Group>
+        </Autocomplete>
         <Form.Group>
           <Form.Label>What type of car space is this?</Form.Label>
           <FloatingLabel controlId="floatingSpaceType" label="Space Type" className="mb-3">
@@ -125,6 +164,7 @@ export const ListingForm = () => {
           <FloatingLabel controlId="floatingVehicleType" label="Vehicle Type" className="mb-3">
             <Form.Select
               value={info.vehicleType}
+              onBlur={findCoordinates}
               onChange={
                 (event) => {console.log(event.target.value); setInfo({
                   ...info,
@@ -194,7 +234,7 @@ export const ListingForm = () => {
           </Row>
         </Form.Group>
         <Form.Group>
-          <Form.Label>Please upload a photo of the car space</Form.Label>
+          <Form.Label>Please upload a photo of the car space:</Form.Label>
           <Form.Control
                 type="file"
                 value={info.photo}
