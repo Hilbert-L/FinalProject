@@ -173,7 +173,27 @@ export const MyPaymentDetails = (props: any) => {
 
     return (
         <Container>
-            <Row>
+            <Row className="text-center">
+                <Col className="text-center">
+                    <span><i>your funds</i></span><br />
+                    <span style={{ fontSize: '40pt' }}>$0</span>
+                </Col>
+                <Col>
+                    <Row>
+                        <Col className="text-center">
+                            <Button variant="success" style={{ width: '200px' }} disabled={detailsExist ? false : true}>add funds</Button>
+                        </Col>
+                    </Row><br />
+                    <Row>
+                        <Col className="text-center">
+                            <Button variant="danger" style={{ width: '200px' }} disabled={detailsExist ? false : true}>withdraw funds</Button>
+                        </Col>
+                    </Row>
+                </Col>
+            </Row>
+            <hr style={{ height: '3px', background: 'black' }}/>
+            <Row className="text-center">
+                <span><i>your bank details</i></span><br /><br />
                 <InputGroup className="mb-3">
                     <InputGroup.Text style={{ width: '150px' }}>bsb</InputGroup.Text>
                     <Form.Control disabled value={paymentDetails.bsb} />
