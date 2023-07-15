@@ -10,7 +10,7 @@ SearchRouter = APIRouter()
 
 @SearchRouter.post("/search/postcode", tags=["Search Car Spaces"])
 async def search_by_postcode(postcode_search: SearchByPostcode):
-    filter = {"Postcode": postcode_search.postcode}
+    filter = {"$or": [{"Postcode": postcode_search.postcode}, {"postcode": postcode_search.postcode}]}
     car_space_cursor = car_space_collections.find(filter)
 
     car_spaces = []
