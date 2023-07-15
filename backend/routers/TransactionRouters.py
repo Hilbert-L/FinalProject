@@ -17,6 +17,9 @@ async def make_payment(booking_id: int, token: str = Depends(verify_user_token))
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invalid user")
 
     bookingInfo = booking_collections.find_one({"booking_id": booking_id})
+    if bookingInfo is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not booking found")
+
     consumer_name = bookingInfo['consumer_username']
     provider_name = bookingInfo['provider_username']
     total_price = bookingInfo['total_price']

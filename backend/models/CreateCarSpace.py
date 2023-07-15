@@ -35,6 +35,8 @@ class CreateCarSpaceSchema(BaseModel):
     address: str = Field(default=None)
     suburb: str = Field(default=None)
     postcode: str = Field(default=None)
+    longitude:str = Field(default=None)
+    latitude:str = Field(default=None)
     width: Optional[str] = Field(default=None)
     breadth: Optional[str] = Field(default=None)
     spacetype: Optional[str] = Field(default=None)
@@ -50,6 +52,8 @@ class CreateCarSpaceSchema(BaseModel):
                 "address": "test",
                 "suburb": "test",
                 "postcode": "test",
+                "longitude": "string",
+                "latitude": "string",
                 "width": "test",
                 "breadth": "test",
                 "spacetype": "test",
@@ -73,6 +77,8 @@ class CarSpaceSchema(BaseModel):
     address: str = Field(default=None)
     suburb: str = Field(default=None)
     postcode: str = Field(default=None)
+    longitude:str = Field(default=None)
+    latitude:str = Field(default=None)
     width: Optional[str] = Field(default=None)
     breadth: Optional[str] = Field(default=None)
     spacetype: Optional[str] = Field(default=None)
@@ -95,6 +101,8 @@ class CarSpaceSchema(BaseModel):
                 "address": "test",
                 "suburb": "test",
                 "postcode": "1234",
+                "longitude": "string",
+                "latitude": "string",
                 "width": "test",
                 "breadth": "test",
                 "spacetype": "test",
@@ -103,5 +111,27 @@ class CarSpaceSchema(BaseModel):
                 "currency": "AUD",
                 "price": 100,
                 "frequency": "Daily",
+            }
+        }
+
+
+class Review(BaseModel):
+    ownerusername: str = Field(default=None)
+    overall: str = Field(default=None)
+    location: str = Field(default=None)
+    cleanliness: str = Field(default=None)
+    easeofaccess: str = Field(default=None)
+    communication: str = Field(default=None)
+    writtenfeedback: Optional[str] = Field(default=None)
+    class Config:
+        schema = {
+            "sample": {
+                "ownerusername": "test",
+                "overall": "10",
+                "location": "10",
+                "cleanliness": "10",
+                "easeofaccess": "10",
+                "communication": "10",
+                "writtenfeedback": "test"
             }
         }
