@@ -1,19 +1,18 @@
-import { PropsWithChildren } from 'react';
-import { Container, Nav, Navbar } from 'react-bootstrap';
-import { Outlet, useNavigate } from 'react-router-dom';
-import { makeRequest } from '../helpers';
+import { Container, Nav, Navbar } from "react-bootstrap"
+import { useNavigate } from "react-router-dom";
+import { makeRequest } from "../helpers";
 
-export const Layout = ({ children }: PropsWithChildren) => {
+export const AdminHeader = () => {
   const navigate = useNavigate();
-
+  
   const handleLogout = () => {
-    const token = localStorage.getItem("authToken");
+    const token = localStorage.getItem("adminToken");
     if (!token) return;
-    makeRequest("/user/auth/logout", "POST", undefined, { token })
+    makeRequest("/admin/auth/logout", "POST", undefined, { token })
       .then((response) => {
         if (response.status === 200) {
-          localStorage.removeItem("authToken");
-          navigate("/login");
+          localStorage.removeItem("adminToken");
+          navigate("/auth/login");
         }
       });
   }
@@ -26,15 +25,11 @@ export const Layout = ({ children }: PropsWithChildren) => {
           <Navbar.Toggle aria-controls="basic-navbar-nav" />
           <Navbar.Collapse id="basic-navbar-nav">
             <Nav className="me-auto">
-              <Nav.Link onClick={() => navigate("/profile")}>My Profile</Nav.Link>
-              <Nav.Link onClick={() => navigate("/listingform")}>Add Listing</Nav.Link>
               <Nav.Link onClick={handleLogout}>Logout</Nav.Link>
             </Nav>
           </Navbar.Collapse>
         </Container>
       </Navbar>
-      {children}
-      <Outlet />
     </div>
-  );
+  )
 }
