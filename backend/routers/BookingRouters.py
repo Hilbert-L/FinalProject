@@ -166,14 +166,6 @@ async def update_booking(
             detail="You are not authorized to update this booking",
         )
 
-    '''
-    # Check if payment has been made for the booking
-    if booking["payment_status"]:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Booking cannot be updated as payment has been made",
-        )
-    '''
 
     # Verify start_date is ealier than the end_date
     if booking_update.start_date >= booking_update.end_date:
@@ -211,6 +203,13 @@ async def update_booking(
     # Calculate duration in hours
     duration= int((booking_update.end_date - booking_update.start_date).total_seconds() / 3600)
 
+    carspaceid = booking["carspaceid"]
+    provider_username = booking["provider_username"]
+    carspace = car_space_collections.find_one({"carspaceid": carspaceid, "username": provider_username})
+    hour_price = carspace['price']
+    total_price = hour_price * duration
+
+
     # Update the booking
     booking_collections.update_one(
         {"booking_id": booking_id},
@@ -218,18 +217,17 @@ async def update_booking(
             "start_date": booking_update.start_date,
             "end_date": booking_update.end_date,
             "duration_hours": duration,
+            "total_price": total_price,
         }}
     )
 
 
     # Retrieve the updated booking
-    updated_booking = booking_collections.find_one({"booking_id": booking_id})
-    updated_booking_dict = dict(updated_booking)
-    updated_booking_dict["_id"] = str(updated_booking_dict["_id"])
+    updated_booking = booking_collections.find_one({"booking_id": booking_id},{"_id": 0})
 
     return {
         "Message": "Booking updated successfully",
-        "Updated Booking": updated_booking_dict,
+        "Updated Booking": updated_booking,
     }
 
 
@@ -251,11 +249,9 @@ async def get_booking_history(username: str, token: str = Depends(verify_user_to
         )
 
     # Retrieve the booking history for the user
-    booking_cursor = booking_collections.find({"consumer_username": username})
+    booking_cursor = booking_collections.find({"consumer_username": username},{"_id": 0})
     bookings = []
     for booking in booking_cursor:
-        booking_dict = dict(booking)
-        booking_dict["_id"] = str(booking_dict["_id"])  # Convert ObjectId to string
-        bookings.append(booking_dict)
+        bookings.append(booking)
 
     return {"Booking History": bookings}
