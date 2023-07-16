@@ -170,45 +170,25 @@ def is_valid_image(base64_img_str):
 
 @UserRouter.post("/user/upload_profile_picture", tags=["Users"])
 @check_token
-async def upload_profile_picture(token: str = Depends(verify_user_token), image: Optional[UploadFile] = File(None),
-                                 base64_image: str = None):
+async def upload_profile_picture(token: str = Depends(verify_user_token),base64_image: str = None):
     filter = {"username": token}
     user = users_collections.find_one(filter)
 
     if user is None:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Username doesn't exist")
 
-    if not image and not base64_image:
+    if not base64_image:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No image provided")
 
-    update_info = {}
-    if image:
-        image_file_types = {'.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff', '.tif', '.webp', '.svg', '.ico'}
-        contents = await image.read()
-        file_extension = os.path.splitext(image.filename)[1].lower()
+    if not is_valid_image(base64_image):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid image format")
 
-        if file_extension not in image_file_types:
-            raise HTTPException(status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, detail="Invalid image file type")
-        
-        update_info["profileImage"] = image.filename
-        update_info["profileImagedata"] = contents
-        update_info["profileImageextension"] = file_extension
-    elif base64_image:
-        base64_image = base64_image + '=' * (-len(base64_image) % 4)
-        if is_valid_image(base64_image):
-            update_info["profileImage"] = "base64_image"
-            update_info["profileImagedata"] = base64.b64decode(base64_image)
-        else:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid base64 image")
-
-    update_results = users_collections.update_one(filter, {"$set" : update_info})
+    update_results = users_collections.update_one(filter, {"$set": {"image": base64_image}})
 
     if update_results.modified_count < 1:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Cannot update profile picture")
 
-    return {
-        "Message": "User Profile Picture Updated",
-    }
+    return {"Message": "User Profile Picture Updated"}
 
 @UserRouter.get("/user/get_current_user", tags=["Users"])
 @check_token

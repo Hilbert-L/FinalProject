@@ -9,7 +9,7 @@ class BookingSchema(BaseModel):
     start_date: datetime = Field(default=None)
     end_date: datetime = Field(default=None)
     duration_hours: int = Field(default=None)
-    total_price: float = Field(default=None)
+    total_price: int = Field(default=None)
 
     class Config:
         schema = {
