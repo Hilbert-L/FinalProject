@@ -30,7 +30,7 @@ export const MyListings = (props: any) => {
 			return 0;
 		}
         retrieveListings();
-    }, [myListings])
+    }, [])
 
     const updateListingCheck = (id: string) => {
         setListingToBeUpdated(id);
@@ -68,7 +68,7 @@ export const MyListings = (props: any) => {
     return (
         <Container>
             { myListings && Object.entries(myListings).map(([key, value]) => (
-                <>
+                <Container key={key}>
                     <Row className="align-items-center" style={{ border:'1px solid black', borderRadius: '8px', padding: '10px 10px 10px 0px' }}>
                         <Col md="auto">
                             <img style={{ width: '150px', height: '150px' }}/>
@@ -91,7 +91,7 @@ export const MyListings = (props: any) => {
                             </Row>
                         </Col>
                     </Row><br />
-                </>
+                </Container>
             ))}
 
             <Modal show={showModal} onHide={handleCloseModal}>

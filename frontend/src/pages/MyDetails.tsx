@@ -41,15 +41,17 @@ export const MyDetails = () => {
 			let response = await makeRequest("/user/get_current_user", "GET", undefined, { token });
 			let profileInfo = response.resp['User Info'];
 			setUsername(profileInfo.username)
-			const base64Data = btoa(profileInfo.profileImagedata); // Needs work
-			const image = `data:image/jpeg;base64,${base64Data}`;
+			// const base64Data = btoa(profileInfo.profileImagedata); // Needs work
+			// const image = `data:image/jpeg;base64,${base64Data}`;
+			// const base64Data = profileInfo.profileImagedata.slice(2, -1);
+  			// const image = `data:image/jpeg;base64,${base64Data}`;
 			setProfile(profile => ({
 				...profile,
 				firstName: profileInfo.firstname,
 				lastName: profileInfo.lastname,
 				email: profileInfo.email,
 				password: profileInfo.passwordunhashed,
-				photo: image,
+				photo: "lol",
 				number: profileInfo.phonenumber,
 			}));
 			setIsLoaded(true);
@@ -155,23 +157,20 @@ export const MyDetails = () => {
 
 	// Handles changing profile picture
 	const handlePhotoChange = () => {
-		console.log(photoChange);
 		async function uploadPhoto() {
-			let body = {
-					"image": photoChange,
-			}
 			try {
-				const response = await makeRequest("/user/upload_profile_picture", "POST", body, { token })
+				const response = await makeRequest(`/user/upload_profile_picture?base64_image=${photoChange}`, "POST", undefined, { token })
 				if (response.status !== 200) {
 					setErrorMessage(response.resp.detail[0].msg);
 					console.log(response.resp.detail[0].msg);
-				} 
+					return;
+				}
+				setTriggerRender(triggerRender === true ? false : true);
 			} catch (error) {
 				console.log(error)
 			}
 		}
 		uploadPhoto();
-		setTriggerRender(triggerRender === true ? false : true);
 		setShowModal(false);
 	}
 
