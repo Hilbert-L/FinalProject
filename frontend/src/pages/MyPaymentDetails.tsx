@@ -85,15 +85,15 @@ export const MyPaymentDetails = (props: any) => {
 			}
 		}
 
-        // TODO
-        // Doesn't work - API issue
+        // Changes the bank details
         async function changeBank() {
 			try {
 				const response = await makeRequest(`/bankaccounts/update_account/${username}/1`, "PUT", body, { token })
 				if (response.status !== 200) {
 					setErrorMessage(response.resp);
+                    return;
 				}
-                console.log(response);
+                setTriggerRender(triggerRender === true ? false : true);
 			} catch (error) {
 				console.log(error)
 			}
@@ -102,9 +102,7 @@ export const MyPaymentDetails = (props: any) => {
             addBank();
         } else {
             changeBank();
-        }
-
-		
+        }		
 		setShowModal(false);
 	}
 

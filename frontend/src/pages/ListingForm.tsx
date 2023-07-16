@@ -26,6 +26,8 @@ type VehicleType =
 
 type ListingInfo = {
   address?: string;
+  suburb?: string;
+  postcode?: string;
   latitude?: string;
   longitude?: string;
   spaceType?: SpaceType;
@@ -33,6 +35,7 @@ type ListingInfo = {
   accessKey?: boolean;
   length?: number;
   width?: number;
+  price?: number;
   photo?: string;
 }
 
@@ -59,12 +62,17 @@ export const ListingForm = () => {
     console.log(info.longitude);
     // Need to add photo as info to send
     const body = {
-      "Address": String(info.address),
-      "SpaceType": String(info.spaceType),
-      "VehicleSize": String(info.vehicleType),
-      "AccessKeyRequired": String(info.accessKey),
-      "Breadth": String(info.length),
-      "Width": String(info.width),
+      "address": String(info.address),
+      "suburb": String(info.suburb),
+      "postcode": String(info.postcode),
+      "spacetype": String(info.spaceType),
+      "vehiclesize": String(info.vehicleType),
+      "accesskeyrequired": String(info.accessKey),
+      "breadth": String(info.length),
+      "width": String(info.width),
+      "price": info.price,
+      "latitude": String(info.latitude),
+      "longitude": String(info.longitude)
     };
     makeRequest("/carspace/create_car_space", "POST", body, { token })
       .then((response) => {
@@ -97,12 +105,35 @@ export const ListingForm = () => {
 		});
 	};
 
+  // Given coordinates, extracts suburb and postcode
+  const extractSuburb = async () => {
+		const lat = info.latitude;
+		const lng = info.longitude;
+		let searchedSuburb: string = '';
+		let searchedPostcode: string = '';
+
+		try {
+			const response = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=AIzaSyB4Bsp9jhz4i39NidfXExaaZV89o8jP5To`);
+			const data = await response.json();
+			const allComponents = data.results[0].address_components;
+			for (const component of allComponents) {
+				const types = component.types;
+				if (types.includes('locality')) searchedSuburb = component.short_name;
+				if (types.includes('postal_code')) searchedPostcode = component.short_name;
+			}
+		} catch (error) {
+			console.error('Error retrieving information!', error);
+		}
+		setInfo({...info, suburb: searchedSuburb, postcode: searchedPostcode});;
+	}
+
   const allFilledOut = info.address !== undefined
     && info.spaceType !== undefined
     && info.vehicleType !== undefined
     && info.accessKey !== undefined
     && info.width !== undefined
     && info.length !== undefined
+    && info.price !== undefined
     && photo !== undefined
   
   if (!isLoaded) {
@@ -117,7 +148,7 @@ export const ListingForm = () => {
   }
 
   return (
-    <FormContainer width="500px" top="50px">
+    <FormContainer width="500px" top="20px">
       <div style={{ margin: "30px 15px" }}>
         <h1 style={{textAlign: "center"}}>add your car space 🚗</h1>
         <Autocomplete>
@@ -138,6 +169,7 @@ export const ListingForm = () => {
           <FloatingLabel controlId="floatingSpaceType" label="Space Type" className="mb-3">
             <Form.Select
               value={info.spaceType}
+              onBlur={findCoordinates}
               onChange={
                 (event) => setInfo({
                   ...info,
@@ -164,7 +196,6 @@ export const ListingForm = () => {
           <FloatingLabel controlId="floatingVehicleType" label="Vehicle Type" className="mb-3">
             <Form.Select
               value={info.vehicleType}
-              onBlur={findCoordinates}
               onChange={
                 (event) => {console.log(event.target.value); setInfo({
                   ...info,
@@ -217,6 +248,7 @@ export const ListingForm = () => {
                   type="number"
                   placeholder="Length (metres)"
                   value={info.length}
+                  onBlur={extractSuburb}
                   onChange={event => setInfo({...info, length: parseInt(event.target.value, 10)})}
                   />
               </FloatingLabel>
@@ -232,6 +264,17 @@ export const ListingForm = () => {
               </FloatingLabel>
             </Col>
           </Row>
+        </Form.Group>
+        <Form.Group>
+          <Form.Label>What is the price per day?</Form.Label>
+            <FloatingLabel controlId="floatingPrice" label="Price" className="mb-3">
+              <Form.Control
+                    type="number"
+                    value={info.photo}
+                    placeholder="Price"
+                    onChange={event => setInfo({...info, price: parseInt(event.target.value, 10)})}
+                  />
+            </FloatingLabel>
         </Form.Group>
         <Form.Group>
           <Form.Label>Please upload a photo of the car space:</Form.Label>

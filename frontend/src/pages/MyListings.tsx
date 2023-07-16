@@ -1,23 +1,35 @@
 import React, { useEffect, useState } from 'react';
-import { Container, Row, Col, InputGroup, Form, Button, Modal, OverlayTrigger, Tooltip, Spinner } from 'react-bootstrap';
+import { Container, Row, Col, Button, Modal } from 'react-bootstrap';
 import { makeRequest } from '../helpers';
 
-export const MyListings = () => {
+export const MyListings = (props: any) => {
 
-    const [myListings, setMyListings] = useState([
-        {id: "1", title: "Carspace 1", info: "lmao"},
-        {id: "2", title: "Carspace 2", info: "lmao"},
-        {id: "3", title: "Carspace 3", info: "lmao"},
-        {id: "3", title: "Carspace 3", info: "lmao"},
-    ]);
+    const username = props.username;
+    let token = localStorage.getItem('authToken') || '';
+    const [myListings, setMyListings] = useState([{}]);
     const [showModal, setShowModal] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [listingToBeUpdated, setListingToBeUpdated] = useState('');
     const [listingToBeDeleted, setListingToBeDeleted] = useState('');
 
     useEffect(() => {
-        // TODO 
-        // Add API call to retrieve listings here
+        // Retrieves car spaces given the postcode
+		async function retrieveListings() {
+			try {
+				let response = await makeRequest(`/carspace/get_car_space_Info/${username}`, "GET", undefined, { token });
+				if (response.status !== 200) {
+					console.log("There was an error!")
+				} else {
+					let listings = response.resp;
+                    setMyListings(listings);
+                    return listings;
+				}
+			} catch (error) {
+				console.log(error);
+			}
+			return 0;
+		}
+        retrieveListings();
     }, [myListings])
 
     const updateListingCheck = (id: string) => {
@@ -55,16 +67,22 @@ export const MyListings = () => {
 
     return (
         <Container>
-            { myListings.map((listing) => (
+            { myListings && Object.entries(myListings).map(([key, value]) => (
                 <>
                     <Row className="align-items-center" style={{ border:'1px solid black', borderRadius: '8px', padding: '10px 10px 10px 0px' }}>
                         <Col md="auto">
-                        <img style={{ width: '150px', height: '150px' }}/>
+                            <img style={{ width: '150px', height: '150px' }}/>
                         </Col>
-                        <Col>
-                        info
+                        <Col className="text-center">
+                            <span style={{ fontSize: '35pt' }}>${value["Your Car Space Information"] && value["Your Car Space Information"]["price"]}</span> <br />
+                            <span><i>per day</i></span>
                         </Col>
-                        <Col className="text-end" md="auto">
+                        <Col >
+                            <span style={{ fontSize: '15pt' }}>📍 {value["Your Car Space Information"] && value["Your Car Space Information"]["suburb"]}</span> <br />
+                            <span style={{ fontSize: '15pt' }}>📏 {value["Your Car Space Information"] && value["Your Car Space Information"]["width"]} m by {value["Your Car Space Information"] && value["Your Car Space Information"]["breadth"]} m</span><br />
+                            <span style={{ fontSize: '15pt' }}>🚗 {value["Your Car Space Information"] && value["Your Car Space Information"]["vehiclesize"].replace(/^\w/, (c: string) => c.toUpperCase())}</span>
+                        </Col>
+                        <Col className="text-center" md="auto">
                             <Row>
                                 <Button style={{ width: '100px' }} onClick={() => updateListingCheck("1")}>edit</Button>
                             </Row><br />

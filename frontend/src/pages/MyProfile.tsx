@@ -53,7 +53,7 @@ export const MyProfile = () => {
           </Tab>
           <Tab eventKey="listings" title="my listings">
             <br />
-            <MyListings />
+            <MyListings username={username}/>
           </Tab>
           <Tab eventKey="bookings" title="my bookings">
             <br />

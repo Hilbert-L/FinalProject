@@ -1,10 +1,45 @@
 import React, { useState } from 'react';
 import { useJsApiLoader, GoogleMap, Autocomplete, Marker } from '@react-google-maps/api';
-import { Container, Row, InputGroup, Form, Button, Modal, Spinner } from 'react-bootstrap';
+import { Container, Col, Row, InputGroup, Form, Button, Modal, Spinner } from 'react-bootstrap';
 import 'bootstrap/dist/css/bootstrap.css';
 import { makeRequest } from '../helpers';
 
 const libraries: ("places")[] = ['places'];
+
+type SpaceType = 
+  | "indoor-lot"
+  | "outdoor-lot"
+  | "undercover"
+  | "outside"
+  | "carport"
+  | "driveway"
+  | "locked-garage"
+
+type VehicleType = 
+  | "hatchback"
+  | "sedan"
+  | "suv"
+  | "ev"
+  | "ute"
+  | "wagon"
+  | "van"
+  | "bike"
+
+type ListingInfo = {
+  address?: string;
+  suburb?: string;
+  postcode?: string;
+  latitude?: string;
+  longitude?: string;
+  spaceType?: SpaceType;
+  vehicleType?: VehicleType;
+  accessKey?: boolean;
+  length?: number;
+  width?: number;
+  price?: number;
+  photo?: string;
+	username?: string;
+}
 
 export const SearchPage = () => {
 
@@ -19,7 +54,8 @@ export const SearchPage = () => {
 	const [addressComponents, setAddressComponents] = useState(''); // Contains all of the address components for given coordinates
   const [showList, setShowList] = useState(false);
 	const [showModal, setShowModal] = useState(false);
-  const [carspaces, setCarspaces] = useState([{id: 0, lat: 0, lng: 0}]);
+  const [carspaces, setCarspaces] = useState({});
+	const [listingInfo, setListingInfo] = useState<ListingInfo>({});
 
 	// Retrieves car spaces from the backend every time the mapCentre changes
 	React.useEffect(() => {
@@ -47,15 +83,10 @@ export const SearchPage = () => {
 
 		async function addMarkers() {
 			let suburbAndPostcode = await extractSuburb();
-			//let carspaceResults = await retrieveCarspaces(suburbAndPostcode[1])
-			//setCarspaces(carspaceResults);
-			setCarspaces([
-				{id: 1, lat: -33.86819, lng: 151.22464},
-				{id: 2, lat: -33.87023, lng: 151.22411},
-				{id: 3, lat: -33.87071, lng: 151.22299}
-			])
-			console.log(carspaces);
+			let carspaceResults = await retrieveCarspaces(suburbAndPostcode[1])
+			setCarspaces(carspaceResults);
 		};
+
 		addMarkers();
 	}, [mapCentre]);
 
@@ -98,10 +129,40 @@ export const SearchPage = () => {
 
 	const handleShowModal = (carspace: any) => {
 		console.log(carspace)
+		console.log(carspaces);
+		let carspaceToView = null;
+
+		for (const key in carspaces) {
+			if (carspaces.hasOwnProperty(key)) {
+				const listing = carspaces[key];
+				if (listing._id === carspace) {
+					carspaceToView = listing;
+					break;
+				}
+			}
+		}
+
+		setListingInfo({...listingInfo, 
+			username: carspaceToView.username,
+			address: carspaceToView.address,
+			accessKey: carspaceToView.accesskeyrequired,
+			width: carspaceToView.width,
+			length: carspaceToView.breadth,
+			spaceType: carspaceToView.spacetype,
+			vehicleType: carspaceToView.vehiclesize,
+			price: carspaceToView.price,
+			suburb: carspaceToView.suburb
+		})
 		setShowModal(true);
 	}
 
 	const handleCloseModal = () => setShowModal(false);
+
+	// For debugging	
+	// const print = () => {
+	// 	console.log(Object.entries(carspaces))
+	// 	Object.entries(carspaces).map(([key, value]) => (console.log("value is:", value._id)))
+	// }
 
 	if (!isLoaded) {
 		return (
@@ -132,8 +193,8 @@ export const SearchPage = () => {
 					(
 						<div style={{width: "100%", height: "85vh"}}>
 							<GoogleMap center={mapCentre} zoom={15} options={{zoomControl: false, mapTypeControl: false, fullscreenControl: false}} mapContainerStyle={ {width: '100%', height: '100%'} }>
-								{carspaces.map((carspace) => (
-									<Marker key={carspace.id} position={{ lat: carspace.lat, lng: carspace.lng }} onClick={() => handleShowModal(carspace.id)} />
+								{ carspaces && Object.entries(carspaces).map(([key, value]) => (
+									<Marker key={value._id} position={{ lat: parseFloat(value.latitude), lng: parseFloat(value.longitude) }} onClick={() => handleShowModal(value._id)} />
 								))}
 								<Marker position={{ lat: -33.86819, lng: 151.22464 }} />
 							</GoogleMap>
@@ -141,10 +202,23 @@ export const SearchPage = () => {
 					) :
 					(
 						<Container>
-							{carspaces.map((carspace) => (
-								<Row key={carspace.id}>
-									<div>Carspace: {carspace.id} Latitude: {carspace.lat} Longitude: {carspace.lng}</div>
-								</Row>
+							{ carspaces && Object.entries(carspaces).map(([key, value]) => (
+									<>
+											<Row className="align-items-center" onClick={() => handleShowModal(value._id)} style={{ border:'1px solid black', borderRadius: '8px', padding: '10px 10px 10px 0px', margin: '0px 5px', cursor: 'pointer' }}>
+													<Col md="auto">
+													<img style={{ width: '150px', height: '150px' }}/>
+													</Col>
+													<Col className="text-center">
+													<span style={{ fontSize: '35pt' }}>${value.price}</span> <br />
+													<span><i>per day</i></span>
+													</Col>
+													<Col >
+													<span style={{ fontSize: '20pt' }}>📍 {value.suburb}</span> <br />
+													<span style={{ fontSize: '20pt' }}>📏 {value.width} m by {value.breadth} m</span><br />
+													<span style={{ fontSize: '20pt' }}>🚗 {value.vehiclesize.replace(/^\w/, (c: string) => c.toUpperCase())}</span>
+													</Col>
+											</Row><br />
+									</>
 							))}
 						</Container>
 					)
@@ -153,10 +227,31 @@ export const SearchPage = () => {
 
       <Modal show={showModal} onHide={handleCloseModal}>
         <Modal.Header closeButton>
-          <Modal.Title>Carspace</Modal.Title>
+          <Modal.Title>Carspace in {listingInfo.suburb}</Modal.Title>
         </Modal.Header>
-        <Modal.Body>Carspace Info</Modal.Body>
+        <Modal.Body>
+					<Row className="align-items-center">
+						<Col className="text-center">
+							<img style={{ width: '200px', height: '200px' }} /> 
+						</Col>
+						<Col className="text-center">
+							<span className="text-center" style={{ fontSize: '45pt' }}>${listingInfo.price}</span><br />
+							<span><i>per day</i></span>
+						</Col>
+					</Row><br />
+					<Row className="text-center">
+						<span>📍 {listingInfo.address}</span><br /><br />
+						<hr />
+						<span >This carspace is <b>{listingInfo.width} m by {listingInfo.length} m</b>. 
+						An access key <b>{listingInfo.accessKey ? "is" : "is not"}</b> required.
+						The largest vehicle size this carspace can hold is a <b>{listingInfo.vehicleType}</b>.
+						The carspace is of type <b>{listingInfo.spaceType}</b>.</span>
+						<br /><br /><br /><br /><hr />
+						<span>Provided by {listingInfo.username}</span>
+					</Row>
+				</Modal.Body>
         <Modal.Footer>
+					<Button variant="warning" onClick={handleCloseModal}>See Reviews</Button>
           <Button variant="primary" onClick={handleCloseModal}>Book</Button>
         </Modal.Footer>
       </Modal>
