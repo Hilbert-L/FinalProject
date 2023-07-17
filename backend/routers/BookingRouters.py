@@ -1,12 +1,15 @@
 from fastapi import APIRouter, Depends, status, HTTPException
 from datetime import datetime, timedelta
 from typing import List
+from dateutil.parser import parse
 import pytz
 
 from mongodbconnect.mongodb_connect import (
     car_space_collections,
     booking_collections,
     users_collections,
+    bank_information_collections,
+    transaction_information_collections
 )
 from models.Booking import BookingCreateSchema, BookingUpdateSchema, BookingSchema
 from authentication.authentication import verify_user_token
@@ -101,8 +104,42 @@ async def create_booking(
     booking_dict["duration_hours"] = duration
     booking_dict['total_price'] = total_price
     booking_dict["booking_id"] = booking_count + 1
+    booking_dict["status"] = "Confirmed"
 
     booking_collections.insert_one(dict(booking_dict))
+
+    # Update provider's balance
+    consumer_info = bank_information_collections.find_one({"username": consumer_user["username"]})
+    provider_info = bank_information_collections.find_one({"username": provider_username})
+    Pnew_balance = provider_info["balance"] + total_price
+    bank_information_collections.update_one(
+        {"username": provider_info['username']},
+        {"$set": {"balance": Pnew_balance}}
+    )
+
+    # Update consumer's balance
+    Cnew_balance = consumer_info["balance"] - total_price
+    # Check current balance of consumer
+    if Cnew_balance < 0:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                            detail="Insufficient balance to accomplish the transaction")
+    else:
+        bank_information_collections.update_one(
+            {"username": consumer_info['username']},
+            {"$set": {"balance": Cnew_balance}}
+        )
+
+    num_transactions = transaction_information_collections.count_documents({})
+
+    transaction_dict = dict()
+    transaction_dict["TansactionID"] = num_transactions + 1
+    transaction_dict["transaction_time"] = datetime.now().strftime("%Y/%m/%d-%H:%M:%S")
+    transaction_dict['booking_id'] = booking_dict["booking_id"]
+    transaction_dict['consumer_name'] = consumer_user["username"]
+    transaction_dict['provider_name'] = provider_username
+    transaction_dict['total_price'] = total_price
+    transaction_dict["status"] = "Confirmed"  # Add transaction status
+    transaction_information_collections.insert_one(dict(transaction_dict))
 
     return {
         "Message": "Booking created successfully",
@@ -111,7 +148,7 @@ async def create_booking(
 
     
 
-@BookingRouter.delete("/booking/delete_booking/{booking_id}", tags=["Booking"])
+@BookingRouter.put("/booking/delete_booking/{booking_id}", tags=["Booking"])
 @check_token
 async def delete_booking(booking_id: int, token: str = Depends(verify_user_token)):
     
@@ -133,11 +170,62 @@ async def delete_booking(booking_id: int, token: str = Depends(verify_user_token
             detail="You are not authorized to delete this booking",
         )
 
+    # Check the booking status
+    if booking["status"] == "Canceled":
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="booking not found or has been deleted")
 
-    # Delete the booking from the database
-    booking_collections.delete_one({"booking_id": booking_id})
+    transaction_info = transaction_information_collections.find_one({"booking_id": booking_id})
 
-    return {"Message": "Booking deleted successfully"}
+    if transaction_info is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Transaction not found")
+
+    provider_name = transaction_info['provider_name']
+    consumer_name = transaction_info['consumer_name']
+
+    consumer_info = bank_information_collections.find_one({"username": consumer_name})
+    provider_info = bank_information_collections.find_one({"username": provider_name})
+
+    amount = transaction_info["total_price"]
+    # Calculate the penalty if the booking start date is less than 24 hours away
+    penalty = 0
+    if booking["start_date"].tzinfo is None or booking["start_date"].tzinfo.utcoffset(booking["start_date"]) is None:
+        booking["start_date"] = booking["start_date"].replace(tzinfo=pytz.UTC)
+    now = datetime.now().astimezone(pytz.UTC)  # now is a timezone-aware datetime object
+    less_than_24h = int((booking["start_date"] - now).total_seconds()) < 24 * 60 * 60
+    if less_than_24h:
+        penalty = 0.05 * amount
+        amount -= penalty
+    # Update provider's balance
+    Pnew_balance = provider_info["balance"] - amount
+    # Check current balance of provider
+    # Check if provider has enough balance
+    if Pnew_balance < 0:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                            detail="Provider doesn't have enough balance to refund the transaction")
+
+    bank_information_collections.update_one(
+        {"username": provider_info['username']},
+        {"$set": {"balance": Pnew_balance}}
+    )
+
+    # Update consumer's balance
+    Cnew_balance = consumer_info["balance"] + amount
+    # Check current balance of consumer
+
+    bank_information_collections.update_one(
+        {"username": consumer_info['username']},
+        {"$set": {"balance": Cnew_balance}}
+    )
+    # Update the corresponding transaction status to 'Canceled' as well
+    transaction_information_collections.update_one({"booking_id": booking_id}, {"$set": {"status": "Canceled"}})
+    # Update the booking status to 'Canceled' in the database
+    booking_collections.update_one({"booking_id": booking_id}, {"$set": {"status": "Canceled"}})
+    return {
+        "Message": "Booking cancelled successfully" +
+                   (
+                       " with a 5% penalty due to cancellation less than 24 hours before the start time." if less_than_24h else ""),
+        "Penalty": penalty,
+    }
 
 
 
@@ -157,7 +245,11 @@ async def update_booking(
     # Verify booking
     booking = booking_collections.find_one({"booking_id": booking_id})
     if booking is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invalid booking")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Booking not")
+
+    # Check the booking status
+    if booking["status"] == "Canceled":
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Booking has been deleted")
 
     # Check if the user is authorized to update the booking
     if booking["consumer_username"] != user["username"]:
