@@ -219,7 +219,18 @@ async def get_current_user(token: str = Depends(verify_user_token)):
             document_str = json.dumps(document, default=str)
             document_dict = json.loads(document_str)
             money_received.append(document_dict)
-        
+
+    if "carSpaceImagedata" in user_dict:
+        car_space_images = user_dict["carSpaceImagedata"]
+        base64_car_space_images = []
+        for image in car_space_images:
+            base64_image = base64.b64encode(image).decode("utf-8")
+            base64_car_space_images.append(base64_image)
+        user_dict["carSpaceImagedata"] = base64_car_space_images
+
+    if "profileImagedata" in user_dict:
+        user_dict["profileImagedata"] = base64.b64encode(user_dict["profileImagedata"].encode("utf-8")).decode("utf-8")
+
     return {
         "Message": "User Information Retrieved Successfully",
         "User Info": user_dict,
