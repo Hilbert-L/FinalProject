@@ -292,6 +292,44 @@ async def update_booking(
     hour_price = carspace['price']
     total_price = hour_price * duration
 
+    # Calculate the price difference
+    price_difference = total_price - booking["total_price"]
+
+    # Retrieve consumer and provider information
+    consumer_info = bank_information_collections.find_one({"username": booking["consumer_username"]})
+    provider_info = bank_information_collections.find_one({"username": booking["provider_username"]})
+
+    # If the price increased, charge the consumer the difference and add it to the provider's balance
+    if price_difference > 0:
+        if consumer_info["balance"] < price_difference:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                detail="Insufficient balance to cover the price increase")
+
+        bank_information_collections.update_one(
+            {"username": consumer_info['username']},
+            {"$inc": {"balance": -price_difference}}
+        )
+
+        bank_information_collections.update_one(
+            {"username": provider_info['username']},
+            {"$inc": {"balance": price_difference}}
+        )
+    # If the price decreased, refund the difference to the consumer and deduct it from the provider's balance
+    elif price_difference < 0:
+        if provider_info["balance"] < -price_difference:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                detail="Provider doesn't have enough balance to refund the price decrease")
+
+        bank_information_collections.update_one(
+            {"username": consumer_info['username']},
+            {"$inc": {"balance": -price_difference}}
+        )
+
+        bank_information_collections.update_one(
+            {"username": provider_info['username']},
+            {"$inc": {"balance": price_difference}}
+        )
+
     # Update the booking
     booking_collections.update_one(
         {"booking_id": booking_id},
