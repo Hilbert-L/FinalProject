@@ -1,5 +1,22 @@
-Week 1 - sort out the group and decide on the project
-Week 2 - start the proposal draft and come up with functionalities including novel functionalities
-Week 3 - Finalise Proposal and made a start on the sprint API and sample UI using React and FastAPI
-Week 4 - Bug fixes for connecting backend to frontend and updated field requirements. Made a start on Sprint 2 tasks. Created Docker container.
-         
+Week 1 
+    - sort out the group and decide on the project
+Week 2 
+    - start the proposal draft and come up with functionalities including novel functionalities
+Week 3 
+    - Finalise Proposal and made a start on the sprint API and sample UI using React and FastAPI
+Week 4 
+    - Bug fixes for connecting backend to frontend and updated field requirements. Made a start on Sprint 2 tasks. Created Docker container.
+Week 5 
+    - Added some image upload features for the user profile routers 
+    - Bug fixes for user profile
+Week 6 
+    - Made a start on the banking transaction routers 
+    - added regex matching for the backend to verify bank account info is correct
+Week 7 
+    - Fix the bugs for listings and added some car space routers 
+    - 
+Week 8 
+    - Made a start on the Search filter 
+    - Created Mock Data to be placed into mongodb
+Week 9 
+    - Made a start on the Recommender System
