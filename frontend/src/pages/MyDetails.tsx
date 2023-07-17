@@ -35,23 +35,25 @@ export const MyDetails = () => {
 	const [passwordChange, setPasswordChange] = useState('');
 	const [photoChange, setPhotoChange] = useState('');
 	
+	// Local storage trick
+	if (!localStorage.getItem('myFunds')) {
+		localStorage.setItem('myFunds', '0');
+	}
+	
+
 	useEffect(() => {
 		async function retrieveUserInfo() {
 			let token = localStorage.getItem('authToken') || '';
 			let response = await makeRequest("/user/get_current_user", "GET", undefined, { token });
 			let profileInfo = response.resp['User Info'];
-			setUsername(profileInfo.username)
-			// const base64Data = btoa(profileInfo.profileImagedata); // Needs work
-			// const image = `data:image/jpeg;base64,${base64Data}`;
-			// const base64Data = profileInfo.profileImagedata.slice(2, -1);
-  			// const image = `data:image/jpeg;base64,${base64Data}`;
+			setUsername(profileInfo.username);
 			setProfile(profile => ({
 				...profile,
 				firstName: profileInfo.firstname,
 				lastName: profileInfo.lastname,
 				email: profileInfo.email,
 				password: profileInfo.passwordunhashed,
-				photo: "lol",
+				photo: profileInfo.image,
 				number: profileInfo.phonenumber,
 			}));
 			setIsLoaded(true);
