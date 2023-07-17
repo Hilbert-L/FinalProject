@@ -180,20 +180,6 @@ export const SearchPage = () => {
 		setShowModal(true);
 	}
 
-    setListingInfo({
-      ...listingInfo,
-      username: carspaceToView.username,
-      address: carspaceToView.address,
-      accessKey: carspaceToView.accesskeyrequired,
-      width: carspaceToView.width,
-      length: carspaceToView.breadth,
-      spaceType: carspaceToView.spacetype,
-      vehicleType: carspaceToView.vehiclesize,
-      price: carspaceToView.price,
-      suburb: carspaceToView.suburb,
-    });
-    setShowModal(true);
-  };
 
   const handleCloseModal = () => setShowModal(false);
 
@@ -202,7 +188,7 @@ export const SearchPage = () => {
   // 	console.log(Object.entries(carspaces))
   // 	Object.entries(carspaces).map(([key, value]) => (console.log("value is:", value._id)))
   // }
-
+  
   if (!isLoaded) {
     return (
       <Container className="text-center">
@@ -213,6 +199,7 @@ export const SearchPage = () => {
       </Container>
     );
   }
+
 
   return (
     <Container fluid>

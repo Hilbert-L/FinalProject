@@ -9,8 +9,6 @@ from geopy.distance import geodesic
 import pandas as pd
 import numpy as np
 
-
-
 SearchRouter = APIRouter()
 
 @SearchRouter.post("/search/postcode", tags=["Search Car Spaces"])
@@ -115,8 +113,9 @@ async def advanced_search(advanced_search: AdvancedSearch):
             combined_conditions.append(
                 {"VehicleType": value}
             )
+            
+    filter = {"$and": combined_conditions} if len(combined_conditions) > 0 else {}
 
-    filter = {"$and": combined_conditions}
     car_space_cursor = car_space_collections.find(filter)
     filtered_carspaces = []
     for document in car_space_cursor:
@@ -126,7 +125,7 @@ async def advanced_search(advanced_search: AdvancedSearch):
 
     # Apply Filter on distance From pin based on latitude/longitude, we will use the geodesic function from geopy library
     if advanced_search_dict['latitude'] is not None and advanced_search_dict['longitude'] is not None and advanced_search_dict["distancefrompin"] is not None:
-        for car_space in filtered_car_spaces:
+        for car_space in filtered_carspaces:
             latitude = car_space.get('latitude')
             longitude = car_space.get('longitude')
             if latitude is not None and longitude is not None:
@@ -141,10 +140,10 @@ async def advanced_search(advanced_search: AdvancedSearch):
             else:
                 car_space["geodistance"] = None
 
-    filtered_car_spaces = [obj for obj in filtered_car_spaces if obj.get("geodistance") is not None]
+    filtered_carspaces = [obj for obj in filtered_carspaces if obj.get("geodistance") is not None]
 
 
-    if advanced_search["sortmethod"] is not None and advanced_search["recommendersystem"] is not None:
+    if advanced_search_dict["sortmethod"] is not None and advanced_search_dict["recommendersystem"] is not None:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT, detail="Cannot have a sort method and recommender system in the body")
 
@@ -152,18 +151,20 @@ async def advanced_search(advanced_search: AdvancedSearch):
 
     if sortmethod:
         if sortmethod == "price-ascending":
-            filtered_car_spaces.sort(key=lambda x: x["Price"], reverse=False)
+            filtered_carspaces.sort(key=lambda x: x["Price"], reverse=False)
 
         elif sortmethod == "price-descending":
-            filtered_car_spaces.sort(key=lambda x: x["Price"], reverse=True)
+            filtered_carspaces.sort(key=lambda x: x["Price"], reverse=True)
 
-        elif sortmethod == "distance-from-pin":
-            filtered_car_spaces.sort(key=lambda x: x.get("geodistance", float("inf")), reverse=False)
+        elif sortmethod == "distance-from-pin-ascending":
+            filtered_carspaces.sort(key=lambda x: x.get("geodistance", float("inf")), reverse=False)
 
+        elif sortmethod == "distance-from-pin-descending":
+            filtered_carspaces.sort(key=lambda x: x.get("geodistance", float("inf")), reverse=True)
 
     # TODO First need to simulate users and spots then we can train a model based on the required metrics
     # THIS IS THE PART where we need to train a model using numpy/pandas
-    # recommendermethod = advanced_search_dict.get("ecommendersystem")
+    # recommendermethod = advanced_search_dict.get("recommendersystem")
     # if recommendermethod:
     #     if recommender_method == 'cosine':
     #         pass
@@ -174,6 +175,6 @@ async def advanced_search(advanced_search: AdvancedSearch):
 
     # Return results as a limit
     if advanced_search_dict["resultlimit"] is not None:
-        filtered_car_spaces = filtered_car_spaces[:advanced_search_dict["resultlimit"]]
+        filtered_carspaces = filtered_carspaces[:advanced_search_dict["resultlimit"]]
 
-    return {"Message": "Filters successfully applied", "Filtered Car Spaces": filtered_car_spaces}
+    return {"Message": "Filters successfully applied", "Filtered Car Spaces": filtered_carspaces}

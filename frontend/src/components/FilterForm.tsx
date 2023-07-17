@@ -196,9 +196,10 @@ export const FilterForm = (props: any) => {
               onChange={(event) => handleInputChange(event, setSortMethod)}
             >
               <option value="none">No Sorting</option>
-              <option value="price-descending">Price Descending</option>
               <option value="price-ascending">Price Ascending</option>
-              <option value="distance-from-pin">Distance from Pin</option>
+              <option value="price-descending">Price Descending</option>
+              <option value="distance-from-pin-ascending">Distance from Pin Ascending</option>
+              <option value="distance-from-pin-descending">Distance from Pin Descending</option>
             </Form.Select>
           </Form.Group>
           <br></br>
