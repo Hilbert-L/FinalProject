@@ -16,6 +16,7 @@ import {
   Spinner,
   Accordion,
 } from 'react-bootstrap';
+import { useNavigate } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.css';
 import { makeRequest } from '../helpers';
 import { FilterForm } from '../components/FilterForm';
@@ -54,16 +55,19 @@ type ListingInfo = {
   width?: number;
   price?: number;
   photo?: string;
-  username?: string;
-};
+	username?: string;
+	id?: string;
+}
 
 export const SearchPage = () => {
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: 'AIzaSyB4Bsp9jhz4i39NidfXExaaZV89o8jP5To',
     libraries: libraries,
   });
+  
+  const navigate = useNavigate();
 
-  const [view, setView] = useState('map view');
+	const [view, setView] = useState("map view");
   const [searchValue, setSearchValue] = useState('Sydney');
   const [mapCentre, setMapCentre] = useState({ lat: -33.8688, lng: 151.2093 });
   const [addressComponents, setAddressComponents] = useState(''); // Contains all of the address components for given coordinates
@@ -160,15 +164,21 @@ export const SearchPage = () => {
     console.log(carspaces);
     let carspaceToView = null;
 
-    for (const key in carspaces) {
-      if (carspaces.hasOwnProperty(key)) {
-        const listing = carspaces[key];
-        if (listing._id === carspace) {
-          carspaceToView = listing;
-          break;
-        }
-      }
-    }
+		setListingInfo({...listingInfo, 
+			username: carspaceToView.username,
+			address: carspaceToView.address,
+			accessKey: carspaceToView.accesskeyrequired,
+			width: carspaceToView.width,
+			length: carspaceToView.breadth,
+			spaceType: carspaceToView.spacetype,
+			vehicleType: carspaceToView.vehiclesize,
+			price: carspaceToView.price,
+			suburb: carspaceToView.suburb,
+			postcode: carspaceToView.postcode,
+			id: carspaceToView._id
+		})
+		setShowModal(true);
+	}
 
     setListingInfo({
       ...listingInfo,
@@ -353,12 +363,8 @@ export const SearchPage = () => {
           </Row>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="warning" onClick={handleCloseModal}>
-            See Reviews
-          </Button>
-          <Button variant="primary" onClick={handleCloseModal}>
-            Book
-          </Button>
+					<Button variant="warning" onClick={handleCloseModal}>See Reviews</Button>
+          <Button variant="primary" onClick={() => navigate(`/booking?id=${listingInfo.id}&postcode=${listingInfo.postcode}`)}>Book</Button>
         </Modal.Footer>
       </Modal>
     </Container>
