@@ -46,18 +46,14 @@ export const MyDetails = () => {
 			let token = localStorage.getItem('authToken') || '';
 			let response = await makeRequest("/user/get_current_user", "GET", undefined, { token });
 			let profileInfo = response.resp['User Info'];
-			setUsername(profileInfo.username)
-			// console.log(profileInfo.profileImagedata)
-			// const image = `data:image/jpeg;base64,${base64Data}`;
-			// const base64Data = profileInfo.profileImagedata.slice(2, -1);
-  			// const image = `data:image/jpeg;base64,${base64Data}`;
+			setUsername(profileInfo.username);
 			setProfile(profile => ({
 				...profile,
 				firstName: profileInfo.firstname,
 				lastName: profileInfo.lastname,
 				email: profileInfo.email,
 				password: profileInfo.passwordunhashed,
-				photo: "imageUrl",
+				photo: profileInfo.image,
 				number: profileInfo.phonenumber,
 			}));
 			setIsLoaded(true);
