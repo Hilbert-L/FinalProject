@@ -173,7 +173,7 @@ async def get_car_space_info(username: str, token: str = Depends(verify_user_tok
     # For each car space, find all bookings and determine availability
     for car_space in car_spaces:
         # Convert _id to string
-        bookings = booking_collections.find({"carspaceid": car_space['carspaceid']})
+        bookings = booking_collections.find({"carspaceid": car_space['carspaceid'], "status": "Confirmed"})
         booking_times = []
         for booking in bookings:
             start_time = booking['start_date']
