@@ -417,7 +417,6 @@ async def get_car_spaces_reviews_by_user(username: str, token: str = Depends(ver
     filter = {"username": username}
     carspace_cursor = car_space_review_collections.find({filter})
     carspaces = []
-    []
     for document in carspace_cursor:
         document_str = json.dumps(document, default=str)
         document_dict = json.loads(document_str)

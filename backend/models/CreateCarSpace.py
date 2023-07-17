@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field, EmailStr
-from typing import Optional, List
+from typing import Optional, List, Union
 from pymongo import MongoClient
 from fastapi import FastAPI
 from base64 import b64encode
@@ -77,8 +77,8 @@ class CarSpaceSchema(BaseModel):
     address: str = Field(default=None)
     suburb: str = Field(default=None)
     postcode: str = Field(default=None)
-    longitude:str = Field(default=None)
-    latitude:str = Field(default=None)
+    longitude:Optional[Union[int, str]] = Field(default=None)
+    latitude:Optional[Union[int, str]] = Field(default=None)
     width: Optional[str] = Field(default=None)
     breadth: Optional[str] = Field(default=None)
     spacetype: Optional[str] = Field(default=None)

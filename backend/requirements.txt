@@ -15,3 +15,4 @@ passlib==1.7.4
 python-multipart==0.0.5
 python-dotenv==1.0.0
 pillow==9.4.0
+geopy==2.2.0
