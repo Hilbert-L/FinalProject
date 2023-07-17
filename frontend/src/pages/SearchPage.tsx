@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useJsApiLoader, GoogleMap, Autocomplete, Marker } from '@react-google-maps/api';
 import { Container, Col, Row, InputGroup, Form, Button, Modal, Spinner } from 'react-bootstrap';
+import { useNavigate } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.css';
 import { makeRequest } from '../helpers';
 
@@ -39,6 +40,7 @@ type ListingInfo = {
   price?: number;
   photo?: string;
 	username?: string;
+	id?: string;
 }
 
 export const SearchPage = () => {
@@ -47,6 +49,8 @@ export const SearchPage = () => {
     googleMapsApiKey: 'AIzaSyB4Bsp9jhz4i39NidfXExaaZV89o8jP5To',
     libraries: libraries,
   })
+
+  const navigate = useNavigate();
 
 	const [view, setView] = useState("map view");
   const [searchValue, setSearchValue] = useState('Sydney');
@@ -151,7 +155,9 @@ export const SearchPage = () => {
 			spaceType: carspaceToView.spacetype,
 			vehicleType: carspaceToView.vehiclesize,
 			price: carspaceToView.price,
-			suburb: carspaceToView.suburb
+			suburb: carspaceToView.suburb,
+			postcode: carspaceToView.postcode,
+			id: carspaceToView._id
 		})
 		setShowModal(true);
 	}
@@ -252,7 +258,7 @@ export const SearchPage = () => {
 				</Modal.Body>
         <Modal.Footer>
 					<Button variant="warning" onClick={handleCloseModal}>See Reviews</Button>
-          <Button variant="primary" onClick={handleCloseModal}>Book</Button>
+          <Button variant="primary" onClick={() => navigate(`/booking?id=${listingInfo.id}&postcode=${listingInfo.postcode}`)}>Book</Button>
         </Modal.Footer>
       </Modal>
 

@@ -12,6 +12,11 @@ interface Payment {
 export const MyPaymentDetails = (props: any) => {
 
     const username = props.username;
+
+    // Local storage trick
+    const myFundsString = localStorage.getItem('myFunds');
+    const myFunds = myFundsString ? parseInt(myFundsString, 10) : 0;
+    
     let token = localStorage.getItem('authToken') || '';
     const [showModal, setShowModal] = useState(false);
     const [modalState, setModalState] = useState('');
@@ -25,6 +30,9 @@ export const MyPaymentDetails = (props: any) => {
     const [cardNumberCheck, setCardNumberCheck] = useState(false);
     const [cardExpiryCheck, setCardExpiryCheck] = useState(false);
     const [buttonDisabled, setButtonDisabled] = useState(true);
+    const [fundsAmount, setFundsAmount] = useState(0);
+    const [addFundsAmount, setAddFundsAmount] = useState(0);
+    const [withdrawFundsAmount, setWithdrawFundsAmount] = useState(0);
 
     // State variables for all of the possible payment detail changes
     const [BSBChange, setBSBChange] = useState('');
@@ -54,6 +62,8 @@ export const MyPaymentDetails = (props: any) => {
             }
 		}
 		retrieveUserBankDetails();
+        // Local storage trick
+        setFundsAmount(myFunds);
 	}, [triggerRender]);
 
 	// Handles adding/changing bank details
@@ -157,6 +167,28 @@ export const MyPaymentDetails = (props: any) => {
         setShowModal(false)
     }
 
+    const addFunds = () => {
+        if (addFundsAmount <= 0) {
+            // TODO
+            // Add error message
+            return;
+        }
+        setFundsAmount(fundsAmount + addFundsAmount);
+        setAddFundsAmount(0);
+        localStorage.setItem('myFunds', (fundsAmount + addFundsAmount).toString());
+    }
+
+    const withdrawFunds = () => {
+        if (withdrawFundsAmount <= 0 || (fundsAmount - withdrawFundsAmount) < 0) {
+            // TODO
+            // Add error message
+            return;
+        }
+        setFundsAmount(fundsAmount - withdrawFundsAmount);
+        setWithdrawFundsAmount(0);
+        localStorage.setItem('myFunds', (fundsAmount - withdrawFundsAmount).toString());
+    }
+
 	// Handles showing the modal
 	const handleShow = (type: string) => {
 		setModalState(type);
@@ -174,17 +206,23 @@ export const MyPaymentDetails = (props: any) => {
             <Row className="text-center">
                 <Col className="text-center">
                     <span><i>your funds</i></span><br />
-                    <span style={{ fontSize: '40pt' }}>$0</span>
+                    <span style={{ fontSize: '40pt' }}>${fundsAmount}</span>
                 </Col>
                 <Col>
                     <Row>
                         <Col className="text-center">
-                            <Button variant="success" style={{ width: '200px' }} disabled={detailsExist ? false : true}>add funds</Button>
+                            <InputGroup className="mb-3">
+                                <Form.Control placeholder="$" onChange={(event) => setAddFundsAmount(parseInt(event.target.value, 10))}/>
+                                <Button variant="success" style={{ width: '140px' }} disabled={detailsExist ? false : true} onClick={addFunds}>add funds</Button>
+                            </InputGroup>
                         </Col>
-                    </Row><br />
+                    </Row>
                     <Row>
                         <Col className="text-center">
-                            <Button variant="danger" style={{ width: '200px' }} disabled={detailsExist ? false : true}>withdraw funds</Button>
+                            <InputGroup className="mb-3">
+                                <Form.Control placeholder="$" onChange={(event) => setWithdrawFundsAmount(parseInt(event.target.value, 10))}/>
+                                <Button variant="danger" style={{ width: '140px' }} disabled={detailsExist ? false : true} onClick={withdrawFunds}>withdraw funds</Button>
+                            </InputGroup>
                         </Col>
                     </Row>
                 </Col>
