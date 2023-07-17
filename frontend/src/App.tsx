@@ -8,6 +8,7 @@ import { ListingForm } from './pages/ListingForm';
 import { SearchPage } from './pages/SearchPage';
 import { AdminLogin } from './pages/AdminLogin';
 import { Admin } from './pages/Admin';
+import { BookingForm } from './pages/BookingForm';
 
 const RequiresAuth = ({children}: PropsWithChildren) => {
   const isLoggedIn = localStorage.getItem("authToken");
@@ -45,6 +46,7 @@ export const App = () => {
           <Route path="profile" element={<MyProfile />} />
           <Route path="listingform" element={<ListingForm />} />
           <Route path="" element={<SearchPage />} />
+          <Route path="booking" element={<BookingForm />} />
         </Route>
         <Route path="/*" element={
           <RequiresAuth>

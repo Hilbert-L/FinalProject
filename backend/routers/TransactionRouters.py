@@ -1,6 +1,6 @@
-from models.Transaction import MakePayment, CancelPayment
+from models.Transaction import  CancelPayment
 from fastapi import APIRouter, Depends, status, HTTPException
-from mongodbconnect.mongodb_connect import bank_information_collections, transaction_information_collections, users_collections
+from mongodbconnect.mongodb_connect import bank_information_collections, transaction_information_collections, users_collections, booking_collections
 from wrappers.wrappers import check_token
 from authentication.authentication import verify_user_token
 from datetime import datetime
@@ -8,126 +8,52 @@ import json
 
 TransactionRouter = APIRouter()
 
-@TransactionRouter.post("/transactions/make_payment", tags=["User Transactions"])
-@check_token
-async def make_payment(payment: MakePayment, token: str = Depends(verify_user_token)):
-    payer_info = users_collections.find_one({"username": payment.payerusername})
-    receiver_info = users_collections.find_one({"username": payment.receiverusername})
-    
-    if payer_info is None or receiver_info is None:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Payer or receiver cannot be found")
-
-    payer_bank_filter = {
-        "username": payment.payerusername,
-        "bankname": payment.payerbankname,
-        "accountbsb": payment.payeraccountbsb,
-        "accountnumber": payment.payeraccountnumber
-    }
-
-    receiver_bank_filter = {
-        "username": payment.receiverusername,
-        "bankname": payment.receiverbankname,
-        "accountbsb": payment.receiveraccountbsb,
-        "accountnumber": payment.receiveraccountnumber
-    }
-
-    payer_bank_info = bank_information_collections.find_one({**payer_bank_filter})
-    receiver_bank_info = bank_information_collections.find_one({**receiver_bank_filter})
-
-    if payer_bank_info is None or receiver_bank_info is None:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Payer or receiver bank details cannot be found")
-
-    # Update receiver's balance
-    new_balance = receiver_bank_info["balance"] + payment.amount
-    bank_information_collections.update_one(
-        {"username": payment.receiverusername},
-        {"$set": {"balance": new_balance}}
-    )
-
-    num_transactions = transaction_information_collections.count_documents({})
-    
-    transaction_dict = payment.dict()
-    transaction_dict["id"] = num_transactions + 1
-    transaction_dict["transaction_time"] = datetime.now().strftime("%Y/%m/%d-%H:%M:%S")
-    transaction_dict["status"] = "Confirmed"  # Add transaction status
-    transaction_information_collections.insert_one(transaction_dict)
-
-    return {"Message": "Payment added successfully"}
-
 @TransactionRouter.get("/transactions/get_paymanet_detail/{transaction_id}", tags=["User Transactions"])
 @check_token
 async def get_payment_detail(transaction_id: int, token: str = Depends(verify_user_token)):
-    transaction_info = transaction_information_collections.find_one({"id": transaction_id})
+    # Verify user
+    user = users_collections.find_one({"username": token})
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid user")
+
+    transaction_info = transaction_information_collections.find_one({"TansactionID": transaction_id})
 
     if transaction_info is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Transaction not found")
 
     PaymentDetail = {
-        "Transaction ID": transaction_info["id"],
-        "Title": transaction_info["title"],
+        "Transaction ID": transaction_info["TansactionID"],
+        "Status": transaction_info["status"],
         "Created At": transaction_info["transaction_time"],
-        "Receiver": transaction_info["receiverusername"],
-        "Amount": transaction_info["amount"]
+        "Receiver": transaction_info["provider_name"],
+        "Amount": transaction_info["total_price"]
     }
 
     return PaymentDetail
 
-@TransactionRouter.delete("/transactions/cancel_payment/{transaction_id}", tags=["User Transactions"])
+@TransactionRouter.get("/transactions/payment_history", tags=["User Transactions"])
 @check_token
-async def cancel_payment(transaction_id: int, token: str = Depends(verify_user_token)):
-    transaction_info = transaction_information_collections.find_one({"id": transaction_id})
+async def get_all_transactions(username: str, token: str = Depends(verify_user_token)):
+    # Verify user
+    user = users_collections.find_one({"username": token})
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid user")
 
-    if transaction_info is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Transaction not found")
+    # Check if the user is authorized to view the booking history
+    if username != user["username"]:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="You are not authorized to view this transaction history",
+        )
 
-    payer_bank_filter = {
-        "username": transaction_info["payerusername"],
-        "accountbsb": transaction_info["payeraccountbsb"],
-        "accountnumber": transaction_info["payeraccountnumber"]
-    }
-    receiver_bank_filter = {
-        "username": transaction_info["receiverusername"],
-        "accountbsb": transaction_info["receiveraccountbsb"],
-        "accountnumber": transaction_info["receiveraccountnumber"]
-    }
+    # Get all transactions
+    trans_cursor = transaction_information_collections.find({"consumer_name": username})
+    transactions = []
+    for i in trans_cursor:
+        trans_dict = dict(i)
+        trans_dict["_id"] = str(trans_dict["_id"])  # Convert ObjectId to string
+        transactions.append(trans_dict)
 
-    payer_bank_info = bank_information_collections.find_one(payer_bank_filter)
-    receiver_bank_info = bank_information_collections.find_one(receiver_bank_filter)
-
-    if payer_bank_info is None or receiver_bank_info is None:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT,
-                            detail="Payer or receiver bank details cannot be found")
-
-    amount = transaction_info["amount"]
-
-    # Update payer bank account balance
-    updated_payer_balance = payer_bank_info["balance"] + amount
-    bank_information_collections.update_one(
-        payer_bank_filter,
-        {"$set": {"balance": updated_payer_balance}}
-    )
-
-    # Update receiver bank account balance
-    updated_receiver_balance = receiver_bank_info["balance"] - amount
-    bank_information_collections.update_one(
-        receiver_bank_filter,
-        {"$set": {"balance": updated_receiver_balance}}
-    )
-
-    # Update transaction status to "Cancelled"
-    transaction_information_collections.update_one(
-        {"id": transaction_id},
-        {"$set": {"status": "Cancelled"}}
-    )
-
-    return {"Message": "Payment cancelled successfully"}
-
-# TODO For Haoran we are creating separate collection for bank accounts and transaction
-# not under Users 
-# it may make things too complicated further down the line for data processesing 
-# Please implement the following if you can
-# Cancel Payment (Done)
-# Update Payment Method
-# Check balance for user for each account (Done)
-# Update Payment in AdminRouters.py (Done)
-
+    return {"Message": "Transactions fetched successfully",
+            "Transactions": transactions
+            }

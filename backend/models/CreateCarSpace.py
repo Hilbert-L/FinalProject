@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field, EmailStr
-from typing import Optional, List
+from typing import Optional, List, Union
 from pymongo import MongoClient
 from fastapi import FastAPI
 from base64 import b64encode
@@ -35,17 +35,16 @@ class CreateCarSpaceSchema(BaseModel):
     address: str = Field(default=None)
     suburb: str = Field(default=None)
     postcode: str = Field(default=None)
+    longitude:str = Field(default=None)
+    latitude:str = Field(default=None)
     width: Optional[str] = Field(default=None)
     breadth: Optional[str] = Field(default=None)
     spacetype: Optional[str] = Field(default=None)
     accesskeyrequired: Optional[bool] = Field(default=None)
     vehiclesize: Optional[str] = Field(default=None)
     currency: str = Field(default=None)
-    price: str = Field(default=None)
+    price: int = Field(default=None)
     frequency: str = Field(default=None)
-    leasing: bool = Field(default=None)
-    booking: bool = Field(default=None)
-    using: bool = Field(default=None)
     class Config:
         schema = {
             "sample": {
@@ -53,17 +52,16 @@ class CreateCarSpaceSchema(BaseModel):
                 "address": "test",
                 "suburb": "test",
                 "postcode": "test",
+                "longitude": "string",
+                "latitude": "string",
                 "width": "test",
                 "breadth": "test",
                 "spacetype": "test",
                 "accesskeyrequired": False,
                 "vehiclesize": "Large",
                 "currency": "AUD",
-                "price": "100",
+                "price": 100,
                 "frequency": "Daily",
-                "leasing": True,
-                "booking": False,
-                "using": False,
             }
         }
 
@@ -79,17 +77,16 @@ class CarSpaceSchema(BaseModel):
     address: str = Field(default=None)
     suburb: str = Field(default=None)
     postcode: str = Field(default=None)
+    longitude:Optional[Union[int, str]] = Field(default=None)
+    latitude:Optional[Union[int, str]] = Field(default=None)
     width: Optional[str] = Field(default=None)
     breadth: Optional[str] = Field(default=None)
     spacetype: Optional[str] = Field(default=None)
     accesskeyrequired: Optional[bool] = Field(default=False)
     vehiclesize: Optional[str] = Field(default=None)
     currency: str = Field(default=None)
-    price: str = Field(default=None)
+    price: int = Field(default=None)
     frequency: str = Field(default=None)
-    leasing: bool = Field(default=None)
-    booking: bool = Field(default=None)
-    using: bool = Field(default=None)
     class Config:
         schema = {
             "sample" : {
@@ -104,16 +101,37 @@ class CarSpaceSchema(BaseModel):
                 "address": "test",
                 "suburb": "test",
                 "postcode": "1234",
+                "longitude": "string",
+                "latitude": "string",
                 "width": "test",
                 "breadth": "test",
                 "spacetype": "test",
                 "accesskeyrequired": False,
                 "vehiclesize": "Large",
                 "currency": "AUD",
-                "price": "100",
+                "price": 100,
                 "frequency": "Daily",
-                "leasing": True,
-                "booking": False,
-                "using": False,
+            }
+        }
+
+
+class Review(BaseModel):
+    ownerusername: str = Field(default=None)
+    overall: str = Field(default=None)
+    location: str = Field(default=None)
+    cleanliness: str = Field(default=None)
+    easeofaccess: str = Field(default=None)
+    communication: str = Field(default=None)
+    writtenfeedback: Optional[str] = Field(default=None)
+    class Config:
+        schema = {
+            "sample": {
+                "ownerusername": "test",
+                "overall": "10",
+                "location": "10",
+                "cleanliness": "10",
+                "easeofaccess": "10",
+                "communication": "10",
+                "writtenfeedback": "test"
             }
         }
