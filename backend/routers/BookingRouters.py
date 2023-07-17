@@ -270,6 +270,7 @@ async def update_booking(
     existing_bookings = booking_collections.count_documents(
         {
             "booking_id": {"$ne": booking_id},
+            "status": {"$ne": "Canceled"},
            "$or": [
                 {
                     "start_date": {"$lte": booking_update.end_date},
