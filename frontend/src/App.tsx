@@ -6,16 +6,16 @@ import { Layout } from './pages/Layout';
 import { MyProfile } from './pages/MyProfile';
 import { ListingForm } from './pages/ListingForm';
 import { SearchPage } from './pages/SearchPage';
-import { AdminLogin } from './pages/AdminLogin';
-import { Admin } from './pages/Admin';
+import { Admin } from './pages/admin/Admin';
 import { BookingForm } from './pages/BookingForm';
+import { AdminLogin } from './pages/admin/AdminLogin';
 
-const RequiresAuth = ({children}: PropsWithChildren) => {
+const RequiresAuth = ({children}: PropsWithChildren<{}>) => {
   const isLoggedIn = localStorage.getItem("authToken");
   return isLoggedIn ? <>{children}</> : <Navigate to={"/login"} />
 }
 
-const RequiresAdmin = ({children}: PropsWithChildren) => {
+const RequiresAdmin = ({children}: PropsWithChildren<{}>) => {
   const isLoggedIn = localStorage.getItem("adminToken");
   return isLoggedIn ? <>{children}</> : <Navigate to={"/login/admin"} />
 }

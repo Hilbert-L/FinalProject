@@ -1,5 +1,6 @@
 import { Container, Tab, Tabs } from "react-bootstrap"
 import { AdminHeader } from "./AdminHeader"
+import { AdminUsers } from "./AdminUsers"
 
 export const Admin = () => {
   return (
@@ -10,7 +11,7 @@ export const Admin = () => {
         <Tabs fill defaultActiveKey="users">
           <Tab eventKey="users" title="Users">
             <br />
-            <div>users</div>
+            <AdminUsers />
           </Tab>
           <Tab eventKey="bookings" title="Bookings">
             <br />

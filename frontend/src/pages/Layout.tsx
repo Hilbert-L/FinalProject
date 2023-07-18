@@ -3,7 +3,7 @@ import { Container, Nav, Navbar } from 'react-bootstrap';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { makeRequest } from '../helpers';
 
-export const Layout = ({ children }: PropsWithChildren) => {
+export const Layout = ({ children }: PropsWithChildren<{}>) => {
   const navigate = useNavigate();
 
   const handleLogout = () => {

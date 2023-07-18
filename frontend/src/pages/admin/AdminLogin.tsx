@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import logo from '../images/logo.png';
+import logo from '../../images/logo.png';
 import { useNavigate } from 'react-router-dom';
 import { Button, FloatingLabel, Form } from 'react-bootstrap';
 import { makeRequest } from '../../helpers';
