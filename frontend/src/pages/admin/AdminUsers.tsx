@@ -112,28 +112,30 @@ const DeactivateUserModal = ({
       "PUT",
       undefined,
       { token }
-    ).then(() => {
-      onHide();
-      refresh();
+    ).then((resp) => {
+      if (resp.status === 200) {
+        onHide();
+        refresh();
+      }
     })
   }
 
   return (
     <Modal show={show} onHide={onHide}>
       <Modal.Header closeButton>
-          <Modal.Title>{`${user?.active ? "Deactivate" : "Reactivate"} '${user?.username}'?`}</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          Are you sure you want to {user?.active ? "deactivate" : "reactivate"} user '{user?.username}'?
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={onHide}>
-            Close
-          </Button>
-          <Button variant={user?.active ? "danger" : "primary"} onClick={handleSubmit}>
-            Yes
-          </Button>
-        </Modal.Footer>
+        <Modal.Title>{`${user?.active ? "Deactivate" : "Reactivate"} '${user?.username}'?`}</Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        Are you sure you want to {user?.active ? "deactivate" : "reactivate"} user '{user?.username}'?
+      </Modal.Body>
+      <Modal.Footer>
+        <Button variant="secondary" onClick={onHide}>
+          Close
+        </Button>
+        <Button variant={user?.active ? "danger" : "primary"} onClick={handleSubmit}>
+          Yes
+        </Button>
+      </Modal.Footer>
     </Modal>
   );
 }
