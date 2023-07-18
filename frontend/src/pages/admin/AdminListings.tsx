@@ -38,7 +38,7 @@ export const AdminListings = () => {
           length: listing.breadth ?? listing.Breadth
         })))
       })
-  }, []);
+  }, [refresh]);
 
   const theme = createTheme()
 
