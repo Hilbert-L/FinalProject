@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react';
 import logo from '../images/logo.png';
 import { useNavigate } from 'react-router-dom';
 import { Button, FloatingLabel, Form } from 'react-bootstrap';
-import { FormContainer } from '../components/StyledFormContainer';
-import { makeRequest } from '../helpers';
+import { makeRequest } from '../../helpers';
+import { FormContainer } from '../../components/StyledFormContainer';
 
 export const AdminLogin = () => {
   const [username, setUsername] = useState('');

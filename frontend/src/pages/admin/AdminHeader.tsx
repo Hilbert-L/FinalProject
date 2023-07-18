@@ -1,6 +1,6 @@
 import { Container, Nav, Navbar } from "react-bootstrap"
 import { useNavigate } from "react-router-dom";
-import { makeRequest } from "../helpers";
+import { makeRequest } from "../../helpers";
 
 export const AdminHeader = () => {
   const navigate = useNavigate();
