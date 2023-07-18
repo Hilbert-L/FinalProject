@@ -12,7 +12,7 @@ export const AdminHeader = () => {
       .then((response) => {
         if (response.status === 200) {
           localStorage.removeItem("adminToken");
-          navigate("/auth/login");
+          navigate("/login/admin");
         }
       });
   }
