@@ -20,6 +20,7 @@ export const AdminUsers = () => {
   const [selectedUser, setSelectedUser] = useState<User>();
   const [showMakeUserAdminModal, setShowMakeUserAdminModal] = useState(false);
   const [showDeactivateUserModal, setShowDeactivateUserModal] = useState(false);
+  const [refresh, setRefresh] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem("adminToken");
@@ -36,7 +37,7 @@ export const AdminUsers = () => {
           active: user.isactive,
         })));
       })
-  }, []);
+  }, [refresh]);
 
   const theme = createTheme()
 
@@ -85,6 +86,7 @@ export const AdminUsers = () => {
       <DeactivateUserModal
         show={showDeactivateUserModal}
         onHide={() => setShowDeactivateUserModal(false)}
+        refresh={() => setRefresh(!refresh)}
         user={selectedUser}
       />
     </ThemeProvider>
@@ -94,10 +96,12 @@ export const AdminUsers = () => {
 const DeactivateUserModal = ({
   show,
   onHide,
+  refresh,
   user,
 }: {
   show: boolean;
   onHide: () => void;
+  refresh: () => void;
   user?: User;
 }) => {
   const handleSubmit = () => {
@@ -108,9 +112,9 @@ const DeactivateUserModal = ({
       "PUT",
       undefined,
       { token }
-    ).then((response) => {
-      console.log(response);
+    ).then(() => {
       onHide();
+      refresh();
     })
   }
 
