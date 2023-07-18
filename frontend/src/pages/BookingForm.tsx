@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Container, Col, Row, Form, Button, Modal } from 'react-bootstrap';
+import { Container, Col, Row, Form, Button, Modal, FloatingLabel } from 'react-bootstrap';
 import { DateRangePicker } from 'react-date-range';
 import 'bootstrap/dist/css/bootstrap.css';
 import { makeRequest } from '../helpers';
@@ -16,6 +16,8 @@ export const BookingForm = () => {
     const [spaceToBook, setSpaceToBook] = useState({})
     const [showModal, setShowModal] = useState(false);
     const [totalPrice, setTotalPrice] = useState(0);
+    const [carRegistration, setCarRegistration] = useState('');
+    const [vehicleType, setVehicleType] = useState('');
     const [dateRange, setDateRange] = useState({
         startDate: new Date(),
         endDate: new Date(),
@@ -81,6 +83,8 @@ export const BookingForm = () => {
 
     const handleCloseModal = () => setShowModal(false);
 
+    const allFilledOut = carRegistration !== '' && vehicleType !== '';
+
     return (
         <Container>
             <br />
@@ -89,7 +93,6 @@ export const BookingForm = () => {
 			</Row>
             <Row>
                 <Form.Group>
-                    <br />
                     <Form.Label>Address</Form.Label>
                         <Form.Control
                         type="text"
@@ -135,18 +138,46 @@ export const BookingForm = () => {
                         disabled
                         />
                 </Form.Group>
+            </Row>
+            <Row>
+                <Form.Group>
+                    <br />
+                    <Form.Label>Car Registration</Form.Label>
+                        <Form.Control
+                        type="text"
+                        placeholder='Please enter your car registration'
+                        onChange={(event) => {setCarRegistration(event.target.value)}}
+                        />
+                </Form.Group>
             </Row><br />
             <Row>
-                <Button onClick={handleBooking}>Book</Button>
-            </Row>
+                <Form.Group>
+                    <Form.Label>Vehicle Type</Form.Label>
+                    <FloatingLabel controlId="floatingVehicleType" label="Vehicle Type" className="mb-3">
+                        <Form.Select onChange={(event) => {setVehicleType(event.target.value)}}>
+                        <option value="">Please select an option</option>
+                        <option value="hatchback">Hatchback</option>
+                        <option value="sedan">Sedan</option>
+                        <option value="suv">SUV</option>
+                        <option value="ev">EV</option>
+                        <option value="ute">Ute</option>
+                        <option value="wagon">Wagon</option>
+                        <option value="van">Van</option>
+                        <option value="bike">Bike</option>
+                        </Form.Select>
+                    </FloatingLabel>
+                </Form.Group>
+            </Row><br />
+            <Row>
+                <Button onClick={handleBooking} disabled={!allFilledOut}>Book</Button>
+            </Row><br />
 
             <Modal show={showModal} onHide={handleCloseModal}>
                 <Modal.Header closeButton>
-                    <Modal.Title>Booking</Modal.Title>
+                    <Modal.Title>Booking Error 🚫</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>You do not have enough funds in your account to book for this many days. Add more funds to your account or reduce the length of your booking 😔</Modal.Body>
             </Modal>
-
         </Container>
     )
 }
