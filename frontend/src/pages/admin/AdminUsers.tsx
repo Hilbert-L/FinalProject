@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import MaterialTable from 'material-table';
 import { ThemeProvider, createTheme } from "@mui/material";
 import { makeRequest } from "../../helpers";
-import { Button, Form, Modal } from "react-bootstrap";
+import { Button, Modal } from "react-bootstrap";
 
 type User = {
   id: string;
