@@ -267,37 +267,37 @@ async def delete_car_space_reviews_for_producer_carspace(username: str, carspace
         return {"Message": f"Reviews successfully deleted for user: {username} for carspace: {carspaceid}"}
     
 
-@AdminRouter.delete("/admin/carspaceimage/{username}", tags=["Administrators"], description="Delete car space a producer for a particular producer")
-@check_token
-async def delete_car_space_image_for_producer(username: str, token: str = Depends(verify_admin_token)):
-    result = car_space_image_collections.delete_many({"username": username})
-
-    if result.deleted_count > 0:
-        return {"message": "Car Space Image(s) deleted successfully"}
-    else:
-        return {"message": "Car Space Image not found"}
-
-@AdminRouter.delete("/admin/carspaceimage/{username}/{carspaceid}", tags=["Administrators"], description="Delete car space a producer for a carspace owned by a particular producer")
-@check_token
-async def delete_car_space_image_for_producer_carspace(username: str, carspaceid: int, token: str = Depends(verify_admin_token)):
-    result = car_space_image_collections.delete_many({"username": username, "carspaceid": carspaceid})
-
-    if result.deleted_count > 0:
-        return {"message": "Car Space Image(s) deleted successfully"}
-    else:
-        return {"message": "Car Space Image not found"}
-
-
-@AdminRouter.delete("/admin/carspaceimage/{username}/{carspaceid}/{image}", tags=["Administrators"], description="Delete car space a producer for a particular image in a carspace owned by a particular producer")
-@check_token
-async def delete_car_space_image_for_producer_carspace(username: str, carspaceid: int, image: str, token: str = Depends(verify_admin_token)):
-    result = car_space_image_collections.delete_many({"username": username, "carspaceid": carspaceid, "imagename": image})
-
-    if result.deleted_count > 0:
-        return {"message": "Car Space Image(s) deleted successfully"}
-    else:
-        return {"message": "Car Space Image not found"}
-    
+# @AdminRouter.delete("/admin/carspaceimage/{username}", tags=["Administrators"], description="Delete car space a producer for a particular producer")
+# @check_token
+# async def delete_car_space_image_for_producer(username: str, token: str = Depends(verify_admin_token)):
+#     result = car_space_image_collections.delete_many({"username": username})
+#
+#     if result.deleted_count > 0:
+#         return {"message": "Car Space Image(s) deleted successfully"}
+#     else:
+#         return {"message": "Car Space Image not found"}
+#
+# @AdminRouter.delete("/admin/carspaceimage/{username}/{carspaceid}", tags=["Administrators"], description="Delete car space a producer for a carspace owned by a particular producer")
+# @check_token
+# async def delete_car_space_image_for_producer_carspace(username: str, carspaceid: int, token: str = Depends(verify_admin_token)):
+#     result = car_space_image_collections.delete_many({"username": username, "carspaceid": carspaceid})
+#
+#     if result.deleted_count > 0:
+#         return {"message": "Car Space Image(s) deleted successfully"}
+#     else:
+#         return {"message": "Car Space Image not found"}
+#
+#
+# @AdminRouter.delete("/admin/carspaceimage/{username}/{carspaceid}/{image}", tags=["Administrators"], description="Delete car space a producer for a particular image in a carspace owned by a particular producer")
+# @check_token
+# async def delete_car_space_image_for_producer_carspace(username: str, carspaceid: int, image: str, token: str = Depends(verify_admin_token)):
+#     result = car_space_image_collections.delete_many({"username": username, "carspaceid": carspaceid, "imagename": image})
+#
+#     if result.deleted_count > 0:
+#         return {"message": "Car Space Image(s) deleted successfully"}
+#     else:
+#         return {"message": "Car Space Image not found"}
+#
 
 @AdminRouter.get("/admin/carspace/getcarspace/{username}", tags=["Administrators"])
 @check_token
@@ -327,34 +327,34 @@ async def get_car_space_by_id(username: str, carspaceid: int, token: str = Depen
     
 
 
-@AdminRouter.delete("/admin/carspace/deletecarspace/{username}", tags=["Administrators"])
-@check_token
-async def delete_car_spaces_by_user(username: str, token: str = Depends(verify_admin_token)):
-    filter = {"username": username}
-    
-    result = car_space_collections.delete_many(filter)
-    car_space_image_collections.delete_many(filter)
-    car_space_review_collections.delete_many(filter)
-    
-    if result.deleted_count > 0:
-        return {"message": "Car Space deleted successfully"}
-    else:
-        return {"message": "Car Space not found"}
+# @AdminRouter.delete("/admin/carspace/deletecarspace/{username}", tags=["Administrators"])
+# @check_token
+# async def delete_car_spaces_by_user(username: str, token: str = Depends(verify_admin_token)):
+#     filter = {"username": username}
+#
+#     result = car_space_collections.delete_many(filter)
+#     car_space_image_collections.delete_many(filter)
+#     car_space_review_collections.delete_many(filter)
+#
+#     if result.deleted_count > 0:
+#         return {"message": "Car Space deleted successfully"}
+#     else:
+#         return {"message": "Car Space not found"}
 
 
-@AdminRouter.delete("/admin/carspace/deletecarspace/{username}/{carspaceid}", tags=["Administrators"])
-@check_token
-async def delete_car_space_by_id(username: str, carspaceid: int, token: str = Depends(verify_admin_token)):
-    filter = {"username": username, "carspaceid": carspaceid}
-
-    result = car_space_collections.delete_many(filter)
-    car_space_image_collections.delete_many(filter)
-    car_space_review_collections.delete_many(filter)
-    
-    if result.deleted_count > 0:
-        return {"message": "Car Space deleted successfully"}
-    else:
-        return {"message": "Car Space not found"}
+# @AdminRouter.delete("/admin/carspace/deletecarspace/{username}/{carspaceid}", tags=["Administrators"])
+# @check_token
+# async def delete_car_space_by_id(username: str, carspaceid: int, token: str = Depends(verify_admin_token)):
+#     filter = {"username": username, "carspaceid": carspaceid}
+#
+#     result = car_space_collections.delete_many(filter)
+#     car_space_image_collections.delete_many(filter)
+#     car_space_review_collections.delete_many(filter)
+#
+#     if result.deleted_count > 0:
+#         return {"message": "Car Space deleted successfully"}
+#     else:
+#         return {"message": "Car Space not found"}
     
 
 @AdminRouter.put("/admin/carspace/updatecarspace/{username}", tags=["Administrators"])
@@ -417,7 +417,6 @@ async def get_car_spaces_reviews_by_user(username: str, token: str = Depends(ver
     filter = {"username": username}
     carspace_cursor = car_space_review_collections.find({filter})
     carspaces = []
-    []
     for document in carspace_cursor:
         document_str = json.dumps(document, default=str)
         document_dict = json.loads(document_str)

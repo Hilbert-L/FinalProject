@@ -21,10 +21,10 @@ BookingRouter = APIRouter()
 @BookingRouter.post("/booking/create_booking/{username}/{carspaceid}", tags=["Booking"])
 @check_token
 async def create_booking(
-    provider_username: str,
-    carspaceid: int,
-    carspace_booking: BookingCreateSchema,
-    token: str = Depends(verify_user_token)
+        provider_username: str,
+        carspaceid: int,
+        carspace_booking: BookingCreateSchema,
+        token: str = Depends(verify_user_token)
 ):
     # Verify consumer
     consumer_user = users_collections.find_one({"username": token})
@@ -38,14 +38,11 @@ async def create_booking(
             status_code=status.HTTP_404_NOT_FOUND, detail="Invalid carspace"
         )
 
-
     # convert start_date to UTC format
     start_date_utc = carspace_booking.start_date.replace(tzinfo=pytz.UTC)
     current_time_utc = datetime.now(pytz.UTC)
     if start_date_utc < current_time_utc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Start date cannot be in the past")
-
-
 
     # Verify start_date is ealier than the end_date
     if carspace_booking.start_date >= carspace_booking.end_date:
@@ -54,11 +51,11 @@ async def create_booking(
             detail="Invalid booking dates. Start date should be earlier than end date."
         )
 
-
     # Verify if booking dates overlap with existing bookings
     existing_bookings = booking_collections.count_documents(
         {
             "carspaceid": carspaceid,
+            "status": {"$ne": "Canceled"},
             "$or": [
                 {
                     "start_date": {"$lte": carspace_booking.start_date},
@@ -82,7 +79,7 @@ async def create_booking(
         )
 
     # Calculate duration in hours
-    duration= int((carspace_booking.end_date - carspace_booking.start_date).total_seconds() / 3600)
+    duration = int((carspace_booking.end_date - carspace_booking.start_date).total_seconds() / 3600)
     # Create a new booking instance
     booking = BookingCreateSchema(
         start_date=carspace_booking.start_date,
@@ -91,7 +88,6 @@ async def create_booking(
 
     hour_price = carspace['price']
     total_price = hour_price * duration
-
 
     # Create a new booking instance
     booking_count = booking_collections.count_documents({})
@@ -146,23 +142,20 @@ async def create_booking(
         "Booking": booking_dict,
     }
 
-    
 
 @BookingRouter.put("/booking/delete_booking/{booking_id}", tags=["Booking"])
 @check_token
 async def delete_booking(booking_id: int, token: str = Depends(verify_user_token)):
-    
     # Verify user
     user = users_collections.find_one({"username": token})
     if user is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invalid user")
-    
+
     # Verify booking
     booking = booking_collections.find_one({"booking_id": booking_id})
     if booking is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="booking not found")
 
-    
     # Check if the user is authorized to delete the booking
     if booking["consumer_username"] != user["username"]:
         raise HTTPException(
@@ -228,14 +221,12 @@ async def delete_booking(booking_id: int, token: str = Depends(verify_user_token
     }
 
 
-
-
 @BookingRouter.put("/booking/update_booking/{booking_id}", tags=["Booking"])
 @check_token
 async def update_booking(
-    booking_id: int,
-    booking_update: BookingUpdateSchema,
-    token: str = Depends(verify_user_token),
+        booking_id: int,
+        booking_update: BookingUpdateSchema,
+        token: str = Depends(verify_user_token),
 ):
     # Verify user
     user = users_collections.find_one({"username": token})
@@ -258,7 +249,6 @@ async def update_booking(
             detail="You are not authorized to update this booking",
         )
 
-
     # Verify start_date is ealier than the end_date
     if booking_update.start_date >= booking_update.end_date:
         raise HTTPException(
@@ -270,7 +260,8 @@ async def update_booking(
     existing_bookings = booking_collections.count_documents(
         {
             "booking_id": {"$ne": booking_id},
-           "$or": [
+            "status": {"$ne": "Canceled"},
+            "$or": [
                 {
                     "start_date": {"$lte": booking_update.end_date},
                     "end_date": {"$gte": booking_update.start_date},
@@ -293,7 +284,7 @@ async def update_booking(
         )
 
     # Calculate duration in hours
-    duration= int((booking_update.end_date - booking_update.start_date).total_seconds() / 3600)
+    duration = int((booking_update.end_date - booking_update.start_date).total_seconds() / 3600)
 
     carspaceid = booking["carspaceid"]
     provider_username = booking["provider_username"]
@@ -301,6 +292,43 @@ async def update_booking(
     hour_price = carspace['price']
     total_price = hour_price * duration
 
+    # Calculate the price difference
+    price_difference = total_price - booking["total_price"]
+
+    # Retrieve consumer and provider information
+    consumer_info = bank_information_collections.find_one({"username": booking["consumer_username"]})
+    provider_info = bank_information_collections.find_one({"username": booking["provider_username"]})
+
+    # If the price increased, charge the consumer the difference and add it to the provider's balance
+    if price_difference > 0:
+        if consumer_info["balance"] < price_difference:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                detail="Insufficient balance to cover the price increase")
+
+        bank_information_collections.update_one(
+            {"username": consumer_info['username']},
+            {"$inc": {"balance": -price_difference}}
+        )
+
+        bank_information_collections.update_one(
+            {"username": provider_info['username']},
+            {"$inc": {"balance": price_difference}}
+        )
+    # If the price decreased, refund the difference to the consumer and deduct it from the provider's balance
+    elif price_difference < 0:
+        if provider_info["balance"] < -price_difference:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                detail="Provider doesn't have enough balance to refund the price decrease")
+
+        bank_information_collections.update_one(
+            {"username": consumer_info['username']},
+            {"$inc": {"balance": -price_difference}}
+        )
+
+        bank_information_collections.update_one(
+            {"username": provider_info['username']},
+            {"$inc": {"balance": price_difference}}
+        )
 
     # Update the booking
     booking_collections.update_one(
@@ -313,16 +341,22 @@ async def update_booking(
         }}
     )
 
-
     # Retrieve the updated booking
-    updated_booking = booking_collections.find_one({"booking_id": booking_id},{"_id": 0})
+    updated_booking = booking_collections.find_one({"booking_id": booking_id}, {"_id": 0})
+
+    # Update the corresponding transaction's total price
+    transaction_info = transaction_information_collections.find_one({"booking_id": booking_id}, {"_id": 0})
+
+    if transaction_info is not None:
+        transaction_information_collections.update_one(
+            {"booking_id": booking_id},
+            {"$set": {"total_price": total_price}}
+        )
 
     return {
         "Message": "Booking updated successfully",
         "Updated Booking": updated_booking,
     }
-
-
 
 
 @BookingRouter.get("/booking/history/{username}", tags=["Booking"])
@@ -341,7 +375,7 @@ async def get_booking_history(username: str, token: str = Depends(verify_user_to
         )
 
     # Retrieve the booking history for the user
-    booking_cursor = booking_collections.find({"consumer_username": username},{"_id": 0})
+    booking_cursor = booking_collections.find({"consumer_username": username}, {"_id": 0})
     bookings = []
     for booking in booking_cursor:
         bookings.append(booking)
