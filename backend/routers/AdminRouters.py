@@ -229,6 +229,7 @@ async def activate_user(username: str, token: str = Depends(verify_admin_token))
     return {"Message": f"User {username} has been activated"}
 
 @AdminRouter.put("/admin/setuserasadmin/{username}", tags=["Administrators"])
+@check_token
 async def set_user_as_admin(username: str, token: str = Depends(verify_admin_token)):
     filter = {"username": username}
     user = users_collections.find_one(filter)
@@ -259,6 +260,7 @@ async def set_user_as_admin(username: str, token: str = Depends(verify_admin_tok
 
 
 @AdminRouter.put("/admin/removeuserfromadmin/{username}", tags=["Administrators"])
+@check_token
 async def unset_user_as_admin(username: str, token: str = Depends(verify_admin_token)):
     filter = {"username": username}
     user_admin = admin_collections.delete_one(filter)

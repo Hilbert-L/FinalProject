@@ -66,7 +66,7 @@ export const FilterForm = (props: any) => {
       maxprice: maxPrice !== '' ? maxPrice : null,
       spacetype: spaceType !== 'none' ? spaceType : null,
       vehicletype: vehicleType !== 'none' ? vehicleType : null,
-      distancefrompin: distanceFromPin !== '' ? distanceFromPin : 10.0,
+      distancefrompin: distanceFromPin !== '' ? distanceFromPin : null,
       recommendersystem: recommenderSystem !== 'none' ? recommenderSystem : null,
       resultlimit: resultLimit !== '' ? resultLimit : null,
       sortmethod: sortMethod !== 'none' ? sortMethod : null,
