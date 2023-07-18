@@ -85,7 +85,7 @@ export const ListingForm = () => {
       const reader = new FileReader();
       reader.onloadend = () => {
         const base64 = reader.result as string;
-        setPhoto(base64)
+        setPhoto(encodeURIComponent(base64));
       };
       reader.readAsDataURL(event.target.files[0]);
     }

@@ -164,6 +164,16 @@ export const SearchPage = () => {
     console.log(carspaces);
     let carspaceToView = null;
 
+    for (const key in carspaces) {
+			if (carspaces.hasOwnProperty(key)) {
+				const listing = carspaces[key];
+				if (listing._id === carspace) {
+					carspaceToView = listing;
+					break;
+				}
+			}
+		}
+
 		setListingInfo({...listingInfo, 
 			username: carspaceToView.username,
 			address: carspaceToView.address,
@@ -203,35 +213,35 @@ export const SearchPage = () => {
 
   return (
     <Container fluid>
+      <br />
       <Row>
-        <div>
-          <Autocomplete>
-            <InputGroup className="mb-3">
-              <InputGroup.Text style={{ width: '50px' }}>🚗</InputGroup.Text>
-              <Form.Control
-                type="text"
-                onBlur={(event) => setSearchValue(event.target.value)}
-              />
-              <Button variant="primary" onClick={handleSearch}>
-                search
-              </Button>
-              <Button
-                variant="secondary"
-                onClick={() =>
-                  setView(view === 'map view' ? 'list view' : 'map view')
-                }
-              >
-                {view === 'map view' ? 'list view' : 'map view'}
-              </Button>
-            </InputGroup>
-          </Autocomplete>
-        </div>
-        <FilterForm searchValue={searchValue} mapCentre={mapCentre}/>
+        <Autocomplete>
+          <InputGroup className="mb-3">
+            <InputGroup.Text style={{ width: '50px' }}>🚗</InputGroup.Text>
+            <Form.Control
+              type="text"
+              onBlur={(event) => setSearchValue(event.target.value)}
+            />
+            <Button variant="primary" onClick={handleSearch}>
+              search
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() =>
+                setView(view === 'map view' ? 'list view' : 'map view')
+              }
+            >
+              {view === 'map view' ? 'list view' : 'map view'}
+            </Button>
+          </InputGroup>
+        </Autocomplete>
       </Row>
-      <Row></Row>
+      <Row>
+        <FilterForm searchValue={searchValue} mapCentre={mapCentre}/>
+      </Row> <br />
       <Row>
         {view === 'map view' ? (
-          <div style={{ width: '100%', height: '85vh' }}>
+          <div style={{ width: '100%', height: '79vh' }}>
             <GoogleMap
               center={mapCentre}
               zoom={15}
@@ -259,7 +269,7 @@ export const SearchPage = () => {
         ) : (
           <Container>
             {carspaces &&
-              carspaces.map((key: any, value: any) => (
+              Object.entries(carspaces).map(([key, value]) => (
                 <>
                   <Row
                     className="align-items-center"
