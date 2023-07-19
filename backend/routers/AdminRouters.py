@@ -238,25 +238,25 @@ async def set_user_as_admin(username: str, token: str = Depends(verify_admin_tok
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Username does not exist")
     
     admin = admin_collections.find_one(filter)
+    update = {"$set": {"isadmin": True}}
 
     if admin is not None:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Username is already an admin")
-
-    update = {"$set": {"isadmin": True}}
-    users_collections.update_one(filter, update)
-
+        admin_collections.update_one({"username": username}, update)
+        users_collections.update_one(filter, update)
     
-    admin_dict = {}
-    for key, value in user.items():
-        if isinstance(value, ObjectId):
-            admin_dict[key] = str(value)
-        else:
-            admin_dict[key] = value
-    admin_dict["isadmin"] = True
-    print(admin_dict)
-    admin_collections.insert_one(admin_dict)
+    else:
+        users_collections.update_one(filter, update)
+        admin_dict = {}
+        for key, value in user.items():
+            if isinstance(value, ObjectId):
+                admin_dict[key] = str(value)
+            else:
+                admin_dict[key] = value
+        admin_dict["isadmin"] = True
+        print(admin_dict)
+        admin_collections.insert_one(admin_dict)
 
-    return {"Message": f"{username} is now an admin", f"{username}": admin_dict}
+    return {"Message": f"{username} is now an admin"}
 
 
 @AdminRouter.put("/admin/removeuserfromadmin/{username}", tags=["Administrators"])
