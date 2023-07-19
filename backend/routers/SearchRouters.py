@@ -94,28 +94,36 @@ async def advanced_search(advanced_search: AdvancedSearch):
         if key == 'minprice':
             combined_conditions.append({
                 "$or": [
-                    {"price": {"$gte": {"$toInt": value}}},
-                    {"Price": {"$gte": {"$toInt": value}}}
+                    {"price": {"$gte": int(value)}},
+                    {"Price": {"$gte": int(value)}}
             ]})
 
         elif key == 'maxprice':
-            combined_conditions.append({"$or": [
-                {"price": {"$lte": {"$toInt": value}}},
-                {"Price": {"$lte": {"$toInt": value}}}
+            combined_conditions.append({
+                "$or": [
+                    {"price": {"$lte": int(value)}},
+                    {"Price": {"$lte": int(value)}}
             ]})
 
         elif key == 'spacetype':
-            combined_conditions.append(
-                {"SpaceType": value}
-            )
+            combined_conditions.append({
+                "$or": [
+                    {"SpaceType": value},
+                    {"spacetype": value},
+                    {"spaceType": value},
+                    {"Spaceype": value},
+            ]})
 
         elif key == 'vehicletype':
-            combined_conditions.append(
-                {"VehicleType": value}
-            )
+            combined_conditions.append({
+                "$or": [
+                    {"VehicleType": value},
+                    {"vehiclesize": value},
+                    {"vehicleSize": value},
+                    {"Vehiclesize": value}
+            ]})
             
     filter = {"$and": combined_conditions} if len(combined_conditions) > 0 else {}
-
     car_space_cursor = car_space_collections.find(filter)
     filtered_carspaces = []
     for document in car_space_cursor:
@@ -140,7 +148,7 @@ async def advanced_search(advanced_search: AdvancedSearch):
             else:
                 car_space["geodistance"] = None
 
-    filtered_carspaces = [obj for obj in filtered_carspaces if obj.get("geodistance") is not None]
+        filtered_carspaces = [obj for obj in filtered_carspaces if obj.get("geodistance") is not None]
 
 
     if advanced_search_dict["sortmethod"] is not None and advanced_search_dict["recommendersystem"] is not None:
