@@ -13,6 +13,7 @@ type User = {
   phonenumber: string;
   userSince: string;
   active: boolean;
+  admin: boolean;
 }
 
 export const AdminUsers = () => {
@@ -35,6 +36,7 @@ export const AdminUsers = () => {
           email: user.email,
           phonenumber: user.phonenumber,
           active: user.isactive,
+          admin: user.isadmin,
         })));
       })
   }, [refresh]);
@@ -53,6 +55,7 @@ export const AdminUsers = () => {
           { title: "Email", field: "email" },
           { title: "Phone number", field: "phonenumber" },
           { title: "Active", field: "active" },
+          { title: "Admin", field: "admin" },
         ]}
         data={users}
         options={{
@@ -81,6 +84,7 @@ export const AdminUsers = () => {
       <MakeUserAdminModal
         show={showMakeUserAdminModal}
         onHide={() => setShowMakeUserAdminModal(false)}
+        refresh={() => setRefresh(!refresh)}
         user={selectedUser}
       />
       <DeactivateUserModal
@@ -144,23 +148,43 @@ const MakeUserAdminModal = ({
   show,
   onHide,
   user,
+  refresh,
 }: {
   show: boolean;
   onHide: () => void;
   user?: User;
+  refresh: () => void;
 }) => {
   const handleSubmit = () => {
-    console.log("TODO: how to make a user an admin?")
+    const token = localStorage.getItem("adminToken");
+    if (!token) return;
+    makeRequest(
+      `/admin/${user?.admin ? "removeuserfromadmin" : "setuserasadmin"}/${user?.username}`,
+      "PUT",
+      undefined,
+      { token }
+    ).then((resp) => {
+      if (resp.status === 200) {
+        onHide();
+        refresh();
+      }
+    })
   }
+
+  const title = user?.admin
+    ? `Remove ${user?.username}'s admin privileges?`
+    : `Make ${user?.username} an admin?`
+
+  const body = user?.admin
+    ? `Are you sure you want to remove ${user?.username}'s admin privileges?`
+    : `Are you sure you want to give ${user?.username} admin privileges?`
 
   return (
     <Modal show={show} onHide={onHide}>
       <Modal.Header closeButton>
-          <Modal.Title>{`Make ${user?.firstname} ${user?.lastname} an admin?`}</Modal.Title>
+          <Modal.Title>{title}</Modal.Title>
         </Modal.Header>
-        <Modal.Body>
-          Are you sure you want to give {user?.firstname} {user?.lastname} admin privileges?
-        </Modal.Body>
+        <Modal.Body>{body}</Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={onHide}>
             Close
