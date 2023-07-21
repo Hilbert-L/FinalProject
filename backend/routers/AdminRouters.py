@@ -9,7 +9,6 @@ from authentication.authentication import generate_token, verify_admin_token, pw
 import os
 from typing import Optional
 import json
-from bson import json_util, ObjectId
 import io
 from PIL import Image
 
@@ -127,8 +126,7 @@ async def upload_profile_picture(token: str = Depends(verify_admin_token), base6
     if not is_valid_image(base64_image):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid image format")
 
-    update_results = admin_collections.update_one(filter, {"$set": {"image": base64_image}})
-    users_collections.update_one(filter, {"$set": {"image": base64_image}})
+    update_results = users_collections.update_one(filter, {"$set": {"image": base64_image}})
 
     if update_results.modified_count < 1:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Cannot update profile picture")
@@ -149,10 +147,8 @@ async def change_password(password_update: UpdatePassword, token: str = Depends(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invalid username or password")
     
     new_hashed_password = pwd_context.hash(password_update.newPassword)
-    update = {"$set": {"password": new_hashed_password, "passwordunhashed": password_update.newPassword}}
-
+    update = {"$set": {"password": new_hashed_password}}
     update_results = admin_collections.update_one(filter, update)
-    users_collections.update_one(filter, update)
     
     if update_results.modified_count != 1:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Cannot update password")
@@ -192,7 +188,6 @@ async def change_personal_details(personal_update: UpdatePersonalDetails, token:
     filter = {"username" : personal_update.username}
     update = {"$set": update_info}
     update_results = admin_collections.update_many(filter, update)
-    users_collections.update_one(filter, update)
 
     if update_results.modified_count != 1:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Cannot update user information")
@@ -211,7 +206,6 @@ async def deactivate_user(username: str, token: str = Depends(verify_admin_token
 
     update = {"$set": {"isactive": False}}
     users_collections.update_one(filter, update)
-    admin_collections.delete_one(filter)
     return {"Message", f"User {username} has been deactivated"}
 
 
@@ -226,52 +220,7 @@ async def activate_user(username: str, token: str = Depends(verify_admin_token))
 
     update = {"$set": {"isactive": True}}
     users_collections.update_one(filter, update)
-    return {"Message": f"User {username} has been activated"}
-
-@AdminRouter.put("/admin/setuserasadmin/{username}", tags=["Administrators"])
-@check_token
-async def set_user_as_admin(username: str, token: str = Depends(verify_admin_token)):
-    filter = {"username": username}
-    user = users_collections.find_one(filter)
-
-    if user is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Username does not exist")
-    
-    admin = admin_collections.find_one(filter)
-
-    if admin is not None:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Username is already an admin")
-
-    update = {"$set": {"isadmin": True}}
-    users_collections.update_one(filter, update)
-
-    
-    admin_dict = {}
-    for key, value in user.items():
-        if isinstance(value, ObjectId):
-            admin_dict[key] = str(value)
-        else:
-            admin_dict[key] = value
-    admin_dict["isadmin"] = True
-    print(admin_dict)
-    admin_collections.insert_one(admin_dict)
-
-    return {"Message": f"{username} is now an admin", f"{username}": admin_dict}
-
-
-@AdminRouter.put("/admin/removeuserfromadmin/{username}", tags=["Administrators"])
-@check_token
-async def unset_user_as_admin(username: str, token: str = Depends(verify_admin_token)):
-    filter = {"username": username}
-    user_admin = admin_collections.delete_one(filter)
-
-    if user_admin.deleted_count < 1:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Username was not an admin previously")
-    
-    update = {"$set": {"isadmin": False}}
-    users_collections.update_one(filter, update)
-
-    return {"Message": f"{username} is no longer an admin"}
+    return {"Message", f"User {username} has been activated"}
 
 
 @AdminRouter.delete("/admin/carspacereview/consumer/{username}", tags=["Administrators"])
@@ -354,7 +303,7 @@ async def delete_car_space_reviews_for_producer_carspace(username: str, carspace
 @check_token
 async def get_car_spaces_by_user(username: str, token: str = Depends(verify_admin_token)):
     filter = {"username": username}
-    carspace_cursor = car_space_collections.find(filter)
+    carspace_cursor = car_space_collections.find({filter})
     carspaces = []
     for document in carspace_cursor:
         document_str = json.dumps(document, default=str)
@@ -485,7 +434,7 @@ async def get_car_space_reviews_by_id(username: str, carspaceid: int, token: str
         carspaces.append(document_dict)
     return {f"carspaces for user: {username} and carspaceid: {carspaceid}": carspaces}
 
-@AdminRouter.get("/admin/carspace/get_transactions/{username}", tags=["Administrators"])
+@AdminRouter.get("/admin/carspace/get_transections/{username}", tags=["Administrators"])
 @check_token
 async def get_transections_by_user(username: str, token: str = Depends(verify_admin_token)):
     transactions_cursor = transaction_information_collections.find({
@@ -504,8 +453,7 @@ async def get_transections_by_user(username: str, token: str = Depends(verify_ad
             "payer_username": document_dict.get("payerusername"),
             "receiver_username": document_dict.get("receiverusername"),
             "transaction_time": document_dict.get("transaction_time"),
-            "transaction_amount": document_dict.get("amount"),
-            "transaction_status": document_dict.get("status"),
+            "transaction_amount": document_dict.get("amount")
         })
     return {f"transactions for user: {username}": transactions}
 
@@ -526,6 +474,5 @@ async def get_transaction_by_id(transaction_id: int, token: str = Depends(verify
         "payer_username": transaction_dict.get("payerusername"),
         "receiver_username": transaction_dict.get("receiverusername"),
         "transaction_time": transaction_dict.get("transaction_time"),
-        "transaction_amount": transaction_dict.get("amount"),
-        "transaction_status": transaction_dict.get("status"),
+        "transaction_amount": transaction_dict.get("amount")
     }
