@@ -71,7 +71,7 @@ export const MyListings = (props: any) => {
                 <Container key={key}>
                     <Row className="align-items-center" style={{ border:'1px solid black', borderRadius: '8px', padding: '10px 10px 10px 0px' }}>
                         <Col md="auto">
-                            <img src={value["Your Car Space Information"]["image"]} style={{ width: '150px', height: '150px' }}/>
+                            <img src={value["Your Car Space Information"] && value["Your Car Space Information"]["image"]} style={{ width: '150px', height: '150px' }}/>
                         </Col>
                         <Col className="text-center">
                             <span style={{ fontSize: '35pt' }}>${value["Your Car Space Information"] && value["Your Car Space Information"]["price"]}</span> <br />
