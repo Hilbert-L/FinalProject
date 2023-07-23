@@ -305,7 +305,6 @@ async def get_car_spaces_by_user(username: str, token: str = Depends(verify_admi
     filter = {"username": username}
     carspace_cursor = car_space_collections.find({filter})
     carspaces = []
-    []
     for document in carspace_cursor:
         document_str = json.dumps(document, default=str)
         document_dict = json.loads(document_str)
@@ -454,8 +453,7 @@ async def get_transections_by_user(username: str, token: str = Depends(verify_ad
             "payer_username": document_dict.get("payerusername"),
             "receiver_username": document_dict.get("receiverusername"),
             "transaction_time": document_dict.get("transaction_time"),
-            "transaction_amount": document_dict.get("amount"),
-            "transaction_status": document_dict.get("status"),
+            "transaction_amount": document_dict.get("amount")
         })
     return {f"transactions for user: {username}": transactions}
 
@@ -476,6 +474,5 @@ async def get_transaction_by_id(transaction_id: int, token: str = Depends(verify
         "payer_username": transaction_dict.get("payerusername"),
         "receiver_username": transaction_dict.get("receiverusername"),
         "transaction_time": transaction_dict.get("transaction_time"),
-        "transaction_amount": transaction_dict.get("amount"),
-        "transaction_status": transaction_dict.get("status"),
+        "transaction_amount": transaction_dict.get("amount")
     }

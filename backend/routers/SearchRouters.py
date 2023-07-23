@@ -99,7 +99,8 @@ async def advanced_search(advanced_search: AdvancedSearch):
             ]})
 
         elif key == 'maxprice':
-            combined_conditions.append({"$or": [
+            combined_conditions.append({
+                "$or": [
                     {"price": {"$lte": int(value)}},
                     {"Price": {"$lte": int(value)}}
             ]})
@@ -123,7 +124,6 @@ async def advanced_search(advanced_search: AdvancedSearch):
             ]})
             
     filter = {"$and": combined_conditions} if len(combined_conditions) > 0 else {}
-
     car_space_cursor = car_space_collections.find(filter)
     filtered_carspaces = []
     for document in car_space_cursor:

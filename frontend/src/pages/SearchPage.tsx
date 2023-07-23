@@ -185,7 +185,8 @@ export const SearchPage = () => {
 			price: carspaceToView.price,
 			suburb: carspaceToView.suburb,
 			postcode: carspaceToView.postcode,
-			id: carspaceToView._id
+			id: carspaceToView._id,
+      photo: carspaceToView.image
 		})
 		setShowModal(true);
 	}
@@ -283,7 +284,7 @@ export const SearchPage = () => {
                     }}
                   >
                     <Col md="auto">
-                      <img style={{ width: '150px', height: '150px' }} />
+                      <img src={value.image} style={{ width: '150px', height: '150px' }} />
                     </Col>
                     <Col className="text-center">
                       <span style={{ fontSize: '35pt' }}>${value.price}</span>{' '}
@@ -323,7 +324,7 @@ export const SearchPage = () => {
         <Modal.Body>
           <Row className="align-items-center">
             <Col className="text-center">
-              <img style={{ width: '200px', height: '200px' }} />
+              <img src={listingInfo.photo} style={{ width: '200px', height: '200px' }} />
             </Col>
             <Col className="text-center">
               <span className="text-center" style={{ fontSize: '45pt' }}>

@@ -1,3 +1,4 @@
+from bson import ObjectId
 from fastapi import APIRouter, Depends, status, HTTPException
 from datetime import datetime, timedelta
 from typing import List
@@ -9,7 +10,8 @@ from mongodbconnect.mongodb_connect import (
     booking_collections,
     users_collections,
     bank_information_collections,
-    transaction_information_collections
+    transaction_information_collections,
+    booking_id_collections
 )
 from models.Booking import BookingCreateSchema, BookingUpdateSchema, BookingSchema
 from authentication.authentication import verify_user_token
@@ -17,6 +19,13 @@ from wrappers.wrappers import check_token
 
 BookingRouter = APIRouter()
 
+
+def initialize_collection(collection, initial_id):
+    if collection.count_documents({}) == 0:
+        collection.insert_one({"id": initial_id})
+
+
+initialize_collection(booking_id_collections, 1)
 
 @BookingRouter.post("/booking/create_booking/{username}/{carspaceid}", tags=["Booking"])
 @check_token
@@ -55,7 +64,6 @@ async def create_booking(
     existing_bookings = booking_collections.count_documents(
         {
             "carspaceid": carspaceid,
-            "status": {"$ne": "Canceled"},
             "$or": [
                 {
                     "start_date": {"$lte": carspace_booking.start_date},
@@ -92,15 +100,20 @@ async def create_booking(
     # Create a new booking instance
     booking_count = booking_collections.count_documents({})
 
+    Bookin_ID = booking_id_collections.find_one({"_id": ObjectId("64ba93484acd519515400595")})
+
     # Convert booking instance to dictionary and insert into database
     booking_dict = booking.dict()
     booking_dict["consumer_username"] = consumer_user["username"]
     booking_dict["provider_username"] = provider_username
     booking_dict["carspaceid"] = carspaceid
+    booking_dict["transaction_time"] = datetime.now().strftime("%Y/%m/%d-%H:%M:%S")
     booking_dict["duration_hours"] = duration
     booking_dict['total_price'] = total_price
-    booking_dict["booking_id"] = booking_count + 1
-    booking_dict["status"] = "Confirmed"
+    booking_dict["booking_id"] = Bookin_ID['id']
+
+    Bookin_ID['id'] += 1
+    booking_id_collections.update_one({"_id": ObjectId("64ba93484acd519515400595")}, {"$set": {"id": Bookin_ID["id"]}})
 
     booking_collections.insert_one(dict(booking_dict))
 
@@ -134,7 +147,6 @@ async def create_booking(
     transaction_dict['consumer_name'] = consumer_user["username"]
     transaction_dict['provider_name'] = provider_username
     transaction_dict['total_price'] = total_price
-    transaction_dict["status"] = "Confirmed"  # Add transaction status
     transaction_information_collections.insert_one(dict(transaction_dict))
 
     return {
@@ -143,7 +155,7 @@ async def create_booking(
     }
 
 
-@BookingRouter.put("/booking/delete_booking/{booking_id}", tags=["Booking"])
+@BookingRouter.delete("/booking/delete_booking/{booking_id}", tags=["Booking"])
 @check_token
 async def delete_booking(booking_id: int, token: str = Depends(verify_user_token)):
     # Verify user
@@ -163,9 +175,6 @@ async def delete_booking(booking_id: int, token: str = Depends(verify_user_token
             detail="You are not authorized to delete this booking",
         )
 
-    # Check the booking status
-    if booking["status"] == "Canceled":
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="booking not found or has been deleted")
 
     transaction_info = transaction_information_collections.find_one({"booking_id": booking_id})
 
@@ -209,12 +218,11 @@ async def delete_booking(booking_id: int, token: str = Depends(verify_user_token
         {"username": consumer_info['username']},
         {"$set": {"balance": Cnew_balance}}
     )
-    # Update the corresponding transaction status to 'Canceled' as well
-    transaction_information_collections.update_one({"booking_id": booking_id}, {"$set": {"status": "Canceled"}})
-    # Update the booking status to 'Canceled' in the database
-    booking_collections.update_one({"booking_id": booking_id}, {"$set": {"status": "Canceled"}})
+
+    transaction_information_collections.delete_one({"booking_id": booking_id})
+    booking_collections.delete_one({"booking_id": booking_id})
     return {
-        "Message": "Booking cancelled successfully" +
+        "Message": "Booking deleted successfully" +
                    (
                        " with a 5% penalty due to cancellation less than 24 hours before the start time." if less_than_24h else ""),
         "Penalty": penalty,
@@ -236,11 +244,8 @@ async def update_booking(
     # Verify booking
     booking = booking_collections.find_one({"booking_id": booking_id})
     if booking is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Booking not")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Booking not found")
 
-    # Check the booking status
-    if booking["status"] == "Canceled":
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Booking has been deleted")
 
     # Check if the user is authorized to update the booking
     if booking["consumer_username"] != user["username"]:
@@ -260,7 +265,6 @@ async def update_booking(
     existing_bookings = booking_collections.count_documents(
         {
             "booking_id": {"$ne": booking_id},
-            "status": {"$ne": "Canceled"},
             "$or": [
                 {
                     "start_date": {"$lte": booking_update.end_date},
