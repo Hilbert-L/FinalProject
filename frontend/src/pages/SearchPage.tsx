@@ -21,6 +21,7 @@ import 'bootstrap/dist/css/bootstrap.css';
 import { makeRequest } from '../helpers';
 import { FilterForm } from '../components/FilterForm';
 import { ListingReviews } from '../components/ListingReviews';
+import Car from "../images/car.png"
 
 const libraries: 'places'[] = ['places'];
 
@@ -266,6 +267,10 @@ export const SearchPage = () => {
                     position={{
                       lat: parseFloat(value.latitude),
                       lng: parseFloat(value.longitude),
+                    }}
+                    icon={{
+                      url: Car,
+                      scaledSize: new window.google.maps.Size(40, 40),
                     }}
                     onClick={() => handleShowModal(value._id)}
                   />
