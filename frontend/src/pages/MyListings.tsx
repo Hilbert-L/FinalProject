@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Container, Row, Col, Button, Modal } from 'react-bootstrap';
 import { makeRequest } from '../helpers';
+import { ListingForm } from './ListingForm';
 
 export const MyListings = (props: any) => {
 
@@ -11,6 +12,7 @@ export const MyListings = (props: any) => {
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [listingToBeUpdated, setListingToBeUpdated] = useState('');
     const [listingToBeDeleted, setListingToBeDeleted] = useState('');
+    const [triggerRender, setTriggerRender] = useState(true);
 
     useEffect(() => {
         // Retrieves car spaces given the postcode
@@ -30,7 +32,7 @@ export const MyListings = (props: any) => {
 			return 0;
 		}
         retrieveListings();
-    }, [])
+    }, [triggerRender])
 
     const updateListingCheck = (id: string) => {
         setListingToBeUpdated(id);
@@ -50,14 +52,20 @@ export const MyListings = (props: any) => {
     const deleteListingCheck = (id: string) => {
         setListingToBeDeleted(id);
         setShowDeleteModal(true);
-        console.log(id);
     }
 
-    const deleteListing = () => {
-        // TODO
-        // Delete the listing
-        console.log(listingToBeDeleted);
-        //
+    const deleteListing = async () => {
+        try {
+            let response = await makeRequest(`/carspace/deletecarspace/${username}/${listingToBeDeleted}`, "DELETE", undefined, { token });
+            if (response.status !== 200) {
+                console.log("There was an error!")
+            } else {
+                setTriggerRender(triggerRender === true ? false : true);
+            }
+        } catch (error) {
+            console.log(error);
+        }
+
         setListingToBeDeleted('');
         setShowDeleteModal(false);
     }
@@ -67,27 +75,27 @@ export const MyListings = (props: any) => {
 
     return (
         <Container>
-            { myListings && Object.entries(myListings).map(([key, value]) => (
+            { myListings && Object.entries(myListings).map(([key, value]: [any, any]) => (
                 <Container key={key}>
                     <Row className="align-items-center" style={{ border:'1px solid black', borderRadius: '8px', padding: '10px 10px 10px 0px' }}>
                         <Col md="auto">
-                            <img src={value["Your Car Space Information"] && value["Your Car Space Information"]["image"]} style={{ width: '150px', height: '150px' }}/>
+                            <img src={value["Your Car Space Information"]["image"]} style={{ width: '150px', height: '150px' }}/>
                         </Col>
                         <Col className="text-center">
-                            <span style={{ fontSize: '35pt' }}>${value["Your Car Space Information"] && value["Your Car Space Information"]["price"]}</span> <br />
+                            <span style={{ fontSize: '35pt' }}>${value["Your Car Space Information"]["price"]}</span> <br />
                             <span><i>per day</i></span>
                         </Col>
                         <Col >
-                            <span style={{ fontSize: '15pt' }}>📍 {value["Your Car Space Information"] && value["Your Car Space Information"]["suburb"]}</span> <br />
-                            <span style={{ fontSize: '15pt' }}>📏 {value["Your Car Space Information"] && value["Your Car Space Information"]["width"]} m by {value["Your Car Space Information"] && value["Your Car Space Information"]["breadth"]} m</span><br />
-                            <span style={{ fontSize: '15pt' }}>🚗 {value["Your Car Space Information"] && value["Your Car Space Information"]["vehiclesize"].replace(/^\w/, (c: string) => c.toUpperCase())}</span>
+                            <span style={{ fontSize: '15pt' }}>📍 {value["Your Car Space Information"]["suburb"]}</span> <br />
+                            <span style={{ fontSize: '15pt' }}>📏 {value["Your Car Space Information"]["width"]} m by {value["Your Car Space Information"] && value["Your Car Space Information"]["breadth"]} m</span><br />
+                            <span style={{ fontSize: '15pt' }}>🚗 {value["Your Car Space Information"]["vehiclesize"].replace(/^\w/, (c: string) => c.toUpperCase())}</span>
                         </Col>
                         <Col className="text-center" md="auto">
                             <Row>
-                                <Button style={{ width: '100px' }} onClick={() => updateListingCheck("1")}>edit</Button>
+                                <Button style={{ width: '100px' }} onClick={() => updateListingCheck(value["Your Car Space Information"]["carspaceid"])}>edit</Button>
                             </Row><br />
                             <Row>
-                                <Button variant='danger' style={{ width: '100px' }} onClick={() => deleteListingCheck("1")}>delete</Button>
+                                <Button variant='danger' style={{ width: '100px' }} onClick={() => deleteListingCheck(value["Your Car Space Information"]["carspaceid"])}>delete</Button>
                             </Row>
                         </Col>
                     </Row><br />
@@ -98,7 +106,9 @@ export const MyListings = (props: any) => {
                 <Modal.Header closeButton>
                     <Modal.Title>Carspace</Modal.Title>
                 </Modal.Header>
-                <Modal.Body>Carspace Info</Modal.Body>
+                <Modal.Body>
+                    <ListingForm></ListingForm>
+                </Modal.Body>
                 <Modal.Footer>
                     <Button variant="primary" onClick={updateListing}>Update</Button>
                 </Modal.Footer>
