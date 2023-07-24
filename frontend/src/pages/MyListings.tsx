@@ -79,16 +79,16 @@ export const MyListings = (props: any) => {
                 <Container key={key}>
                     <Row className="align-items-center" style={{ border:'1px solid black', borderRadius: '8px', padding: '10px 10px 10px 0px' }}>
                         <Col md="auto">
-                            <img src={value["Your Car Space Information"]["image"]} style={{ width: '150px', height: '150px' }}/>
+                            <img src={value["Your Car Space Information"] && value["Your Car Space Information"]["image"]} style={{ width: '150px', height: '150px' }}/>
                         </Col>
                         <Col className="text-center">
-                            <span style={{ fontSize: '35pt' }}>${value["Your Car Space Information"]["price"]}</span> <br />
+                            <span style={{ fontSize: '35pt' }}>${value["Your Car Space Information"] && value["Your Car Space Information"]["price"]}</span> <br />
                             <span><i>per day</i></span>
                         </Col>
                         <Col >
-                            <span style={{ fontSize: '15pt' }}>📍 {value["Your Car Space Information"]["suburb"]}</span> <br />
-                            <span style={{ fontSize: '15pt' }}>📏 {value["Your Car Space Information"]["width"]} m by {value["Your Car Space Information"] && value["Your Car Space Information"]["breadth"]} m</span><br />
-                            <span style={{ fontSize: '15pt' }}>🚗 {value["Your Car Space Information"]["vehiclesize"].replace(/^\w/, (c: string) => c.toUpperCase())}</span>
+                            <span style={{ fontSize: '15pt' }}>📍 {value["Your Car Space Information"] && value["Your Car Space Information"]["suburb"]}</span> <br />
+                            <span style={{ fontSize: '15pt' }}>📏 {value["Your Car Space Information"] && value["Your Car Space Information"]["width"]} m by {value["Your Car Space Information"] && value["Your Car Space Information"]["breadth"]} m</span><br />
+                            <span style={{ fontSize: '15pt' }}>🚗 {value["Your Car Space Information"] && value["Your Car Space Information"]["vehiclesize"].replace(/^\w/, (c: string) => c.toUpperCase())}</span>
                         </Col>
                         <Col className="text-center" md="auto">
                             <Row>
