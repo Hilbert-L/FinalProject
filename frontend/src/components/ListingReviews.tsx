@@ -63,11 +63,11 @@ export const ListingReviews = (props: any) => {
                         </Row><hr />
                         <Row>
                             <Col>
-                                Cleanliness<br />
-                                Communication<br />
-                                Ease of Access<br />
-                                Location<br />
-                                Overall
+                                🫧 Cleanliness<br />
+                                💬 Communication<br />
+                                ✅ Ease of Access<br />
+                                🗺️ Location<br />
+                                🟰 Overall
                             </Col>
                             <Col>
                                 <StarRating stars={value.cleanliness} />

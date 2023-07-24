@@ -195,7 +195,10 @@ export const SearchPage = () => {
 	}
 
 
-  const handleCloseModal = () => setShowModal(false);
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setModalView("See Reviews");
+  }
 
   // For debugging
   // const print = () => {
