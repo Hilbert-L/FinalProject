@@ -38,6 +38,15 @@ WEEK 7
 
 WEEK 8
 
+- Fixed bugs associated with payment details page.
+- Added modal to search page to summarise carspace listing.
+- Added booking page with calendar that allows for a date range input.
+- Finalised demo presentation B and presented for the group.
+- Completed retrospective B after the demo.
+
 WEEK 9
+
+- Added photos to car listings on map, list view and my listings page.
+- Added reviews to search page. Created star rating component to visualise reviews.
 
 WEEK 10

@@ -3,7 +3,7 @@ export const HOST = 'http://127.0.0.1:8000';
 export async function makeRequest(
   endpoint: string,
   method: string,
-  body?: Record<string, string>,
+  body?: Record<string, any>,
   headers?: Record<string, string>
 ) {
   try {

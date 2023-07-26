@@ -96,7 +96,7 @@ export const FilterForm = (props: any) => {
 
   return (
     <div>
-      <Button variant="secondary" onClick={handleFilterButtonClick}>
+      <Button variant="warning" style={{ width: '100%' }} onClick={handleFilterButtonClick}>
         {isFilterVisible ? 'Hide Advanced Search' : 'Advanced Search'}
       </Button>
       {isFilterVisible && (

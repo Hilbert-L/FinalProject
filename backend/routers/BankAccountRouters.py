@@ -32,7 +32,7 @@ async def create_account(create_account: BankAccount, token: str = Depends(verif
     return {"Message": "Bank details added successfully"}
 
 
-@BankAccountRouter.put("/bankaccounts/update_account/{username}/{id}", tags=["User Bank Accounts"])
+@BankAccountRouter.put("/bankaccounts/update_account/{username}", tags=["User Bank Accounts"])
 @check_token
 async def update_account(username: str, new_accounts: BankAccount, token: str = Depends(verify_user_token)):
     # Verify user
@@ -129,3 +129,30 @@ async def deposit_money(username: str,deposit:int, token: str = Depends(verify_u
     bank_information_collections.update_one({"username": username}, {"$set": {"balance": new_balance}})
 
     return {"Message": "Deposit successful", "New Balance": new_balance}
+
+@BankAccountRouter.put("/bankaccounts/withdraw/{username}", tags=["User Bank Accounts"])
+@check_token
+async def withdraw_money(username: str,withdraw:int, token: str = Depends(verify_user_token)):
+    # Verify user
+    user = users_collections.find_one({"username": token})
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid user")
+
+    # Check if the user exists
+    user_info = users_collections.find_one({"username": username})
+    if user_info is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not exist")
+
+    # Check if the bank account exists
+    bank_account = bank_information_collections.find_one({"username": username})
+    if bank_account is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Bank account not found")
+
+    if bank_account["balance"] < withdraw:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="You cannot withdraw money larger than your deposit!")
+
+    # Update the balance
+    new_balance = bank_account["balance"] - withdraw
+    bank_information_collections.update_one({"username": username}, {"$set": {"balance": new_balance}})
+
+    return {"Message": "Withdraw successful", "New Balance": new_balance}

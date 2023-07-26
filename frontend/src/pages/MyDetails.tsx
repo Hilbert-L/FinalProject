@@ -150,7 +150,7 @@ export const MyDetails = () => {
 			const reader = new FileReader();
       reader.onloadend = () => {
         const base64String = reader.result as string;
-        setPhotoChange(base64String);
+        setPhotoChange(encodeURIComponent(base64String));
 		console.log(base64String);
       };
       reader.readAsDataURL(event.target.files[0]);

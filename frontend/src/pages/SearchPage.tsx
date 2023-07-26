@@ -20,6 +20,8 @@ import { useNavigate } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.css';
 import { makeRequest } from '../helpers';
 import { FilterForm } from '../components/FilterForm';
+import { ListingReviews } from '../components/ListingReviews';
+import Car from "../images/car.png"
 
 const libraries: 'places'[] = ['places'];
 
@@ -57,6 +59,7 @@ type ListingInfo = {
   photo?: string;
 	username?: string;
 	id?: string;
+  carspaceid?: string;
 }
 
 export const SearchPage = () => {
@@ -75,6 +78,7 @@ export const SearchPage = () => {
   const [showModal, setShowModal] = useState(false);
   const [carspaces, setCarspaces] = useState({});
   const [listingInfo, setListingInfo] = useState<ListingInfo>({});
+  const [modalView, setModalView] = useState("See Reviews")
 
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -160,9 +164,18 @@ export const SearchPage = () => {
   };
 
   const handleShowModal = (carspace: any) => {
-    console.log(carspace);
-    console.log(carspaces);
     let carspaceToView = null;
+
+    for (const key in carspaces) {
+			if (carspaces.hasOwnProperty(key)) {
+				const listing = carspaces[key];
+				if (listing._id === carspace) {
+					carspaceToView = listing;
+          console.log(carspaceToView)
+					break;
+				}
+			}
+		}
 
 		setListingInfo({...listingInfo, 
 			username: carspaceToView.username,
@@ -175,13 +188,18 @@ export const SearchPage = () => {
 			price: carspaceToView.price,
 			suburb: carspaceToView.suburb,
 			postcode: carspaceToView.postcode,
-			id: carspaceToView._id
+			id: carspaceToView._id,
+      photo: carspaceToView.image,
+      carspaceid: carspaceToView.carspaceid
 		})
 		setShowModal(true);
 	}
 
 
-  const handleCloseModal = () => setShowModal(false);
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setModalView("See Reviews");
+  }
 
   // For debugging
   // const print = () => {
@@ -203,35 +221,35 @@ export const SearchPage = () => {
 
   return (
     <Container fluid>
+      <br />
       <Row>
-        <div>
-          <Autocomplete>
-            <InputGroup className="mb-3">
-              <InputGroup.Text style={{ width: '50px' }}>🚗</InputGroup.Text>
-              <Form.Control
-                type="text"
-                onBlur={(event) => setSearchValue(event.target.value)}
-              />
-              <Button variant="primary" onClick={handleSearch}>
-                search
-              </Button>
-              <Button
-                variant="secondary"
-                onClick={() =>
-                  setView(view === 'map view' ? 'list view' : 'map view')
-                }
-              >
-                {view === 'map view' ? 'list view' : 'map view'}
-              </Button>
-            </InputGroup>
-          </Autocomplete>
-        </div>
-        <FilterForm searchValue={searchValue} mapCentre={mapCentre}/>
+        <Autocomplete>
+          <InputGroup className="mb-3">
+            <InputGroup.Text style={{ width: '50px' }}>🚗</InputGroup.Text>
+            <Form.Control
+              type="text"
+              onBlur={(event) => setSearchValue(event.target.value)}
+            />
+            <Button variant="primary" onClick={handleSearch}>
+              search
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() =>
+                setView(view === 'map view' ? 'list view' : 'map view')
+              }
+            >
+              {view === 'map view' ? 'list view' : 'map view'}
+            </Button>
+          </InputGroup>
+        </Autocomplete>
       </Row>
-      <Row></Row>
+      <Row>
+        <FilterForm searchValue={searchValue} mapCentre={mapCentre}/>
+      </Row> <br />
       <Row>
         {view === 'map view' ? (
-          <div style={{ width: '100%', height: '85vh' }}>
+          <div style={{ width: '100%', height: '79vh' }}>
             <GoogleMap
               center={mapCentre}
               zoom={15}
@@ -243,12 +261,16 @@ export const SearchPage = () => {
               mapContainerStyle={{ width: '100%', height: '100%' }}
             >
               {carspaces &&
-                Object.entries(carspaces).map(([key, value]) => (
+                Object.entries(carspaces).map(([key, value]: [any, any]) => (
                   <Marker
                     key={value._id}
                     position={{
                       lat: parseFloat(value.latitude),
                       lng: parseFloat(value.longitude),
+                    }}
+                    icon={{
+                      url: Car,
+                      scaledSize: new window.google.maps.Size(40, 40),
                     }}
                     onClick={() => handleShowModal(value._id)}
                   />
@@ -259,7 +281,7 @@ export const SearchPage = () => {
         ) : (
           <Container>
             {carspaces &&
-              carspaces.map((key: any, value: any) => (
+              Object.entries(carspaces).map(([key, value]: [any, any]) => (
                 <>
                   <Row
                     className="align-items-center"
@@ -273,7 +295,7 @@ export const SearchPage = () => {
                     }}
                   >
                     <Col md="auto">
-                      <img style={{ width: '150px', height: '150px' }} />
+                      <img src={value.image} style={{ width: '150px', height: '150px' }} />
                     </Col>
                     <Col className="text-center">
                       <span style={{ fontSize: '35pt' }}>${value.price}</span>{' '}
@@ -311,46 +333,52 @@ export const SearchPage = () => {
           <Modal.Title>Carspace in {listingInfo.suburb}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <Row className="align-items-center">
-            <Col className="text-center">
-              <img style={{ width: '200px', height: '200px' }} />
-            </Col>
-            <Col className="text-center">
-              <span className="text-center" style={{ fontSize: '45pt' }}>
-                ${listingInfo.price}
+          { modalView === "See Reviews"
+            ? <>
+            <Row className="align-items-center">
+              <Col className="text-center">
+                <img src={listingInfo.photo} style={{ width: '200px', height: '200px' }} />
+              </Col>
+              <Col className="text-center">
+                <span className="text-center" style={{ fontSize: '45pt' }}>
+                  ${listingInfo.price}
+                </span>
+                <br />
+                <span>
+                  <i>per day</i>
+                </span>
+              </Col>
+            </Row>
+            <br />
+            <Row className="text-center">
+              <span>📍 {listingInfo.address}</span>
+              <br />
+              <br />
+              <hr />
+              <span>
+                This carspace is{' '}
+                <b>
+                  {listingInfo.width} m by {listingInfo.length} m
+                </b>
+                . An access key <b>{listingInfo.accessKey ? 'is' : 'is not'}</b>{' '}
+                required. The largest vehicle size this carspace can hold is a{' '}
+                <b>{listingInfo.vehicleType}</b>. The carspace is of type{' '}
+                <b>{listingInfo.spaceType}</b>.
               </span>
               <br />
-              <span>
-                <i>per day</i>
-              </span>
-            </Col>
-          </Row>
-          <br />
-          <Row className="text-center">
-            <span>📍 {listingInfo.address}</span>
-            <br />
-            <br />
-            <hr />
-            <span>
-              This carspace is{' '}
-              <b>
-                {listingInfo.width} m by {listingInfo.length} m
-              </b>
-              . An access key <b>{listingInfo.accessKey ? 'is' : 'is not'}</b>{' '}
-              required. The largest vehicle size this carspace can hold is a{' '}
-              <b>{listingInfo.vehicleType}</b>. The carspace is of type{' '}
-              <b>{listingInfo.spaceType}</b>.
-            </span>
-            <br />
-            <br />
-            <br />
-            <br />
-            <hr />
-            <span>Provided by {listingInfo.username}</span>
-          </Row>
+              <br />
+              <br />
+              <br />
+              <hr />
+              <span>Provided by {listingInfo.username}</span>
+            </Row>
+            </>
+            : <>
+              <ListingReviews listing={listingInfo}></ListingReviews>
+            </>}
         </Modal.Body>
         <Modal.Footer>
-					<Button variant="warning" onClick={handleCloseModal}>See Reviews</Button>
+					<Button variant="warning" onClick={() => setModalView(modalView === "See Reviews" ? "Carspace Details" : "See Reviews")}>{modalView === "See Reviews" ? "See Reviews" : "Carspace Details"}</Button>
           <Button variant="primary" onClick={() => navigate(`/booking?id=${listingInfo.id}&postcode=${listingInfo.postcode}`)}>Book</Button>
         </Modal.Footer>
       </Modal>

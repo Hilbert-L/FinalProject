@@ -98,7 +98,7 @@ export const MyPaymentDetails = (props: any) => {
         // Changes the bank details
         async function changeBank() {
 			try {
-				const response = await makeRequest(`/bankaccounts/update_account/${username}/1`, "PUT", body, { token })
+				const response = await makeRequest(`/bankaccounts/update_account/${username}`, "PUT", body, { token })
 				if (response.status !== 200) {
 					setErrorMessage(response.resp);
                     return;
@@ -147,11 +147,10 @@ export const MyPaymentDetails = (props: any) => {
     };
 
     // TODO
-    // Needs work - the server returns with an error but it deletes the details anyway!
     const handleDelete = () => {
         async function deleteBank() {
 			try {
-				const response = await makeRequest(`/bankaccounts/delete_account/${username}/1`, "DELETE", undefined, { token })
+				const response = await makeRequest(`/bankaccounts/delete_account?username=${username}&confirm=true`, "DELETE", undefined, { token })
 				if (response.status !== 200) {
 					setErrorMessage(response.resp);
 				}
@@ -159,6 +158,14 @@ export const MyPaymentDetails = (props: any) => {
                 // Remember to fix this
                 setDetailsExist(false);
                 setTriggerRender(triggerRender === true ? false : true);
+                setPaymentDetails(details => ({
+                    ...details,
+                    bsb: '',
+                    accountNumber: '',
+                    cardNumber: '',
+                    cardExpiry: '',
+                }));
+                localStorage.setItem('myFunds', "0")
 			} catch (error) {
 				console.log(error)
 			}

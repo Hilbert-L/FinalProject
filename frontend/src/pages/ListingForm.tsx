@@ -74,7 +74,7 @@ export const ListingForm = () => {
       "latitude": String(info.latitude),
       "longitude": String(info.longitude)
     };
-    makeRequest("/carspace/create_car_space", "POST", body, { token })
+    makeRequest(`/carspace/create_car_space?base64_image=${photo}`, "POST", body, { token })
       .then((response) => {
         if (response.status === 200) navigate("/");
         else setError(response.resp.detail);
@@ -85,7 +85,7 @@ export const ListingForm = () => {
       const reader = new FileReader();
       reader.onloadend = () => {
         const base64 = reader.result as string;
-        setPhoto(base64)
+        setPhoto(encodeURIComponent(base64));
       };
       reader.readAsDataURL(event.target.files[0]);
     }
@@ -134,7 +134,6 @@ export const ListingForm = () => {
     && info.width !== undefined
     && info.length !== undefined
     && info.price !== undefined
-    && photo !== undefined
   
   if (!isLoaded) {
     return (
