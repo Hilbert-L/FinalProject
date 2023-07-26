@@ -220,7 +220,52 @@ async def activate_user(username: str, token: str = Depends(verify_admin_token))
 
     update = {"$set": {"isactive": True}}
     users_collections.update_one(filter, update)
-    return {"Message", f"User {username} has been activated"}
+    return {"Message": f"User {username} has been activated"}
+
+@AdminRouter.put("/admin/setuserasadmin/{username}", tags=["Administrators"])
+@check_token
+async def set_user_as_admin(username: str, token: str = Depends(verify_admin_token)):
+    filter = {"username": username}
+    user = users_collections.find_one(filter)
+
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Username does not exist")
+    
+    admin = admin_collections.find_one(filter)
+    update = {"$set": {"isadmin": True}}
+
+    if admin is not None:
+        admin_collections.update_one({"username": username}, update)
+        users_collections.update_one(filter, update)
+    
+    else:
+        users_collections.update_one(filter, update)
+        admin_dict = {}
+        for key, value in user.items():
+            if isinstance(value, ObjectId):
+                admin_dict[key] = str(value)
+            else:
+                admin_dict[key] = value
+        admin_dict["isadmin"] = True
+        print(admin_dict)
+        admin_collections.insert_one(admin_dict)
+
+    return {"Message": f"{username} is now an admin"}
+
+
+@AdminRouter.put("/admin/removeuserfromadmin/{username}", tags=["Administrators"])
+@check_token
+async def unset_user_as_admin(username: str, token: str = Depends(verify_admin_token)):
+    filter = {"username": username}
+    user_admin = admin_collections.delete_one(filter)
+
+    if user_admin.deleted_count < 1:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Username was not an admin previously")
+    
+    update = {"$set": {"isadmin": False}}
+    users_collections.update_one(filter, update)
+
+    return {"Message": f"{username} is no longer an admin"}
 
 
 @AdminRouter.delete("/admin/carspacereview/consumer/{username}", tags=["Administrators"])

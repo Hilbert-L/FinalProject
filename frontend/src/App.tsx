@@ -6,11 +6,18 @@ import { Layout } from './pages/Layout';
 import { MyProfile } from './pages/MyProfile';
 import { ListingForm } from './pages/ListingForm';
 import { SearchPage } from './pages/SearchPage';
+import { Admin } from './pages/admin/Admin';
 import { BookingForm } from './pages/BookingForm';
+import { AdminLogin } from './pages/admin/AdminLogin';
 
-const RequiresAuth = ({children}: PropsWithChildren) => {
+const RequiresAuth = ({children}: PropsWithChildren<{}>) => {
   const isLoggedIn = localStorage.getItem("authToken");
   return isLoggedIn ? <>{children}</> : <Navigate to={"/login"} />
+}
+
+const RequiresAdmin = ({children}: PropsWithChildren<{}>) => {
+  const isLoggedIn = localStorage.getItem("adminToken");
+  return isLoggedIn ? <>{children}</> : <Navigate to={"/login/admin"} />
 }
 
 export const App = () => {
@@ -19,13 +26,23 @@ export const App = () => {
       <Routes>
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/login/admin" element={<AdminLogin />} />
+        <Route
+          path="/admin"
+          element={
+            <RequiresAdmin>
+              <Admin />
+            </RequiresAdmin>
+          }
+        />
         <Route
           path="/"
           element={
             <RequiresAuth>
               <Layout />
             </RequiresAuth>
-        } >
+          }
+        >
           <Route path="profile" element={<MyProfile />} />
           <Route path="listingform" element={<ListingForm />} />
           <Route path="" element={<SearchPage />} />
