@@ -7,6 +7,7 @@ import 'react-date-range/dist/styles.css';
 import 'react-date-range/dist/theme/default.css';
 import { differenceInDays } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
+import dayjs from 'dayjs';
 
 export const BookingForm = () => {
     
@@ -84,8 +85,8 @@ export const BookingForm = () => {
                 `/booking/create_booking/${username}/${spaceToBook.carspaceid}?provider_username=${spaceToBook.username}`,
                 "POST",
                 {
-                    start_date: dateRange.startDate.toISOString(),
-                    end_date: dateRange.endDate.toISOString()
+                    start_date: dayjs(dateRange.startDate).toISOString(),
+                    end_date: dayjs(dateRange.endDate).toISOString()
                 },
                 { token }
             ).then((resp) => {
