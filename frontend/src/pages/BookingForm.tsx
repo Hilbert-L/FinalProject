@@ -71,19 +71,39 @@ export const BookingForm = () => {
       }
 
     const handleBooking = () => {
-        const myFunds = parseInt(localStorage.getItem('myFunds'), 10);
+        const myFunds = parseInt(localStorage.getItem('myFunds') ?? "0", 10);
         const days = differenceInDays(dateRange.endDate, dateRange.startDate) + 1;
         if (totalPrice > myFunds) {
             setShowModal(true);
         } else {
+            const token = localStorage.getItem("authToken");
+            const username = localStorage.getItem("username");
+            if (!token || !username) return;
             localStorage.setItem('myFunds', (myFunds - totalPrice).toString());
-            navigate('/');
+            makeRequest(
+                `/booking/create_booking/${username}/${spaceToBook.carspaceid}?provider_username=${spaceToBook.username}`,
+                "POST",
+                {
+                    start_date: dateRange.startDate.toISOString(),
+                    end_date: dateRange.endDate.toISOString()
+                },
+                { token }
+            ).then((resp) => {
+                if (resp.status === 200) {
+                    console.log(resp);
+                    navigate('/');
+                }
+            })
         }
     }
 
     const handleCloseModal = () => setShowModal(false);
 
     const allFilledOut = carRegistration !== '' && vehicleType !== '';
+
+    const today = new Date()
+    const tomorrow = new Date(today)
+    tomorrow.setDate(tomorrow.getDate() + 1)
 
     return (
         <Container>
@@ -125,7 +145,7 @@ export const BookingForm = () => {
             </Row><hr />
             <Row>
                 <Col className="d-flex justify-content-center">
-                    <DateRangePicker minDate={new Date()} ranges={[dateRange]} onChange={handleSelect} />
+                    <DateRangePicker minDate={tomorrow} ranges={[dateRange]} onChange={handleSelect} />
                 </Col>
             </Row>
             <Row>
