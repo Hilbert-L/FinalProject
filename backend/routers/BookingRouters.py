@@ -98,7 +98,6 @@ async def create_booking(
     total_price = hour_price * duration
 
     # Create a new booking instance
-    booking_count = booking_collections.count_documents({})
 
     Bookin_ID = booking_id_collections.find_one({"_id": ObjectId("64ba93484acd519515400595")})
 
@@ -112,20 +111,18 @@ async def create_booking(
     booking_dict['total_price'] = total_price
     booking_dict["booking_id"] = Bookin_ID['id']
 
-    Bookin_ID['id'] += 1
-    booking_id_collections.update_one({"_id": ObjectId("64ba93484acd519515400595")}, {"$set": {"id": Bookin_ID["id"]}})
-
-    booking_collections.insert_one(dict(booking_dict))
-
-    # Update provider's balance
+    
+    # get users bank infro
+    # Attempt to find the consumer user's bank information
     consumer_info = bank_information_collections.find_one({"username": consumer_user["username"]})
-    provider_info = bank_information_collections.find_one({"username": provider_username})
-    Pnew_balance = provider_info["balance"] + total_price
-    bank_information_collections.update_one(
-        {"username": provider_info['username']},
-        {"$set": {"balance": Pnew_balance}}
-    )
+    if not consumer_info:
+        raise HTTPException(status_code=404, detail=f"Bank account not found for consumer user '{consumer_user['username']}'")
 
+    # Attempt to find the provider user's bank information
+    provider_info = bank_information_collections.find_one({"username": provider_username})
+    if not provider_info:
+        raise HTTPException(status_code=404, detail=f"Bank account not found for provider user '{provider_username}'")
+    
     # Update consumer's balance
     Cnew_balance = consumer_info["balance"] - total_price
     # Check current balance of consumer
@@ -137,6 +134,19 @@ async def create_booking(
             {"username": consumer_info['username']},
             {"$set": {"balance": Cnew_balance}}
         )
+
+    # Update provider's balance
+    Pnew_balance = provider_info["balance"] + total_price
+    bank_information_collections.update_one(
+        {"username": provider_info['username']},
+        {"$set": {"balance": Pnew_balance}}
+    )
+
+
+    Bookin_ID['id'] += 1
+    booking_id_collections.update_one({"_id": ObjectId("64ba93484acd519515400595")}, {"$set": {"id": Bookin_ID["id"]}})
+
+    booking_collections.insert_one(dict(booking_dict))
 
     num_transactions = transaction_information_collections.count_documents({})
 
