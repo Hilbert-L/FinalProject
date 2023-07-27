@@ -25,6 +25,9 @@ export const BookingForm = () => {
         key: 'selection',
       });
 
+    const [error, setError] = useState("");
+    const [success, setSuccess] = useState(false);
+
     const navigate = useNavigate();
 
     // Retrieves car spaces from the backend every time the mapCentre changes
@@ -91,8 +94,9 @@ export const BookingForm = () => {
                 { token }
             ).then((resp) => {
                 if (resp.status === 200) {
-                    console.log(resp);
-                    navigate('/');
+                    setSuccess(true);
+                } else {
+                    setError(resp.resp.detail);
                 }
             })
         }
@@ -107,98 +111,114 @@ export const BookingForm = () => {
     tomorrow.setDate(tomorrow.getDate() + 1)
 
     return (
-        <Container>
-            <br />
-            <Row>
-                <h1 style={{textAlign: "center"}}>book a carspace 📅</h1>
-			</Row>
-            <Row>
-                <Form.Group>
-                    <Form.Label>Address</Form.Label>
-                        <Form.Control
-                        type="text"
-                        value={spaceToBook.address}
-                        disabled
-                        />
-                </Form.Group>
-            </Row>
-            <Row>
-                <Form.Group>
-                    <br />
-                    <Form.Label>Price (per day)</Form.Label>
-                        <Form.Control
-                        type="text"
-                        value={`$${spaceToBook.price}`}
-                        disabled
-                        />
-                </Form.Group>
-            </Row>
-            <Row>
-                <Form.Group>
-                    <br />
-                    <Form.Label>Provider</Form.Label>
-                        <Form.Control
-                        type="text"
-                        value={spaceToBook.username}
-                        disabled
-                        />
-                </Form.Group>
-            </Row><hr />
-            <Row>
-                <Col className="d-flex justify-content-center">
-                    <DateRangePicker minDate={tomorrow} ranges={[dateRange]} onChange={handleSelect} />
-                </Col>
-            </Row>
-            <Row>
-                <Form.Group>
-                    <br />
-                    <Form.Label>Total Price</Form.Label>
-                        <Form.Control
-                        type="text"
-                        value={`$${totalPrice}`}
-                        disabled
-                        />
-                </Form.Group>
-            </Row>
-            <Row>
-                <Form.Group>
-                    <br />
-                    <Form.Label>Car Registration</Form.Label>
-                        <Form.Control
-                        type="text"
-                        placeholder='Please enter your car registration'
-                        onChange={(event) => {setCarRegistration(event.target.value)}}
-                        />
-                </Form.Group>
-            </Row><br />
-            <Row>
-                <Form.Group>
-                    <Form.Label>Vehicle Type</Form.Label>
-                    <FloatingLabel controlId="floatingVehicleType" label="Vehicle Type" className="mb-3">
-                        <Form.Select onChange={(event) => {setVehicleType(event.target.value)}}>
-                        <option value="">Please select an option</option>
-                        <option value="hatchback">Hatchback</option>
-                        <option value="sedan">Sedan</option>
-                        <option value="suv">SUV</option>
-                        <option value="ev">EV</option>
-                        <option value="ute">Ute</option>
-                        <option value="wagon">Wagon</option>
-                        <option value="van">Van</option>
-                        <option value="bike">Bike</option>
-                        </Form.Select>
-                    </FloatingLabel>
-                </Form.Group>
-            </Row><br />
-            <Row>
-                <Button onClick={handleBooking} disabled={!allFilledOut}>Book</Button>
-            </Row><br />
+        <>
+            <Container>
+                <br />
+                <Row>
+                    <h1 style={{textAlign: "center"}}>book a carspace 📅</h1>
+                </Row>
+                <Row>
+                    <Form.Group>
+                        <Form.Label>Address</Form.Label>
+                            <Form.Control
+                            type="text"
+                            value={spaceToBook.address}
+                            disabled
+                            />
+                    </Form.Group>
+                </Row>
+                <Row>
+                    <Form.Group>
+                        <br />
+                        <Form.Label>Price (per day)</Form.Label>
+                            <Form.Control
+                            type="text"
+                            value={`$${spaceToBook.price}`}
+                            disabled
+                            />
+                    </Form.Group>
+                </Row>
+                <Row>
+                    <Form.Group>
+                        <br />
+                        <Form.Label>Provider</Form.Label>
+                            <Form.Control
+                            type="text"
+                            value={spaceToBook.username}
+                            disabled
+                            />
+                    </Form.Group>
+                </Row><hr />
+                <Row>
+                    <Col className="d-flex justify-content-center">
+                        <DateRangePicker minDate={tomorrow} ranges={[dateRange]} onChange={handleSelect} />
+                    </Col>
+                </Row>
+                <Row>
+                    <Form.Group>
+                        <br />
+                        <Form.Label>Total Price</Form.Label>
+                            <Form.Control
+                            type="text"
+                            value={`$${totalPrice}`}
+                            disabled
+                            />
+                    </Form.Group>
+                </Row>
+                <Row>
+                    <Form.Group>
+                        <br />
+                        <Form.Label>Car Registration</Form.Label>
+                            <Form.Control
+                            type="text"
+                            placeholder='Please enter your car registration'
+                            onChange={(event) => {setCarRegistration(event.target.value)}}
+                            />
+                    </Form.Group>
+                </Row><br />
+                <Row>
+                    <Form.Group>
+                        <Form.Label>Vehicle Type</Form.Label>
+                        <FloatingLabel controlId="floatingVehicleType" label="Vehicle Type" className="mb-3">
+                            <Form.Select onChange={(event) => {setVehicleType(event.target.value)}}>
+                            <option value="">Please select an option</option>
+                            <option value="hatchback">Hatchback</option>
+                            <option value="sedan">Sedan</option>
+                            <option value="suv">SUV</option>
+                            <option value="ev">EV</option>
+                            <option value="ute">Ute</option>
+                            <option value="wagon">Wagon</option>
+                            <option value="van">Van</option>
+                            <option value="bike">Bike</option>
+                            </Form.Select>
+                        </FloatingLabel>
+                    </Form.Group>
+                </Row><br />
+                <Row>
+                    <Button onClick={handleBooking} disabled={!allFilledOut}>Book</Button>
+                </Row><br />
 
-            <Modal show={showModal} onHide={handleCloseModal}>
+                <Modal show={showModal} onHide={handleCloseModal}>
+                    <Modal.Header closeButton>
+                        <Modal.Title>Booking Error 🚫</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body>You do not have enough funds in your account to book for this many days. Add more funds to your account or reduce the length of your booking 😔</Modal.Body>
+                </Modal>
+            </Container>
+            <Modal show={!!error} onHide={() => setError("")}>
                 <Modal.Header closeButton>
-                    <Modal.Title>Booking Error 🚫</Modal.Title>
+                    <Modal.Title>Booking unsuccessful</Modal.Title>
                 </Modal.Header>
-                <Modal.Body>You do not have enough funds in your account to book for this many days. Add more funds to your account or reduce the length of your booking 😔</Modal.Body>
+                <Modal.Body>{error}</Modal.Body>
             </Modal>
-        </Container>
+            <Modal show={success} onHide={() => navigate("/")}>
+                <Modal.Header closeButton>
+                    <Modal.Title>Booking Successful!</Modal.Title>
+                </Modal.Header>
+                <Modal.Footer>
+                    <Button onClick={() => navigate("/")}>OK</Button>
+                </Modal.Footer>
+            </Modal>
+        </>
     )
 }

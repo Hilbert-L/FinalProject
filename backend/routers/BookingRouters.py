@@ -113,9 +113,6 @@ async def create_booking(
     booking_dict["booking_id"] = Bookin_ID['id']
 
     Bookin_ID['id'] += 1
-    booking_id_collections.update_one({"_id": ObjectId("64ba93484acd519515400595")}, {"$set": {"id": Bookin_ID["id"]}})
-
-    booking_collections.insert_one(dict(booking_dict))
 
     # Update provider's balance
     consumer_info = bank_information_collections.find_one({"username": consumer_user["username"]})
@@ -147,7 +144,12 @@ async def create_booking(
     transaction_dict['consumer_name'] = consumer_user["username"]
     transaction_dict['provider_name'] = provider_username
     transaction_dict['total_price'] = total_price
+    
+    # update DB
+    booking_id_collections.update_one({"_id": ObjectId("64ba93484acd519515400595")}, {"$set": {"id": Bookin_ID["id"]}})
+    booking_collections.insert_one(dict(booking_dict))
     transaction_information_collections.insert_one(dict(transaction_dict))
+
 
     return {
         "Message": "Booking created successfully",
