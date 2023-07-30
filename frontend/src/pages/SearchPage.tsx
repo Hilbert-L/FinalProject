@@ -22,6 +22,7 @@ import { makeRequest } from '../helpers';
 import { FilterForm } from '../components/FilterForm';
 import { ListingReviews } from '../components/ListingReviews';
 import Car from "../images/car.png"
+import { NotificationBox } from '../components/NotificationBox';
 
 const libraries: 'places'[] = ['places'];
 
@@ -79,8 +80,8 @@ export const SearchPage = () => {
   const [carspaces, setCarspaces] = useState({});
   const [listingInfo, setListingInfo] = useState<ListingInfo>({});
   const [modalView, setModalView] = useState("See Reviews")
-
   const [isExpanded, setIsExpanded] = useState(false);
+  const [showNotification, setShowNotification] = useState(false);
 
   const handleExpandClick = () => {
     setIsExpanded(!isExpanded);
@@ -121,6 +122,12 @@ export const SearchPage = () => {
     }
 
     addMarkers();
+    const booked = localStorage.getItem('booked');
+    if (booked === 'true') {
+      setShowNotification(true);
+      localStorage.setItem('booked', 'false')
+    }
+  
   }, [mapCentre]);
 
   // Takes the search input and converts it into coordinates - moves the map to these coordinates
@@ -382,6 +389,9 @@ export const SearchPage = () => {
           <Button variant="primary" onClick={() => navigate(`/booking?id=${listingInfo.id}&postcode=${listingInfo.postcode}`)}>Book</Button>
         </Modal.Footer>
       </Modal>
+      {showNotification && 
+      <NotificationBox title='🚗 Booking Notification' message='Carspace booked successfully!' ></NotificationBox>
+      }
     </Container>
   );
 };

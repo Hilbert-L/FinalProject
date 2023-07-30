@@ -77,6 +77,7 @@ export const BookingForm = () => {
             setShowModal(true);
         } else {
             localStorage.setItem('myFunds', (myFunds - totalPrice).toString());
+            localStorage.setItem('booked', 'true')
             navigate('/');
         }
     }
