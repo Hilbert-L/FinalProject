@@ -330,7 +330,7 @@ export const SearchPage = () => {
                       </span>{' '}
                       <br />
                       <span style={{ fontSize: '20pt' }}>
-                        📏 {value.width} m by {value.breadth} m
+                        📏 {Math.ceil(parseFloat(value.width))} m by {Math.ceil(parseFloat(value.breadth))} m
                       </span>
                       <br />
                       <span style={{ fontSize: '20pt' }}>

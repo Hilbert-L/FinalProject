@@ -22,9 +22,9 @@ export const NotificationBox = (props: any) => {
       }, [show, progress]);
 
     return (
-        <ToastContainer className="p-3" position='top-end' style={{ zIndex: 10 }}>
+        <ToastContainer className="p-3" position={props.position ? props.position : 'top-end'} style={{ zIndex: 10 }}>
             <Toast show={show}>
-                <ProgressBar style={{ height: '8px', margin: '0px 0px', padding: '0px 0px', borderRadius: '3px' }} variant="warning" now={progress} />
+                <ProgressBar style={{ height: '8px', margin: '0px 0px', padding: '0px 0px', borderRadius: '3px' }} variant={props.variant ? props.variant : "warning"} now={progress} />
                 <Toast.Header closeButton={false}>
                     <strong className="me-auto">{props.title}</strong>
                     <small>just now</small>

@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Container, Row, Col, Button, Modal } from 'react-bootstrap';
 import { makeRequest } from '../helpers';
 import { DateRangePicker } from 'react-date-range';
 import { ListingComponent } from '../components/ListingComponent';
+import { NotificationBox } from '../components/NotificationBox';
 
 export const MyListings = (props: any) => {
 
@@ -16,6 +17,7 @@ export const MyListings = (props: any) => {
     const [listingToBeUpdated, setListingToBeUpdated] = useState('');
     const [listingToBeDeleted, setListingToBeDeleted] = useState('');
     const [triggerRender, setTriggerRender] = useState(true);
+    const [showNotification, setShowNotification] = useState(false);
     const [dateRange, setDateRange] = useState({
         startDate: new Date(),
         endDate: new Date(),
@@ -63,7 +65,8 @@ export const MyListings = (props: any) => {
         try {
             let response = await makeRequest(`/carspace/deletecarspace/${username}/${listingToBeDeleted}`, "DELETE", undefined, { token });
             if (response.status !== 200) {
-                console.log("There was an error!")
+                setShowNotification(true)
+                setTimeout(() => {setShowNotification(false)}, 5000);
             } else {
                 setTriggerRender(triggerRender === true ? false : true);
             }
@@ -79,7 +82,7 @@ export const MyListings = (props: any) => {
 	const handleCloseModal = () => setShowModal(false);
     const handleCloseDeleteModal = () => setShowDeleteModal(false);
 
-    function isSameDay(date1, date2) {
+    function isSameDay(date1: any, date2: any) {
         return (
           date1.getDate() === date2.getDate() &&
           date1.getMonth() === date2.getMonth() &&
@@ -107,7 +110,7 @@ export const MyListings = (props: any) => {
         );
       }
 
-    const handleSelect = (ranges) => {
+    const handleSelect = (ranges: any) => {
     setDateRange(ranges.selection);
     }
 
@@ -177,6 +180,9 @@ export const MyListings = (props: any) => {
                     </Row>
                 </Modal.Body>
             </Modal>
+            {showNotification && 
+            <NotificationBox variant='danger' title='🚫 Listing Error' message='You cannot delete this listing. There are future bookings!' ></NotificationBox>
+            }
         </Container>
     )
 }
