@@ -5,12 +5,7 @@ import {
     Container,
     Col,
     Row,
-    InputGroup,
-    Form,
-    Button,
-    Modal,
     Spinner,
-    Accordion,
   } from 'react-bootstrap';
 
 export const ListingReviews = (props: any) => {

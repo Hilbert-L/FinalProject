@@ -269,7 +269,7 @@ export const ListingForm = () => {
             <FloatingLabel controlId="floatingPrice" label="Price" className="mb-3">
               <Form.Control
                     type="number"
-                    value={info.photo}
+                    value={info.price}
                     placeholder="Price"
                     onChange={event => setInfo({...info, price: parseInt(event.target.value, 10)})}
                   />

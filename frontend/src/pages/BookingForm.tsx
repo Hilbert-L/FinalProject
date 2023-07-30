@@ -32,7 +32,7 @@ export const BookingForm = () => {
 		// Retrieves car spaces given the postcode
 		async function retrieveCarspaces(postcode: string) {
 			let body = {
-				"limit": "10",
+				"limit": "100",
 				"sort": "false",
 				"postcode": postcode,
 			}
