@@ -333,3 +333,26 @@ async def get_car_space_bookings(carspaceid: int, token: str = Depends(verify_us
         booking_times.append({"start_time": start_time, "end_time": end_time})
 
     return booking_times
+
+
+@CarSpaceRouter.get("/carspace/get_reservation_count", tags=["Car Spaces"])
+@check_token
+async def get_reservation_count(token: str = Depends(verify_user_token)):
+    # Check if user exists
+    user = users_collections.find_one({"username": token})
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Username doesn't exist")
+
+    # Get current time
+    current_time = datetime.now()
+
+    # Query for reservations that belong to the user and have a start time later than the current time
+    future_reservations_filter = {"provider_username": user['username'], "start_date": {"$gt": current_time}}
+
+    # Get the count of such reservations
+    reservation_count = booking_collections.count_documents(future_reservations_filter)
+
+    return {
+        "Message": "Reservation Count Retrieved Successfully",
+        "Number of Reservations": reservation_count
+    }
