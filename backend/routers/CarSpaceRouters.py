@@ -321,6 +321,32 @@ async def get_car_space_bookings(carspaceid: int, token: str = Depends(verify_us
 
     return booking_times
 
+
+@CarSpaceRouter.get("/user/get_current_reservations", tags=["Car Spaces"])
+@check_token
+async def get_reservation_count(token: str = Depends(verify_user_token)):
+    # Verify user token and get user
+    user = users_collections.find_one({"username": token})
+
+    # Check if user exists
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Username doesn't exist")
+
+
+    # Get current time in UTC
+    current_time = datetime.utcnow()
+
+    future_reservations_filter = {"provider_username": user['username'], "start_date": {"$gt": current_time}}
+
+    # Get the count of such reservations
+    reservation_count = booking_collections.count_documents(future_reservations_filter)
+
+    return {
+        "Message": "Reservation Count Retrieved Successfully",
+        "Reservation Count": reservation_count
+    }
+
+
 @CarSpaceRouter.post("/carspace/create_car_space_no_token", tags=["Car Spaces"])
 async def create_car_space_no_token(fakeuser_id: int, create_car_space: CreateCarSpaceSchema, base64_image: str = None):
     stored_user = users_collections.find_one({"username": f"fake_user_{fakeuser_id}"})
