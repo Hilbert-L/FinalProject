@@ -117,11 +117,11 @@ class CarSpaceSchema(BaseModel):
 
 class Review(BaseModel):
     ownerusername: str = Field(default=None)
-    overall: str = Field(default=None)
-    location: str = Field(default=None)
-    cleanliness: str = Field(default=None)
-    easeofaccess: str = Field(default=None)
-    communication: str = Field(default=None)
+    overall: Union[int, float] = Field(default=None)
+    location: Union[int, float]= Field(default=None)
+    cleanliness: Union[int, float] = Field(default=None)
+    easeofaccess: Union[int, float] = Field(default=None)
+    communication: Union[int, float] = Field(default=None)
     writtenfeedback: Optional[str] = Field(default=None)
     class Config:
         schema = {

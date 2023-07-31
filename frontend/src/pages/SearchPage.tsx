@@ -88,6 +88,15 @@ export const SearchPage = () => {
   };
 
   React.useEffect(() => {
+    // Perform any necessary actions with the updated carspaces state here
+    console.log('Filtered Car Spaces Updated:', carspaces);
+  }, [carspaces]);
+
+  const updateFilteredCarSpaces = (value: any) => {
+    setCarspaces(value);
+  };
+      
+  React.useEffect(() => {
     async function retrieveUsername() {
       let token = localStorage.getItem('authToken') || '';
       let response = await makeRequest("/user/get_current_user", "GET", undefined, { token });
@@ -266,7 +275,7 @@ export const SearchPage = () => {
         </Autocomplete>
       </Row>
       <Row>
-        <FilterForm searchValue={searchValue} mapCentre={mapCentre}/>
+        <FilterForm searchValue={searchValue} mapCentre={mapCentre} onUpdateState={updateFilteredCarSpaces}/>
       </Row> <br />
       <Row>
         {view === 'map view' ? (

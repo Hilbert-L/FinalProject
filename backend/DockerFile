@@ -1,6 +1,11 @@
 # Use the official Python base image with Python 3.9.6
 FROM python:3.9.6-slim-buster
 
+# Update package lists and install required system packages
+RUN apt-get update && \
+    apt-get install -y build-essential && \
+    apt-get clean
+    
 # Set the working directory in the container
 WORKDIR /app
 
