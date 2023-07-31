@@ -148,7 +148,7 @@ export const MyListings = (props: any) => {
 
             <Modal show={showBookingsModal} onHide={handleCloseBookingsModal}>
                 <Modal.Header closeButton>
-                    <Modal.Title>bookings</Modal.Title>
+                    <Modal.Title>bookings 📅</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
                     <DateRangePicker dayContentRenderer={renderDayContent} showPreview={false} minDate={new Date()} onChange={handleSelect} ranges={[dateRange]}/>
@@ -157,9 +157,9 @@ export const MyListings = (props: any) => {
 
             <Modal show={showModal} onHide={handleCloseModal}>
                 <Modal.Header closeButton>
-                    <Modal.Title>update carspace</Modal.Title>
+                    <Modal.Title>update carspace ✏️</Modal.Title>
                 </Modal.Header>
-                <ListingComponent username={username} token={token} listing={listingToBeUpdated} allListings={myListings} onClose={handleCloseModal}></ListingComponent>
+                <ListingComponent username={username} token={token} listing={listingToBeUpdated} allListings={myListings} onClose={handleCloseModal} rerender={() => setTriggerRender(triggerRender === true ? false : true)}></ListingComponent>
             </Modal>
 
             <Modal show={showDeleteModal} onHide={handleCloseDeleteModal}>

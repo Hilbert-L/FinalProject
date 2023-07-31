@@ -36,15 +36,12 @@ type ListingInfo = {
   length?: number;
   width?: number;
   price?: number;
-  photo?: string;
 }
 
 const libraries: ("places")[] = ['places'];
 
 export const ListingForm = () => {
   const [info, setInfo] = useState<ListingInfo>({});
-  
-  const [photo, setPhoto] = useState<string>();
 
   const [error, setError] = useState<string>();
 
@@ -58,9 +55,7 @@ export const ListingForm = () => {
   })
 
   const handleSubmit = () => {
-    console.log(info.latitude);
-    console.log(info.longitude);
-    // Need to add photo as info to send
+
     const body = {
       "address": String(info.address),
       "suburb": String(info.suburb),
@@ -74,22 +69,12 @@ export const ListingForm = () => {
       "latitude": String(info.latitude),
       "longitude": String(info.longitude)
     };
-    makeRequest(`/carspace/create_car_space?base64_image=${photo}`, "POST", body, { token })
+    makeRequest("/carspace/create_car_space", "POST", body, { token })
       .then((response) => {
         if (response.status === 200) navigate("/");
         else setError(response.resp.detail);
       })
   }
-  const handlePhoto = (event: any) => {
-    if (event.target.files) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64 = reader.result as string;
-        setPhoto(encodeURIComponent(base64));
-      };
-      reader.readAsDataURL(event.target.files[0]);
-    }
-  };
 
   // Takes the search input and converts it into coordinates
 	const findCoordinates = () => {
@@ -275,15 +260,7 @@ export const ListingForm = () => {
                   />
             </FloatingLabel>
         </Form.Group>
-        <Form.Group>
-          <Form.Label>Please upload a photo of the car space:</Form.Label>
-          <Form.Control
-                type="file"
-                value={info.photo}
-                accept="image/*"
-                onChange={(event) => handlePhoto(event)}
-              />
-        </Form.Group>
+        <span style={{ color: "grey", fontSize: "14px" }}><i>You can upload a carspace photo on your profile</i></span>
         {error && <span style={{ color: "#D7504D", fontSize: "14px" }}>{error}</span>}
         <div className="d-grid gap-2" style={{ paddingTop: "10px" }}>
           <Button

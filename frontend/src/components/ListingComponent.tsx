@@ -35,7 +35,9 @@ type VehicleType =
 export const ListingComponent = (props: any) => {  
 
     const token = props.token;
+    console.log(props);
     const [info, setInfo] = useState<ListingInfo>({});
+    const [photo, setPhoto] = useState('');
 
     useEffect(() => {
         const currentListing = props.allListings.find((listing: any) => listing["Your Car Space Information"].carspaceid === props.listing);
@@ -54,24 +56,46 @@ export const ListingComponent = (props: any) => {
     }, [])
 
     const updateListing = async () => {
-        // try {
-        //     const body = {
-        //         width: info.width,
-        //         breadth: info.length,
-        //         spacetype: info.spaceType,
-        //         accesskeyrequired: info.accessKey,
-        //         vehiclesize: info.vehicleType,
-        //         price: info.price,
-        //     }
-        //     let response = await makeRequest(`/carspace/updatecarspace/${props.username}/${props.listing}`, "PUT", body, { token });
-        //     if (response.status !== 200) {
-        //         console.log("There was an error!")
-        //     }
-        // } catch (error) {
-        //     console.log(error);
-        // }
+        try {
+            const body = {
+                width: info.width,
+                breadth: info.length,
+                spacetype: info.spaceType,
+                accesskeyrequired: info.accessKey,
+                vehiclesize: info.vehicleType,
+                price: info.price,
+            }
+            let response = await makeRequest(`/carspace/updatecarspace?carspaceid=${props.listing}`, "PUT", body, { token });
+            if (response.status !== 200) {
+                console.log("There was an error!")
+            }
+        } catch (error) {
+            console.log(error);
+        }
+        // If there is a photo, upload it
+        if (photo) {
+            let formData = new FormData();
+            formData.append("file", photo, photo.name);
+            try {
+                let response = await makeRequest(`/carspace/upload_carspace_image/${props.listing}`, "POST", formData, { token });
+                if (response.status !== 200) {
+                    console.log("There was an error!")
+                }
+                setPhoto('');
+            } catch (error) {
+                console.log(error);
+            }          
+        }
         props.onClose();
+        props.rerender();
     }
+
+    const handlePhoto = (event: any) => {
+        if (event.target.files && event.target.files[0]) {
+            setPhoto(event.target.files[0]);
+            console.log(event.target.files[0])
+        }
+      };
 
     const allFilledOut = info.spaceType !== undefined
     && info.vehicleType !== undefined
@@ -206,6 +230,15 @@ export const ListingComponent = (props: any) => {
                             onChange={event => setInfo({...info, price: parseInt(event.target.value, 10)})}
                         />
                     </FloatingLabel>
+                </Form.Group>
+                <Form.Group>
+                    <Form.Label>Please upload a photo of the car space:</Form.Label>
+                    <Form.Control
+                            type="file"
+                            value={info.photo}
+                            accept="image/*"
+                            onChange={(event) => handlePhoto(event)}
+                        />
                 </Form.Group>
             </Modal.Body>
             <Modal.Footer>
