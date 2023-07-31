@@ -23,7 +23,6 @@ export const MyPaymentDetails = (props: any) => {
     const [detailsExist, setDetailsExist] = useState(false);
     const [triggerRender, setTriggerRender] = useState(true);
     const [paymentDetails, setPaymentDetails] = useState<Payment>({});
-    const [showError, setShowError] = useState(false);
 	const [errorMessage, setErrorMessage] = useState('');
     const [bsbCheck, setBSBCheck] = useState(false);
     const [accountNumberCheck, setAccountNumberCheck]= useState(false);
@@ -175,14 +174,18 @@ export const MyPaymentDetails = (props: any) => {
     }
 
     const addFunds = () => {
-        if (addFundsAmount <= 0) {
-            // TODO
-            // Add error message
-            return;
-        }
-        setFundsAmount(fundsAmount + addFundsAmount);
-        setAddFundsAmount(0);
-        localStorage.setItem('myFunds', (fundsAmount + addFundsAmount).toString());
+        const token = localStorage.getItem("authToken");
+        const username = localStorage.getItem("username");
+        if (!token || !username) return;
+        makeRequest(`/bankaccounts/deposit/${username}?deposit=${addFundsAmount}`, "PUT", undefined, { token })
+            .then((resp) => {
+                if (resp.status === 200) {
+                    setFundsAmount(resp.resp["New Balance"]);
+                    setAddFundsAmount(0);
+                } else {
+                    setErrorMessage(resp.resp["Message"]);
+                }
+            })
     }
 
     const withdrawFunds = () => {
@@ -322,6 +325,17 @@ export const MyPaymentDetails = (props: any) => {
                     }
                 </Modal.Body>
             </Modal>
+            {!!errorMessage &&
+                <Modal>
+                    <Modal.Header>
+                        <Modal.Title>Error</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body>{errorMessage}</Modal.Body>
+                    <Modal.Footer>
+                        <Button onClick={() => setErrorMessage("")}>OK</Button>
+                    </Modal.Footer>
+                </Modal>
+            }
         </Container>
     )
 }
