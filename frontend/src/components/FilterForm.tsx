@@ -33,6 +33,8 @@ export const FilterForm = (props: any) => {
   const [latitude, setLatitude] = React.useState(0.000000);
   const [longitude, setLongitude] = React.useState(0.000000);
 
+  const [filteredCarSpaces, setFilteredCarSpaces] = React.useState({});
+
   React.useEffect(() => {
     const geocoder = new window.google.maps.Geocoder();
     geocoder.geocode({ address: props.searchValue }, (results, status) => {
@@ -46,6 +48,12 @@ export const FilterForm = (props: any) => {
       }
     });
   }, [props.searchValue])
+
+  React.useEffect(() => {
+    if (typeof props.onUpdateState === 'function') {
+      props.onUpdateState(filteredCarSpaces)
+    }
+  }, [filteredCarSpaces, props.onUpdateState])
 
   async function handleFilterSubmit(event: any) {
     event.preventDefault();
@@ -72,17 +80,23 @@ export const FilterForm = (props: any) => {
       sortmethod: sortMethod !== 'none' ? sortMethod : null,
     };
     console.log(body);
+    const token = localStorage.getItem('authToken') || '';
+
     try {
-        const response = await makeRequest('/search/advancedsearch', 'POST', body, undefined)
+        const response = await makeRequest('/search/advancedsearch', 'POST', body, {token})
         if (response.status === 200) {
             console.log(response)
             console.log("Response is valid")
+            const spaces = await response.resp;
+            setFilteredCarSpaces(spaces["Filtered Car Spaces"])
+            
         } else {
             alert("Invalid Response")
         }
     } catch (error) {
     console.log(error);
     }
+    console.log(filteredCarSpaces)
     setIsFilterVisible(!isFilterVisible);
   };
 
@@ -183,9 +197,7 @@ export const FilterForm = (props: any) => {
               }
             >
               <option value="none">No Recommender System</option>
-              <option value="cosine">Cosine Similarity</option>
-              <option value="jaccard">Jaccard Similarity</option>
-              <option value="pearson">Pearson Similarity</option>
+              <option value="recommender">Use Recommender System</option>
             </Form.Control>
           </Form.Group>
           <br></br>

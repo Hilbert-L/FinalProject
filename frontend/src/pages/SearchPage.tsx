@@ -86,6 +86,15 @@ export const SearchPage = () => {
     setIsExpanded(!isExpanded);
   };
 
+  React.useEffect(() => {
+    // Perform any necessary actions with the updated carspaces state here
+    console.log('Filtered Car Spaces Updated:', carspaces);
+  }, [carspaces]);
+
+  const updateFilteredCarSpaces = (value: any) => {
+    setCarspaces(value);
+  };
+
   // Retrieves car spaces from the backend every time the mapCentre changes
   React.useEffect(() => {
     // Retrieves car spaces given the postcode
@@ -245,7 +254,7 @@ export const SearchPage = () => {
         </Autocomplete>
       </Row>
       <Row>
-        <FilterForm searchValue={searchValue} mapCentre={mapCentre}/>
+        <FilterForm searchValue={searchValue} mapCentre={mapCentre} onUpdateState={updateFilteredCarSpaces}/>
       </Row> <br />
       <Row>
         {view === 'map view' ? (
