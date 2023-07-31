@@ -87,7 +87,7 @@ async def create_car_space(create_car_space: CreateCarSpaceSchema,token: str = D
 
 @CarSpaceRouter.post("/carspace/upload_carspace_image/{car_space_id}", tags=["Car Spaces"])
 @check_token
-async def upload_carspace_image(car_space_id: int,image: UploadFile = File(...),token: str = Depends(verify_user_token)):
+async def upload_carspace_image(car_space_id: int, file: UploadFile = File(...),token: str = Depends(verify_user_token)):
     stored_user = users_collections.find_one({"username": token})
 
     if stored_user is None:
@@ -98,13 +98,13 @@ async def upload_carspace_image(car_space_id: int,image: UploadFile = File(...),
     if stored_car_space is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Car space {car_space_id} not found")
 
-    contents = await image.read()
+    contents = await file.read()
     base64_image = base64.b64encode(contents).decode()
 
     if not is_valid_image(base64_image):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid image format")
 
-    image_uri = f"data:{image.content_type};base64,{base64_image}"
+    image_uri = f"data:{file.content_type};base64,{base64_image}"
 
     car_space_collections.update_one(
         {"carspaceid": car_space_id},
@@ -117,24 +117,11 @@ async def upload_carspace_image(car_space_id: int,image: UploadFile = File(...),
 # Will add three attributes: leasing, using and booking
 @CarSpaceRouter.put("/carspace/updatecarspace", tags=["Car Spaces"])
 @check_token
-async def update_car_space(update_car_space: UpdateCarSpace, carspaceid: int, base64_image: str = None,
-                           token: str = Depends(verify_user_token)):
+async def update_car_space(update_car_space: UpdateCarSpace, carspaceid: int, token: str = Depends(verify_user_token)):
     # Verify user
     user = users_collections.find_one({"username": token})
     if user is None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid user")
-
-    if not base64_image:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No image provided")
-
-    carspace_image_info_list = []
-    if base64_image:
-        verify_base64_image = base64_image + '=' * (-len(base64_image) % 4)
-        if is_valid_image(verify_base64_image):
-            carspace_image_info = base64_image
-            carspace_image_info_list.append(carspace_image_info)
-        else:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid base64 image")
 
     filter = {
         "username": str(token),
