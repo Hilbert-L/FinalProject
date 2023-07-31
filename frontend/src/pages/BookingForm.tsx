@@ -75,31 +75,25 @@ export const BookingForm = () => {
       }
 
     const handleBooking = () => {
-        const myFunds = parseInt(localStorage.getItem('myFunds') ?? "0", 10);
-        const days = differenceInDays(dateRange.endDate, dateRange.startDate) + 1;
-        if (totalPrice > myFunds) {
-            setShowModal(true);
-        } else {
-            const token = localStorage.getItem("authToken");
-            const username = localStorage.getItem("username");
-            if (!token || !username) return;
-            localStorage.setItem('myFunds', (myFunds - totalPrice).toString());
-            makeRequest(
-                `/booking/create_booking/${username}/${spaceToBook.carspaceid}?provider_username=${spaceToBook.username}`,
-                "POST",
-                {
-                    start_date: dayjs(dateRange.startDate).toISOString(),
-                    end_date: dayjs(dateRange.endDate).toISOString()
-                },
-                { token }
-            ).then((resp) => {
-                if (resp.status === 200) {
-                    setSuccess(true);
-                } else {
-                    setError(resp.resp.detail);
-                }
-            })
-        }
+        const token = localStorage.getItem("authToken");
+        const username = localStorage.getItem("username");
+        if (!token || !username) return;
+        makeRequest(
+            `/booking/create_booking/${username}/${spaceToBook.carspaceid}?provider_username=${spaceToBook.username}`,
+            "POST",
+            {
+                start_date: dayjs(dateRange.startDate).toISOString(),
+                end_date: dayjs(dateRange.endDate).toISOString()
+            },
+            { token }
+        ).then((resp) => {
+            if (resp.status === 200) {
+                setSuccess(true);
+            } else {
+                setError(resp.resp.detail);
+            }
+        })
+        
     }
 
     const handleCloseModal = () => setShowModal(false);

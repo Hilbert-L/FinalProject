@@ -159,7 +159,7 @@ export const MyPaymentDetails = (props: any) => {
                     cardNumber: '',
                     cardExpiry: '',
                 }));
-                localStorage.setItem('myFunds', "0")
+                setFundsAmount(0);
 			} catch (error) {
 				console.log(error)
 			}
