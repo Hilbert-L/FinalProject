@@ -260,6 +260,7 @@ export const ListingForm = () => {
                   />
             </FloatingLabel>
         </Form.Group>
+        <span style={{ color: "grey", fontSize: "14px" }}><i>You can upload a carspace photo on your profile</i></span>
         {error && <span style={{ color: "#D7504D", fontSize: "14px" }}>{error}</span>}
         <div className="d-grid gap-2" style={{ paddingTop: "10px" }}>
           <Button

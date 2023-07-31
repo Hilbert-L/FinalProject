@@ -84,7 +84,35 @@ export const BookingForm = () => {
         }
     }
 
-    const allFilledOut = carRegistration !== '' && vehicleType !== '';
+    function isSameDay(date1: any, date2: any) {
+        return (
+          date1.getDate() === date2.getDate() &&
+          date1.getMonth() === date2.getMonth() &&
+          date1.getFullYear() === date2.getFullYear()
+        );
+      }
+
+    function renderDayContent(day: any) {
+
+        const disabledDays = [new Date('08/10/2023'), new Date('08/15/2023')];
+      
+        // Check if the current day is one of the disabled days
+        const isDisabled = disabledDays.some(disabledDay => isSameDay(day, disabledDay));;
+      
+        // Style for disabled days
+        const disabledStyles = {
+          color: 'red',
+          textDecoration: 'line-through'
+        };
+      
+        return (
+          <div style={isDisabled ? disabledStyles: {color: 'grey'}}>
+            {day.getDate()}
+          </div>
+        );
+      }
+
+    const allFilledOut = carRegistration !== '' && vehicleType !== '' && totalPrice !== 0;
 
     return (
         <Container>
@@ -126,7 +154,7 @@ export const BookingForm = () => {
             </Row><hr />
             <Row>
                 <Col className="d-flex justify-content-center">
-                    <DateRangePicker minDate={new Date()} ranges={[dateRange]} onChange={handleSelect} />
+                    <DateRangePicker dayContentRenderer={renderDayContent} minDate={new Date()} ranges={[dateRange]} onChange={handleSelect} />
                 </Col>
             </Row>
             <Row>
