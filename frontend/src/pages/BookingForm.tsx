@@ -11,6 +11,7 @@ import { NotificationBox } from '../components/NotificationBox';
 
 export const BookingForm = () => {
     
+    const token = localStorage.getItem('authToken');
     const searchParams = new URLSearchParams(location.search);
     const listingID = searchParams.get('id');
     const postcode = searchParams.get('postcode');
@@ -19,6 +20,7 @@ export const BookingForm = () => {
     const [carRegistration, setCarRegistration] = useState('');
     const [vehicleType, setVehicleType] = useState('');
     const [showNotification, setShowNotification] = useState(false);
+    const [currentReservations, setCurrentReservations] = useState([]);
     const [dateRange, setDateRange] = useState({
         startDate: new Date(),
         endDate: new Date(),
@@ -32,6 +34,7 @@ export const BookingForm = () => {
 
 		// Retrieves car spaces given the postcode
 		async function retrieveCarspaces(postcode: string) {
+            let currentListing = null;
 			let body = {
 				"limit": "100",
 				"sort": "false",
@@ -40,17 +43,44 @@ export const BookingForm = () => {
 			try {
 				let response = await makeRequest("/search/postcode", "POST", body, undefined);
 				if (response.status !== 200) {
-					console.log("There was an error!")
+					console.log("There was an error!");
+                    return;
 				} else {
 					let spaces = response.resp;
 					const carspaces = spaces['Postcode Search Results'];
                     Object.entries(carspaces).forEach(([key, value]) => {
-                        if (value._id === listingID) {
+                        if (value && value._id === listingID) {
                             setSpaceToBook(value);
+                            currentListing = value;
                             console.log(value);
                         }
                     });
 				}
+                // let daysBetween = []
+                // if (currentListing) {
+                //     let reservations = await makeRequest(`/carspace/get_car_space_booking/${currentListing.carspaceid}`, "GET", undefined, { token });
+                //     setCurrentReservations(reservations.resp);
+                //     const extractedDays = reservations.resp.map(({ start_time, end_time }) => {
+                //         const startDate = new Date(start_time);
+                //         const endDate = new Date(end_time);
+                      
+                //         // Calculate the difference in days between the start and end dates
+                //         const timeDiff = endDate.getTime() - startDate.getTime();
+                //         const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
+                      
+                //         // Create an array to store the days between the start and end dates (including start date)
+                //         const daysBetween = [];
+                //         for (let i = 0; i < daysDiff; i++) {
+                //           const day = new Date(startDate);
+                //           day.setDate(day.getDate() + i);
+                //           daysBetween.push(day.toLocaleDateString());
+                //         }
+                        
+                //     })
+                //     console.log(daysBetween);
+                //     console.log(reservations.resp)
+                    
+                // }
 			} catch (error) {
 				console.log(error);
 			}
