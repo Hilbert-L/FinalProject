@@ -107,7 +107,7 @@ async def create_booking(
     booking_dict["provider_username"] = provider_username
     booking_dict["carspaceid"] = carspaceid
     booking_dict["transaction_time"] = datetime.now().strftime("%Y/%m/%d-%H:%M:%S")
-    booking_dict["duration_hours"] = duration
+    booking_dict["duration_hours"] = duration # actually should be in days
     booking_dict['total_price'] = total_price
     booking_dict["booking_id"] = Bookin_ID['id']
 
