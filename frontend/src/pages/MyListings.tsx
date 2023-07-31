@@ -1,18 +1,28 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Container, Row, Col, Button, Modal } from 'react-bootstrap';
 import { makeRequest } from '../helpers';
-import { ListingForm } from './ListingForm';
+import { DateRangePicker } from 'react-date-range';
+import { ListingComponent } from '../components/ListingComponent';
+import { NotificationBox } from '../components/NotificationBox';
 
 export const MyListings = (props: any) => {
 
     const username = props.username;
     let token = localStorage.getItem('authToken') || '';
     const [myListings, setMyListings] = useState([{}]);
+    const [showBookingsModal, setShowBookingsModal] = useState(false);
     const [showModal, setShowModal] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [bookingsListingToBeChecked, setBookingsListingToBeChecked] = useState('');
     const [listingToBeUpdated, setListingToBeUpdated] = useState('');
     const [listingToBeDeleted, setListingToBeDeleted] = useState('');
     const [triggerRender, setTriggerRender] = useState(true);
+    const [showNotification, setShowNotification] = useState(false);
+    const [dateRange, setDateRange] = useState({
+        startDate: new Date(),
+        endDate: new Date(),
+        key: 'selection',
+      });
 
     useEffect(() => {
         // Retrieves car spaces given the postcode
@@ -34,19 +44,16 @@ export const MyListings = (props: any) => {
         retrieveListings();
     }, [triggerRender])
 
+    const bookingListingCheck = (id: string) => {
+        setBookingsListingToBeChecked(id);
+        setShowBookingsModal(true);
+        console.log(id);
+    }
+
     const updateListingCheck = (id: string) => {
         setListingToBeUpdated(id);
         setShowModal(true);
         console.log(id);
-    }
-
-    const updateListing = () => {
-        // TODO
-        // Update the listing
-        console.log(listingToBeUpdated);
-        //
-        setListingToBeUpdated('');
-        setShowModal(false);
     }
 
     const deleteListingCheck = (id: string) => {
@@ -58,7 +65,8 @@ export const MyListings = (props: any) => {
         try {
             let response = await makeRequest(`/carspace/deletecarspace/${username}/${listingToBeDeleted}`, "DELETE", undefined, { token });
             if (response.status !== 200) {
-                console.log("There was an error!")
+                setShowNotification(true)
+                setTimeout(() => {setShowNotification(false)}, 5000);
             } else {
                 setTriggerRender(triggerRender === true ? false : true);
             }
@@ -70,8 +78,41 @@ export const MyListings = (props: any) => {
         setShowDeleteModal(false);
     }
 
+    const handleCloseBookingsModal = () => setShowBookingsModal(false);
 	const handleCloseModal = () => setShowModal(false);
     const handleCloseDeleteModal = () => setShowDeleteModal(false);
+
+    function isSameDay(date1: any, date2: any) {
+        return (
+          date1.getDate() === date2.getDate() &&
+          date1.getMonth() === date2.getMonth() &&
+          date1.getFullYear() === date2.getFullYear()
+        );
+      }
+
+    function renderDayContent(day: any) {
+
+        const disabledDays = [new Date('08/10/2023'), new Date('08/15/2023')];
+      
+        // Check if the current day is one of the disabled days
+        const isDisabled = disabledDays.some(disabledDay => isSameDay(day, disabledDay));;
+      
+        // Style for disabled days
+        const disabledStyles = {
+          color: 'red',
+          textDecoration: 'line-through'
+        };
+      
+        return (
+          <div style={isDisabled ? disabledStyles: {color: 'grey'}}>
+            {day.getDate()}
+          </div>
+        );
+      }
+
+    const handleSelect = (ranges: any) => {
+    setDateRange(ranges.selection);
+    }
 
     return (
         <Container>
@@ -92,6 +133,9 @@ export const MyListings = (props: any) => {
                         </Col>
                         <Col className="text-center" md="auto">
                             <Row>
+                                <Button variant='warning' style={{ width: '100px' }} onClick={() => bookingListingCheck(value["Your Car Space Information"]["carspaceid"])}>bookings</Button>
+                            </Row><br />
+                            <Row>
                                 <Button style={{ width: '100px' }} onClick={() => updateListingCheck(value["Your Car Space Information"]["carspaceid"])}>edit</Button>
                             </Row><br />
                             <Row>
@@ -102,16 +146,20 @@ export const MyListings = (props: any) => {
                 </Container>
             ))}
 
-            <Modal show={showModal} onHide={handleCloseModal}>
+            <Modal show={showBookingsModal} onHide={handleCloseBookingsModal}>
                 <Modal.Header closeButton>
-                    <Modal.Title>Carspace</Modal.Title>
+                    <Modal.Title>bookings 📅</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
-                    <ListingForm></ListingForm>
+                    <DateRangePicker dayContentRenderer={renderDayContent} showPreview={false} minDate={new Date()} onChange={handleSelect} ranges={[dateRange]}/>
                 </Modal.Body>
-                <Modal.Footer>
-                    <Button variant="primary" onClick={updateListing}>Update</Button>
-                </Modal.Footer>
+            </Modal>
+
+            <Modal show={showModal} onHide={handleCloseModal}>
+                <Modal.Header closeButton>
+                    <Modal.Title>update carspace ✏️</Modal.Title>
+                </Modal.Header>
+                <ListingComponent username={username} token={token} listing={listingToBeUpdated} allListings={myListings} onClose={handleCloseModal} rerender={() => setTriggerRender(triggerRender === true ? false : true)}></ListingComponent>
             </Modal>
 
             <Modal show={showDeleteModal} onHide={handleCloseDeleteModal}>
@@ -120,8 +168,7 @@ export const MyListings = (props: any) => {
                 </Modal.Header>
                 <Modal.Body>
                     <Row className="text-center">
-                        <span>Are you sure you want to delete this carspace listing?</span><br />
-                        <span><b>All existing bookings will be cancelled</b> 😱</span><br /><br />
+                        <span>Are you sure you want to delete this carspace listing?</span><br /><br />
                     </Row>  
                     <Row>
                         <Col className="text-center">
@@ -133,6 +180,9 @@ export const MyListings = (props: any) => {
                     </Row>
                 </Modal.Body>
             </Modal>
+            {showNotification && 
+            <NotificationBox variant='danger' title='🚫 Listing Error' message='You cannot delete this listing. There are future bookings!' ></NotificationBox>
+            }
         </Container>
     )
 }

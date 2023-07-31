@@ -14,13 +14,13 @@ import {
   Button,
   Modal,
   Spinner,
-  Accordion,
 } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.css';
 import { makeRequest } from '../helpers';
 import { FilterForm } from '../components/FilterForm';
 import { ListingReviews } from '../components/ListingReviews';
+import { NotificationBox } from '../components/NotificationBox';
 import Car from "../images/car.png"
 
 const libraries: 'places'[] = ['places'];
@@ -69,7 +69,6 @@ export const SearchPage = () => {
   });
   
   const navigate = useNavigate();
-
 	const [view, setView] = useState("map view");
   const [searchValue, setSearchValue] = useState('Sydney');
   const [mapCentre, setMapCentre] = useState({ lat: -33.8688, lng: 151.2093 });
@@ -79,8 +78,10 @@ export const SearchPage = () => {
   const [carspaces, setCarspaces] = useState({});
   const [listingInfo, setListingInfo] = useState<ListingInfo>({});
   const [modalView, setModalView] = useState("See Reviews")
-
+  const [isMyListing, setIsMyListing] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [myUsername, setMyUsername] = useState('');
+  const [showNotification, setShowNotification] = useState(false);
 
   const handleExpandClick = () => {
     setIsExpanded(!isExpanded);
@@ -94,13 +95,22 @@ export const SearchPage = () => {
   const updateFilteredCarSpaces = (value: any) => {
     setCarspaces(value);
   };
+      
+  React.useEffect(() => {
+    async function retrieveUsername() {
+      let token = localStorage.getItem('authToken') || '';
+      let response = await makeRequest("/user/get_current_user", "GET", undefined, { token });
+      setMyUsername(response.resp['User Info'].username);
+    }
+    retrieveUsername();
+  }, [])
 
   // Retrieves car spaces from the backend every time the mapCentre changes
   React.useEffect(() => {
     // Retrieves car spaces given the postcode
     async function retrieveCarspaces(postcode: string) {
       const body = {
-        limit: '10',
+        limit: '200',
         sort: 'false',
         postcode: postcode,
       };
@@ -130,6 +140,11 @@ export const SearchPage = () => {
     }
 
     addMarkers();
+    const booked = localStorage.getItem('booked');
+    if (booked === 'true') {
+      setShowNotification(true);
+      localStorage.setItem('booked', 'false')
+    }
   }, [mapCentre]);
 
   // Takes the search input and converts it into coordinates - moves the map to these coordinates
@@ -201,6 +216,12 @@ export const SearchPage = () => {
       photo: carspaceToView.image,
       carspaceid: carspaceToView.carspaceid
 		})
+
+    if (myUsername === carspaceToView.username) {
+      setIsMyListing(true);
+    } else {
+      setIsMyListing(false);
+    }
 		setShowModal(true);
 	}
 
@@ -284,7 +305,6 @@ export const SearchPage = () => {
                     onClick={() => handleShowModal(value._id)}
                   />
                 ))}
-              <Marker position={{ lat: -33.86819, lng: 151.22464 }} />
             </GoogleMap>
           </div>
         ) : (
@@ -319,7 +339,7 @@ export const SearchPage = () => {
                       </span>{' '}
                       <br />
                       <span style={{ fontSize: '20pt' }}>
-                        📏 {value.width} m by {value.breadth} m
+                        📏 {Math.ceil(parseFloat(value.width))} m by {Math.ceil(parseFloat(value.breadth))} m
                       </span>
                       <br />
                       <span style={{ fontSize: '20pt' }}>
@@ -367,7 +387,7 @@ export const SearchPage = () => {
               <span>
                 This carspace is{' '}
                 <b>
-                  {listingInfo.width} m by {listingInfo.length} m
+                  {Math.ceil(parseFloat(listingInfo.width))} m by {Math.ceil(parseFloat(listingInfo.length))} m
                 </b>
                 . An access key <b>{listingInfo.accessKey ? 'is' : 'is not'}</b>{' '}
                 required. The largest vehicle size this carspace can hold is a{' '}
@@ -388,9 +408,12 @@ export const SearchPage = () => {
         </Modal.Body>
         <Modal.Footer>
 					<Button variant="warning" onClick={() => setModalView(modalView === "See Reviews" ? "Carspace Details" : "See Reviews")}>{modalView === "See Reviews" ? "See Reviews" : "Carspace Details"}</Button>
-          <Button variant="primary" onClick={() => navigate(`/booking?id=${listingInfo.id}&postcode=${listingInfo.postcode}`)}>Book</Button>
+          <Button variant="primary" disabled={isMyListing} onClick={() => navigate(`/booking?id=${listingInfo.id}&postcode=${listingInfo.postcode}`)}>Book</Button>
         </Modal.Footer>
       </Modal>
+      {showNotification && 
+      <NotificationBox title='🚗 Booking Notification' message='Carspace booked successfully!' ></NotificationBox>
+      }
     </Container>
   );
 };

@@ -113,20 +113,22 @@ def is_valid_image(base64_img_str):
 
 @AdminRouter.post("/admin/upload_profile_picture", tags=["Administrators"])
 @check_token
-async def upload_profile_picture(token: str = Depends(verify_admin_token), base64_image: str = None):
+async def upload_profile_picture(token: str = Depends(verify_admin_token), file: UploadFile = File(...)):
     filter = {"username": token}
-    admin = admin_collections.find_one(filter)
+    user = admin_collections.find_one(filter)
 
-    if admin is None:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Admin doesn't exist")
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Username doesn't exist")
 
-    if not base64_image:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No image provided")
+    contents = await file.read()
+    base64_image = base64.b64encode(contents).decode()
 
     if not is_valid_image(base64_image):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid image format")
 
-    update_results = users_collections.update_one(filter, {"$set": {"image": base64_image}})
+    data_uri = f"data:{file.content_type};base64,{base64_image}"
+
+    update_results = admin_collections.update_one(filter, {"$set": {"image": data_uri}})
 
     if update_results.modified_count < 1:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Cannot update profile picture")

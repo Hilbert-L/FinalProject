@@ -47,20 +47,11 @@ def is_valid_image(base64_img_str):
 
 @CarSpaceRouter.post("/carspace/create_car_space", tags=["Car Spaces"])
 @check_token
-async def create_car_space(create_car_space: CreateCarSpaceSchema, base64_image: str = None,
-                           token: str = Depends(verify_user_token)):
+async def create_car_space(create_car_space: CreateCarSpaceSchema,token: str = Depends(verify_user_token)):
     stored_user = users_collections.find_one({"username": token})
 
     if stored_user is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invalid user")
-
-    if not base64_image:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No image provided")
-
-    if not is_valid_image(base64_image):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid image format")
-
-
 
 
     num_car_spaces = car_space_id_collections.find_one({"_id": ObjectId("64ba8947a0d25b4ae8a3cd84")})
@@ -89,34 +80,48 @@ async def create_car_space(create_car_space: CreateCarSpaceSchema, base64_image:
     )
 
     new_car_space_dict = new_car_space.dict()
-    new_car_space_dict["image"] = base64_image
     car_space_collections.insert_one(dict(new_car_space_dict))
     num_car_spaces['id'] += 1
     car_space_id_collections.update_one({"_id": ObjectId("64ba8947a0d25b4ae8a3cd84")}, {"$set": {"id": num_car_spaces["id"]}})
     return {"Message": "Car Space Added Successfully", "Car Space": new_car_space_dict}
 
+@CarSpaceRouter.post("/carspace/upload_carspace_image/{car_space_id}", tags=["Car Spaces"])
+@check_token
+async def upload_carspace_image(car_space_id: int, file: UploadFile = File(...),token: str = Depends(verify_user_token)):
+    stored_user = users_collections.find_one({"username": token})
+
+    if stored_user is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invalid user")
+
+    stored_car_space = car_space_collections.find_one({"carspaceid": car_space_id})
+
+    if stored_car_space is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Car space {car_space_id} not found")
+
+    contents = await file.read()
+    base64_image = base64.b64encode(contents).decode()
+
+    if not is_valid_image(base64_image):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid image format")
+
+    image_uri = f"data:{file.content_type};base64,{base64_image}"
+
+    car_space_collections.update_one(
+        {"carspaceid": car_space_id},
+        {"$set": {"image": image_uri}}
+    )
+
+    return {"Message": "Image uploaded successfully"}
+
 
 # Will add three attributes: leasing, using and booking
 @CarSpaceRouter.put("/carspace/updatecarspace", tags=["Car Spaces"])
 @check_token
-async def update_car_space(update_car_space: UpdateCarSpace, carspaceid: int, base64_image: str = None,
-                           token: str = Depends(verify_user_token)):
+async def update_car_space(update_car_space: UpdateCarSpace, carspaceid: int, token: str = Depends(verify_user_token)):
     # Verify user
     user = users_collections.find_one({"username": token})
     if user is None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid user")
-
-    if not base64_image:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No image provided")
-
-    carspace_image_info_list = []
-    if base64_image:
-        verify_base64_image = base64_image + '=' * (-len(base64_image) % 4)
-        if is_valid_image(verify_base64_image):
-            carspace_image_info = base64_image
-            carspace_image_info_list.append(carspace_image_info)
-        else:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid base64 image")
 
     filter = {
         "username": str(token),
@@ -295,3 +300,23 @@ async def delete_car_space_by_id(username: str, carspaceid: int, token: str = De
         return {"message": "Car Space deleted successfully"}
     else:
         return {"message": "Car Space not found"}
+
+
+
+@CarSpaceRouter.get("/carspace/get_car_space_booking/{carspaceid}", tags=["Car Spaces"])
+@check_token
+async def get_car_space_bookings(carspaceid: int, token: str = Depends(verify_user_token)):
+    # Verify user
+    user = users_collections.find_one({"username": token})
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid user")
+
+        # Convert _id to string
+    bookings = booking_collections.find({"carspaceid": carspaceid})
+    booking_times = []
+    for booking in bookings:
+        start_time = booking['start_date']
+        end_time = booking['end_date']
+        booking_times.append({"start_time": start_time, "end_time": end_time})
+
+    return booking_times

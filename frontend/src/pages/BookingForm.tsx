@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Container, Col, Row, Form, Button, Modal, FloatingLabel } from 'react-bootstrap';
 import { DateRangePicker } from 'react-date-range';
 import 'bootstrap/dist/css/bootstrap.css';
@@ -7,6 +7,7 @@ import 'react-date-range/dist/styles.css';
 import 'react-date-range/dist/theme/default.css';
 import { differenceInDays } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
+import { NotificationBox } from '../components/NotificationBox';
 
 export const BookingForm = () => {
     
@@ -14,10 +15,10 @@ export const BookingForm = () => {
     const listingID = searchParams.get('id');
     const postcode = searchParams.get('postcode');
     const [spaceToBook, setSpaceToBook] = useState({})
-    const [showModal, setShowModal] = useState(false);
     const [totalPrice, setTotalPrice] = useState(0);
     const [carRegistration, setCarRegistration] = useState('');
     const [vehicleType, setVehicleType] = useState('');
+    const [showNotification, setShowNotification] = useState(false);
     const [dateRange, setDateRange] = useState({
         startDate: new Date(),
         endDate: new Date(),
@@ -32,7 +33,7 @@ export const BookingForm = () => {
 		// Retrieves car spaces given the postcode
 		async function retrieveCarspaces(postcode: string) {
 			let body = {
-				"limit": "10",
+				"limit": "100",
 				"sort": "false",
 				"postcode": postcode,
 			}
@@ -74,16 +75,44 @@ export const BookingForm = () => {
         const myFunds = parseInt(localStorage.getItem('myFunds'), 10);
         const days = differenceInDays(dateRange.endDate, dateRange.startDate) + 1;
         if (totalPrice > myFunds) {
-            setShowModal(true);
+            setShowNotification(true);
+            setTimeout(() => {setShowNotification(false)}, 5000);
         } else {
             localStorage.setItem('myFunds', (myFunds - totalPrice).toString());
+            localStorage.setItem('booked', 'true')
             navigate('/');
         }
     }
 
-    const handleCloseModal = () => setShowModal(false);
+    function isSameDay(date1: any, date2: any) {
+        return (
+          date1.getDate() === date2.getDate() &&
+          date1.getMonth() === date2.getMonth() &&
+          date1.getFullYear() === date2.getFullYear()
+        );
+      }
 
-    const allFilledOut = carRegistration !== '' && vehicleType !== '';
+    function renderDayContent(day: any) {
+
+        const disabledDays = [new Date('08/10/2023'), new Date('08/15/2023')];
+      
+        // Check if the current day is one of the disabled days
+        const isDisabled = disabledDays.some(disabledDay => isSameDay(day, disabledDay));;
+      
+        // Style for disabled days
+        const disabledStyles = {
+          color: 'red',
+          textDecoration: 'line-through'
+        };
+      
+        return (
+          <div style={isDisabled ? disabledStyles: {color: 'grey'}}>
+            {day.getDate()}
+          </div>
+        );
+      }
+
+    const allFilledOut = carRegistration !== '' && vehicleType !== '' && totalPrice !== 0;
 
     return (
         <Container>
@@ -125,7 +154,7 @@ export const BookingForm = () => {
             </Row><hr />
             <Row>
                 <Col className="d-flex justify-content-center">
-                    <DateRangePicker minDate={new Date()} ranges={[dateRange]} onChange={handleSelect} />
+                    <DateRangePicker dayContentRenderer={renderDayContent} minDate={new Date()} ranges={[dateRange]} onChange={handleSelect} />
                 </Col>
             </Row>
             <Row>
@@ -171,13 +200,9 @@ export const BookingForm = () => {
             <Row>
                 <Button onClick={handleBooking} disabled={!allFilledOut}>Book</Button>
             </Row><br />
-
-            <Modal show={showModal} onHide={handleCloseModal}>
-                <Modal.Header closeButton>
-                    <Modal.Title>Booking Error 🚫</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>You do not have enough funds in your account to book for this many days. Add more funds to your account or reduce the length of your booking 😔</Modal.Body>
-            </Modal>
+            {showNotification && 
+            <NotificationBox position='middle-center' variant='danger' title='🚫 Booking Error' message='You do not have enough funds in your account to book for this many days. Add more funds to your account or reduce the length of your booking!' ></NotificationBox>
+            }
         </Container>
     )
 }
