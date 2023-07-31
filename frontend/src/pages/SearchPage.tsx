@@ -101,7 +101,7 @@ export const SearchPage = () => {
     // Retrieves car spaces given the postcode
     async function retrieveCarspaces(postcode: string) {
       const body = {
-        limit: '100',
+        limit: '200',
         sort: 'false',
         postcode: postcode,
       };

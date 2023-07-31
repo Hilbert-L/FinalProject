@@ -36,6 +36,7 @@ export const ListingComponent = (props: any) => {
 
     const token = props.token;
     const [info, setInfo] = useState<ListingInfo>({});
+    const [photo, setPhoto] = useState();
 
     useEffect(() => {
         const currentListing = props.allListings.find((listing: any) => listing["Your Car Space Information"].carspaceid === props.listing);
@@ -72,6 +73,13 @@ export const ListingComponent = (props: any) => {
         // }
         props.onClose();
     }
+
+    const handlePhoto = (event: any) => {
+        if (event.target.files && event.target.files[0]) {
+            setPhoto(event.target.files[0]);
+            console.log(event.target.files[0])
+        }
+      };
 
     const allFilledOut = info.spaceType !== undefined
     && info.vehicleType !== undefined
@@ -206,6 +214,15 @@ export const ListingComponent = (props: any) => {
                             onChange={event => setInfo({...info, price: parseInt(event.target.value, 10)})}
                         />
                     </FloatingLabel>
+                </Form.Group>
+                <Form.Group>
+                    <Form.Label>Please upload a photo of the car space:</Form.Label>
+                    <Form.Control
+                            type="file"
+                            value={info.photo}
+                            accept="image/*"
+                            onChange={(event) => handlePhoto(event)}
+                        />
                 </Form.Group>
             </Modal.Body>
             <Modal.Footer>
