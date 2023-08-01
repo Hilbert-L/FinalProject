@@ -139,36 +139,33 @@ export const MyDetails = () => {
 	// Takes the photo input the user uploaded
 	// TODO
 	// Validation
-	const uploadPhoto = (event: any) => {
-		if (event.target.files) {
-			const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64String = reader.result as string;
-        setPhotoChange(encodeURIComponent(base64String));
-		console.log(base64String);
-      };
-      reader.readAsDataURL(event.target.files[0]);
+const uploadPhoto = (event: any) => {
+    if (event.target.files) {
+      const file = event.target.files[0];
+      setPhotoChange(file);
     }
-	}
+}
 
 	// Handles changing profile picture
-	const handlePhotoChange = () => {
-		async function uploadPhoto() {
-			try {
-				const response = await makeRequest(`/user/upload_profile_picture?base64_image=${photoChange}`, "POST", undefined, { token })
-				if (response.status !== 200) {
-					setErrorMessage(response.resp.detail[0].msg);
-					console.log(response.resp.detail[0].msg);
-					return;
-				}
-				setTriggerRender(triggerRender === true ? false : true);
-			} catch (error) {
-				console.log(error)
-			}
-		}
-		uploadPhoto();
-		setShowModal(false);
-	}
+const handlePhotoChange = () => {
+    async function uploadPhoto() {
+        let formData = new FormData();
+        formData.append("file", photoChange, photoChange.name);
+        try {
+            const response = await makeRequest("/user/upload_profile_picture", "POST", formData, { token })
+            if (response.status !== 200) {
+                setErrorMessage(response.resp.detail[0].msg);
+                console.log(response.resp.detail[0].msg);
+                return;
+            }
+            setTriggerRender(triggerRender === true ? false : true);
+        } catch (error) {
+            console.log(error)
+        }
+    }
+    uploadPhoto();
+    setShowModal(false);
+}
 
 	const renderTooltip = (props: any) => (
 		<Tooltip {...props}>

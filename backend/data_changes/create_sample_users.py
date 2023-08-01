@@ -1,14 +1,22 @@
 #!/usr/bin/python3
-from pymongo import MongoClient
-import os 
+# Run this script when the localhost api is running on port 8000
+import requests
 
-MongoDBUser = os.getenv("MONGODB_USER")
-MongoDBPassword = "$Gdaymate123"
-MongoDBCluster = os.getenv("MONGODB_CLUSTER_NAME")
-connectionString = f"mongodb+srv://{MongoDBUser}:{MongoDBPassword}@{MongoDBCluster}.ksdmto3.mongodb.net/?retryWrites=true"
-client = MongoClient(connectionString)
+url = 'http://0.0.0.0:8000/user/auth/register'
+headers = {
+    'accept': 'application/json',
+    'Content-Type': 'application/json'
+}
 
-# Access the project database
-car_reservations_db = client["CarSpaceReservations"]
+# Create 2000 fake users
+for user in range(0, 2001):
+    data = {
+        "firstname": f"firstname_{user}",
+        "lastname": f"lastname_{user}",
+        "username": f"fake_user_{user}",
+        "email": f"fake_user{user}@example.com",
+        "password": "$Test1234",
+        "phonenumber": 0
+    }
 
-users_collections = car_reservations_db["Users"]
+    response = requests.post(url, headers=headers, json=data)

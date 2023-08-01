@@ -87,7 +87,7 @@ async def create_car_space(create_car_space: CreateCarSpaceSchema,token: str = D
 
 @CarSpaceRouter.post("/carspace/upload_carspace_image/{car_space_id}", tags=["Car Spaces"])
 @check_token
-async def upload_carspace_image(car_space_id: int,image: UploadFile = File(...),token: str = Depends(verify_user_token)):
+async def upload_carspace_image(car_space_id: int, file: UploadFile = File(...),token: str = Depends(verify_user_token)):
     stored_user = users_collections.find_one({"username": token})
 
     if stored_user is None:
@@ -98,13 +98,13 @@ async def upload_carspace_image(car_space_id: int,image: UploadFile = File(...),
     if stored_car_space is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Car space {car_space_id} not found")
 
-    contents = await image.read()
+    contents = await file.read()
     base64_image = base64.b64encode(contents).decode()
 
     if not is_valid_image(base64_image):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid image format")
 
-    image_uri = f"data:{image.content_type};base64,{base64_image}"
+    image_uri = f"data:{file.content_type};base64,{base64_image}"
 
     car_space_collections.update_one(
         {"carspaceid": car_space_id},
@@ -117,24 +117,11 @@ async def upload_carspace_image(car_space_id: int,image: UploadFile = File(...),
 # Will add three attributes: leasing, using and booking
 @CarSpaceRouter.put("/carspace/updatecarspace", tags=["Car Spaces"])
 @check_token
-async def update_car_space(update_car_space: UpdateCarSpace, carspaceid: int, base64_image: str = None,
-                           token: str = Depends(verify_user_token)):
+async def update_car_space(update_car_space: UpdateCarSpace, carspaceid: int, token: str = Depends(verify_user_token)):
     # Verify user
     user = users_collections.find_one({"username": token})
     if user is None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid user")
-
-    if not base64_image:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No image provided")
-
-    carspace_image_info_list = []
-    if base64_image:
-        verify_base64_image = base64_image + '=' * (-len(base64_image) % 4)
-        if is_valid_image(verify_base64_image):
-            carspace_image_info = base64_image
-            carspace_image_info_list.append(carspace_image_info)
-        else:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid base64 image")
 
     filter = {
         "username": str(token),
@@ -333,3 +320,86 @@ async def get_car_space_bookings(carspaceid: int, token: str = Depends(verify_us
         booking_times.append({"start_time": start_time, "end_time": end_time})
 
     return booking_times
+
+
+@CarSpaceRouter.get("/user/get_current_reservations", tags=["Car Spaces"])
+@check_token
+async def get_reservation_count(token: str = Depends(verify_user_token)):
+    # Verify user token and get user
+    user = users_collections.find_one({"username": token})
+
+    # Check if user exists
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Username doesn't exist")
+
+
+    # Get current time in UTC
+    current_time = datetime.utcnow()
+
+    future_reservations_filter = {"provider_username": user['username'], "start_date": {"$gt": current_time}}
+
+    # Get the count of such reservations
+    reservation_count = booking_collections.count_documents(future_reservations_filter)
+
+    return {
+        "Message": "Reservation Count Retrieved Successfully",
+        "Reservation Count": reservation_count
+    }
+
+
+@CarSpaceRouter.post("/carspace/create_car_space_no_token", tags=["Car Spaces"])
+async def create_car_space_no_token(fakeuser_id: int, create_car_space: CreateCarSpaceSchema, base64_image: str = None):
+    stored_user = users_collections.find_one({"username": f"fake_user_{fakeuser_id}"})
+
+    if stored_user is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invalid user")
+
+    num_car_spaces = car_space_id_collections.find_one({"_id": ObjectId("64ba8947a0d25b4ae8a3cd84")})
+
+    new_car_space = CarSpaceSchema(
+        username=stored_user["username"],
+        carspaceid=num_car_spaces['id'],
+        title=create_car_space.title,
+        firstname=stored_user["firstname"],
+        lastname=stored_user["lastname"],
+        email=stored_user["email"],
+        phonenumber=stored_user["phonenumber"],
+        address=create_car_space.address,
+        suburb=create_car_space.suburb,
+        postcode=create_car_space.postcode,
+        longitude=create_car_space.longitude,
+        latitude=create_car_space.latitude,
+        width=create_car_space.width,
+        breadth=create_car_space.breadth,
+        spacetype=create_car_space.spacetype,
+        accesskeyrequired=create_car_space.accesskeyrequired,
+        vehiclesize=create_car_space.vehiclesize,
+        currency=create_car_space.currency,
+        price=create_car_space.price,
+        frequency=create_car_space.frequency,
+    )
+
+    new_car_space_dict = new_car_space.dict()
+    new_car_space_dict["image"] = base64_image
+    car_space_collections.insert_one(dict(new_car_space_dict))
+    carspace_id = num_car_spaces['id']
+    num_car_spaces['id'] += 1
+    car_space_id_collections.update_one({"_id": ObjectId("64ba8947a0d25b4ae8a3cd84")}, {"$set": {"id": num_car_spaces["id"]}})
+    return {"Message": "Car Space Added Successfully", "Car Space": new_car_space_dict, "CarSpaceId": carspace_id}
+
+@CarSpaceRouter.post("/carspace/create_review_no_token", tags=["Car Spaces"])
+async def create_car_space_review_no_token(fakeuser_id: int, car_space_review: Review, carspaceid: int):
+    carspace = car_space_collections.find_one({"carspaceid": carspaceid})
+    if carspace is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Car space not found.")
+
+    user = users_collections.find_one({"username": f"fake_user_{fakeuser_id}"})
+    username = user["username"]
+
+    reviews = car_space_review.dict()
+    temp = dict()
+    temp['reviewerusername'] = username
+    temp['carspaceid'] = carspaceid
+    new_reviews = {**temp, **reviews}
+    car_space_review_collections.insert_one(new_reviews)
+    return {"Message": "Car Space Review Added Successfully"}

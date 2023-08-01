@@ -4,10 +4,14 @@ from wrappers.wrappers import check_token
 from authentication.authentication import generate_token, verify_user_token, pwd_context
 from models.SearchModels import SearchByPostcode, SearchByAddress, SearchBySuburb, AdvancedSearch
 import json
-from mongodbconnect.mongodb_connect import car_space_collections
+from mongodbconnect.mongodb_connect import car_space_collections, car_space_review_collections
 from geopy.distance import geodesic 
 import pandas as pd
 import numpy as np
+import os 
+import random
+from surprise import Dataset, Reader, SVD
+from surprise.model_selection import train_test_split
 
 SearchRouter = APIRouter()
 
@@ -83,7 +87,13 @@ async def search_by_address(address_search: SearchByAddress):
     return {"Address Search Results": car_spaces}
 
 @SearchRouter.post("/search/advancedsearch", tags=["Search Car Spaces"])
-async def advanced_search(advanced_search: AdvancedSearch):
+async def advanced_search(advanced_search: AdvancedSearch, 
+        token: str = Depends(verify_user_token)):
+    if token is None:
+        userId = random.randint(0, 2000)
+    else:
+        userId = token
+
     combined_conditions = []
     advanced_search_dict = advanced_search.dict()
 
@@ -111,7 +121,7 @@ async def advanced_search(advanced_search: AdvancedSearch):
                     {"SpaceType": value},
                     {"spacetype": value},
                     {"spaceType": value},
-                    {"Spaceype": value},
+                    {"SpaceType": value},
             ]})
 
         elif key == 'vehicletype':
@@ -159,30 +169,57 @@ async def advanced_search(advanced_search: AdvancedSearch):
 
     if sortmethod:
         if sortmethod == "price-ascending":
-            filtered_carspaces.sort(key=lambda x: x["Price"], reverse=False)
+            filtered_carspaces.sort(key=lambda x: x.get("price", x.get("Price", float("inf"))), reverse=False)
 
         elif sortmethod == "price-descending":
-            filtered_carspaces.sort(key=lambda x: x["Price"], reverse=True)
+            filtered_carspaces.sort(key=lambda x: x.get("price", x.get("Price", float("-inf"))), reverse=True)
 
         elif sortmethod == "distance-from-pin-ascending":
             filtered_carspaces.sort(key=lambda x: x.get("geodistance", float("inf")), reverse=False)
 
         elif sortmethod == "distance-from-pin-descending":
-            filtered_carspaces.sort(key=lambda x: x.get("geodistance", float("inf")), reverse=True)
+            filtered_carspaces.sort(key=lambda x: x.get("geodistance", float("-inf")), reverse=True)
 
-    # TODO First need to simulate users and spots then we can train a model based on the required metrics
-    # THIS IS THE PART where we need to train a model using numpy/pandas
-    # recommendermethod = advanced_search_dict.get("recommendersystem")
-    # if recommendermethod:
-    #     if recommender_method == 'cosine':
-    #         pass
-    #     elif recommender_method == 'jaccard':
-    #         pass
-    #     elif recommender_method == 'pearson':
-    #         pass    
+    recommendermethod = advanced_search_dict.get("recommendersystem")
+
+    if recommendermethod:
+        carspace_ids = [carspace.get("carspaceid") for carspace in filtered_carspaces]
+        query = {"carspaceid": {"$in": carspace_ids}}
+        carspace_review_cursor = car_space_review_collections.find(query)
+
+        # Specify the fields you want to include in the DataFrame
+        fields_to_include = ["carspaceid", "reviewer_username", "overall"]
+
+        # Create a list of dictionaries containing only the specified fields
+        filtered_results = [{field: document[field] for field in fields_to_include if field in document} for document in carspace_review_cursor]
+
+        df = pd.DataFrame(filtered_results)
+        df = df[["carspaceid", "overall", "reviewer_username"]].dropna(subset=["reviewer_username"])
+        df = df[df["reviewer_username"].str.match("fake_user")]
+        df["reviewer_id"] = df["reviewer_username"].str.split("fake_user_").str[1].astype(int)
+        df = df[["carspaceid", "overall", "reviewer_id"]]
+        df["overall"] = df["overall"].add(1)
+        df["overall"] = df["overall"].add(1)
+
+        reader = Reader(rating_scale=(1, 6))
+        data = Dataset.load_from_df(df[["reviewer_id", "carspaceid", "overall"]], reader)
+
+        model = SVD()
+
+        trainset = data.build_full_trainset()
+        model.fit(trainset)
+        carspace_ids = df["carspaceid"].unique()
+        predictions = []
+        for carspace_id in carspace_ids:
+            prediction = model.predict(userId, carspace_id)
+            predictions.append((carspace_id, prediction.est))
+
+        predictions.sort(key=lambda x: x[1], reverse=True)
+        json_dict = {obj['carspaceid']: obj for obj in filtered_carspaces}
+        recommender_order_car_spaces = [int(p[0]) for p in predictions]
+        filtered_carspaces = [json_dict[id] for id in recommender_order_car_spaces]
 
     # Return results as a limit
     if advanced_search_dict["resultlimit"] is not None:
-        filtered_carspaces = filtered_carspaces[:advanced_search_dict["resultlimit"]]
-
+        filtered_carspaces = filtered_carspaces[:advanced_search_dict["resultlimit"]] 
     return {"Message": "Filters successfully applied", "Filtered Car Spaces": filtered_carspaces}
