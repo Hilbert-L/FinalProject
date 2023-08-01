@@ -10,6 +10,7 @@ import pandas as pd
 import numpy as np
 import os 
 import random
+import re 
 from surprise import Dataset, Reader, SVD
 from surprise.model_selection import train_test_split
 
@@ -89,10 +90,10 @@ async def search_by_address(address_search: SearchByAddress):
 @SearchRouter.post("/search/advancedsearch", tags=["Search Car Spaces"])
 async def advanced_search(advanced_search: AdvancedSearch, 
         token: str = Depends(verify_user_token)):
-    if token is None:
+    if token is None or re.match("^fake_user_[0-9]+$", token) is None:
         userId = random.randint(0, 2000)
     else:
-        userId = token
+        userId = int(token.split("fake_user_")[1])
 
     combined_conditions = []
     advanced_search_dict = advanced_search.dict()
@@ -132,6 +133,9 @@ async def advanced_search(advanced_search: AdvancedSearch,
                     {"vehicleSize": value},
                     {"Vehiclesize": value}
             ]})
+
+        elif key == 'suburb':
+            combined_conditions.append({"suburb": value})
             
     filter = {"$and": combined_conditions} if len(combined_conditions) > 0 else {}
     car_space_cursor = car_space_collections.find(filter)
