@@ -1,13 +1,16 @@
-import { PropsWithChildren } from 'react';
+import { PropsWithChildren, useState, useEffect } from 'react';
 import { Container, Nav, Navbar } from 'react-bootstrap';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { makeRequest } from '../helpers';
+import { NotificationBox } from '../components/NotificationBox';
 
 export const Layout = ({ children }: PropsWithChildren<{}>) => {
   const navigate = useNavigate();
+  const token = localStorage.getItem("authToken");
+  const [showNotification, setShowNotification] = useState(false);
+  const [reservationCount, setReservationCount] = useState(0);
 
   const handleLogout = () => {
-    const token = localStorage.getItem("authToken");
     if (!token) return;
     makeRequest("/user/auth/logout", "POST", undefined, { token })
       .then((response) => {
@@ -17,6 +20,31 @@ export const Layout = ({ children }: PropsWithChildren<{}>) => {
         }
       });
   }
+
+  useEffect(() => {
+    async function checkForBookings() {
+      let reservations = localStorage.getItem("reservations");
+      try {
+        const response = await makeRequest("/user/get_current_reservations", "GET", undefined, { token })
+        if (response.status !== 200) {
+          console.log(response.resp)
+        } 
+        if (response.resp['Reservation Count'] > parseInt(reservations, 10)) {
+          console.log(response.resp['Reservation Count'], parseInt(reservations, 10))
+          localStorage.setItem("reservations", response.resp['Reservation Count']);
+          setShowNotification(true);
+        }
+      } catch (error) {
+        console.log(error)
+      }
+    }
+    const interval = setInterval(checkForBookings, 10000);
+
+    // Clean up the interval when the component unmounts to avoid memory leaks
+    return () => {
+      clearInterval(interval);
+    };
+  }, []);
 
   return (
     <div>
@@ -35,6 +63,9 @@ export const Layout = ({ children }: PropsWithChildren<{}>) => {
       </Navbar>
       {children}
       <Outlet />
+      { showNotification &&
+      <NotificationBox title={'New reservation'} message={'Someone has booked one of your carspace listings!'}></NotificationBox>
+      }
     </div>
   );
 }

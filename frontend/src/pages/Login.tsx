@@ -24,6 +24,7 @@ export const Login = () => {
         if (response.status === 200) {
           localStorage.setItem("authToken", response.resp.token);
           localStorage.setItem("username", username);
+          localStorage.setItem("reservations", '0');
           navigate("/");
         } else {
           setError(response.resp.detail);

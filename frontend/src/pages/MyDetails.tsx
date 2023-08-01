@@ -80,6 +80,7 @@ export const MyDetails = () => {
 					setErrorMessage(response.resp.detail[0].msg);
 					// console.log(response)
 				} 
+				setTriggerRender(triggerRender === true ? false : true);
 			} catch (error) {
 				console.log(error)
 			}
@@ -95,7 +96,6 @@ export const MyDetails = () => {
 			return;
 		};
 		uploadDetails();
-		setTriggerRender(triggerRender === true ? false : true);
 		setFirstNameChange("");
 		setLastNameChange("");
 		setEmailChange("");
