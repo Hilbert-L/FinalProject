@@ -128,7 +128,7 @@ export const MyListings = (props: any) => {
                         </Col>
                         <Col >
                             <span style={{ fontSize: '15pt' }}>📍 {value["Your Car Space Information"] && value["Your Car Space Information"]["suburb"]}</span> <br />
-                            <span style={{ fontSize: '15pt' }}>📏 {value["Your Car Space Information"] && value["Your Car Space Information"]["width"]} m by {value["Your Car Space Information"] && value["Your Car Space Information"]["breadth"]} m</span><br />
+                            <span style={{ fontSize: '15pt' }}>📏 {value["Your Car Space Information"] && Math.ceil(parseFloat(value["Your Car Space Information"]["width"]))} m by {value["Your Car Space Information"] && Math.ceil(parseFloat(value["Your Car Space Information"]["breadth"]))} m</span><br />
                             <span style={{ fontSize: '15pt' }}>🚗 {value["Your Car Space Information"] && value["Your Car Space Information"]["vehiclesize"].replace(/^\w/, (c: string) => c.toUpperCase())}</span>
                         </Col>
                         <Col className="text-center" md="auto">

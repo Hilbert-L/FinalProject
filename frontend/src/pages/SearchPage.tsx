@@ -44,7 +44,7 @@ type VehicleType =
   | 'van'
   | 'bike';
 
-type ListingInfo = {
+export type ListingInfo = {
   address?: string;
   suburb?: string;
   postcode?: string;
@@ -87,6 +87,15 @@ export const SearchPage = () => {
     setIsExpanded(!isExpanded);
   };
 
+  React.useEffect(() => {
+    // Perform any necessary actions with the updated carspaces state here
+    console.log('Filtered Car Spaces Updated:', carspaces);
+  }, [carspaces]);
+
+  const updateFilteredCarSpaces = (value: any) => {
+    setCarspaces(value);
+  };
+      
   React.useEffect(() => {
     async function retrieveUsername() {
       let token = localStorage.getItem('authToken') || '';
@@ -266,7 +275,7 @@ export const SearchPage = () => {
         </Autocomplete>
       </Row>
       <Row>
-        <FilterForm searchValue={searchValue} mapCentre={mapCentre}/>
+        <FilterForm searchValue={searchValue} mapCentre={mapCentre} onUpdateState={updateFilteredCarSpaces}/>
       </Row> <br />
       <Row>
         {view === 'map view' ? (

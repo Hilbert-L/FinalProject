@@ -1,6 +1,7 @@
 import base64
+from bson import ObjectId
 from fastapi import APIRouter, Depends, status, HTTPException, Header, UploadFile, File
-from mongodbconnect.mongodb_connect import admin_collections, users_collections, car_space_image_collections, car_space_review_collections, car_space_collections, transaction_information_collections
+from mongodbconnect.mongodb_connect import admin_collections, users_collections, car_space_image_collections, car_space_review_collections, car_space_collections, transaction_information_collections, booking_collections
 from models.UserAuthentication import UserRegistrationSchema, UserSchema, LoginSchema
 from models.UpdateUserInfo import UpdatePassword, UpdatePersonalDetails
 from models.UpdateCarSpace import UpdateCarSpace
@@ -523,3 +524,21 @@ async def get_transaction_by_id(transaction_id: int, token: str = Depends(verify
         "transaction_time": transaction_dict.get("transaction_time"),
         "transaction_amount": transaction_dict.get("amount")
     }
+
+@AdminRouter.get("/admin/Bookings/get_all_bookings", tags=["Administrators"])
+@check_token
+async def get_all_bookings(token: str = Depends(verify_admin_token)):
+    # verify admin
+    admin = admin_collections.find_one({"username": token})
+    if admin is None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid user")
+    bookings_cursor = booking_collections.find({}, {"_id": 0})  # No filter to get all documents
+    bookings = []
+    for document in bookings_cursor:
+        document_str = json.dumps(document, default=str)
+        document_dict = json.loads(document_str)
+        bookings.append(document_dict)
+    quantities = len(bookings)
+    return {"All Bookings": bookings,
+            "Length": quantities
+            }

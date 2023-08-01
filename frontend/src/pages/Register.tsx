@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import logo from '../images/logo.png';
 import { useNavigate } from 'react-router-dom';
 import { FormContainer } from '../components/StyledFormContainer';
@@ -53,6 +53,7 @@ export const Register = () => {
       const response = await makeRequest("/user/auth/register", "POST", body);
       if (response.status === 200) {
         localStorage.setItem("authToken", response.resp.token);
+        localStorage.setItem("username", info.userName);
         navigate("/");
       } else {
         setError(

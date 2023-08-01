@@ -86,16 +86,16 @@ async def create_booking(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Booking dates overlap with existing bookings"
         )
 
-    # Calculate duration in hours
-    duration = int((carspace_booking.end_date - carspace_booking.start_date).total_seconds() / 3600)
+    # Calculate duration in days
+    duration = (carspace_booking.end_date - carspace_booking.start_date).days + 1
     # Create a new booking instance
     booking = BookingCreateSchema(
         start_date=carspace_booking.start_date,
         end_date=carspace_booking.end_date,
     )
 
-    hour_price = carspace['price']
-    total_price = hour_price * duration
+    daily_price = carspace['price']
+    total_price = daily_price * duration
 
     # Create a new booking instance
 
@@ -107,13 +107,13 @@ async def create_booking(
     booking_dict["provider_username"] = provider_username
     booking_dict["carspaceid"] = carspaceid
     booking_dict["transaction_time"] = datetime.now().strftime("%Y/%m/%d-%H:%M:%S")
-    booking_dict["duration_hours"] = duration
+    booking_dict["duration_days"] = duration # actually should be in days
     booking_dict['total_price'] = total_price
     booking_dict["booking_id"] = Bookin_ID['id']
 
-    
-    # get users bank infro
-    # Attempt to find the consumer user's bank information
+    Bookin_ID['id'] += 1
+
+    # Update provider's balance
     consumer_info = bank_information_collections.find_one({"username": consumer_user["username"]})
     if not consumer_info:
         raise HTTPException(status_code=404, detail=f"Bank account not found for consumer user '{consumer_user['username']}'")
@@ -144,9 +144,6 @@ async def create_booking(
 
 
     Bookin_ID['id'] += 1
-    booking_id_collections.update_one({"_id": ObjectId("64ba93484acd519515400595")}, {"$set": {"id": Bookin_ID["id"]}})
-
-    booking_collections.insert_one(dict(booking_dict))
 
     num_transactions = transaction_information_collections.count_documents({})
 
@@ -157,7 +154,12 @@ async def create_booking(
     transaction_dict['consumer_name'] = consumer_user["username"]
     transaction_dict['provider_name'] = provider_username
     transaction_dict['total_price'] = total_price
+    
+    # update DB
+    booking_id_collections.update_one({"_id": ObjectId("64ba93484acd519515400595")}, {"$set": {"id": Bookin_ID["id"]}})
+    booking_collections.insert_one(dict(booking_dict))
     transaction_information_collections.insert_one(dict(transaction_dict))
+
 
     return {
         "Message": "Booking created successfully",
@@ -297,8 +299,8 @@ async def update_booking(
             status_code=status.HTTP_400_BAD_REQUEST, detail="UpdatedBooking dates overlap with existing bookings"
         )
 
-    # Calculate duration in hours
-    duration = int((booking_update.end_date - booking_update.start_date).total_seconds() / 3600)
+    # Calculate duration in days
+    duration = (booking_update.end_date - booking_update.start_date).days + 1
 
     carspaceid = booking["carspaceid"]
     provider_username = booking["provider_username"]
@@ -350,7 +352,7 @@ async def update_booking(
         {"$set": {
             "start_date": booking_update.start_date,
             "end_date": booking_update.end_date,
-            "duration_hours": duration,
+            "duration_days": duration,
             "total_price": total_price,
         }}
     )

@@ -1,1 +1,39 @@
+Haoran Liu
 
+Week 1
+Group formed and named. Selected scrum master, and created the Jira site. Decided on our project topic with other group members.
+
+Week 2
+Start wrote user stories for the dashboard and notification features, and discussed with team members about some functions and system architecture.
+
+Week3
+Finalise Proposal.
+Wrote backlogs in Jira.
+
+Week4
+Reaserch the relevant functions of FastAPI and discuss the implementation of back-end functions.
+
+Week5
+Implement car space funstions.
+Discuss with the members the completed methods that demo A needs to demonstrate.
+Implement part of the transaction subsystem methods, and related listing functionalities.
+
+Week6
+Complete the related functions of the transaction and bank subsystem.
+Modify uploading images corresponds to the front-end.
+
+Week7
+Discuss the front-end and back-end connection issues with the development members of the front-end webpage, and modify and merge the back-end code to match the front-end and back-end interfaces and increase applicability. Also fix bugs in other completed code, such as addressing possible ID duplication issues after deleting data.
+Complete the user-related code so that the front end can obtain the information the user needs.
+
+Week8
+Make the contents of sprint2 more complete, and solve the problem that the front-end web page cannot correctly obtain data.
+Use a new method to replace the previously discussed solution of adding status to avoid potential ID duplication.
+Create a separate collections to store the latest id for all mongodb collections.
+Set a restriction for delete carspace.
+
+
+Week9
+Add withdraw functionality for users.
+Solved the problem of uploading image size limit.
+Start writing the final report.

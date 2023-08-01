@@ -149,7 +149,7 @@ async def withdraw_money(username: str,withdraw:int, token: str = Depends(verify
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Bank account not found")
 
     if bank_account["balance"] < withdraw:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="You cannot withdraw money larger than your deposit!")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="You do not have enough money")
 
     # Update the balance
     new_balance = bank_account["balance"] - withdraw

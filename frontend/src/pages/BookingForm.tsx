@@ -7,6 +7,7 @@ import 'react-date-range/dist/styles.css';
 import 'react-date-range/dist/theme/default.css';
 import { differenceInDays } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
+import dayjs from 'dayjs';
 import { NotificationBox } from '../components/NotificationBox';
 
 export const BookingForm = () => {
@@ -26,6 +27,9 @@ export const BookingForm = () => {
         endDate: new Date(),
         key: 'selection',
       });
+
+    const [error, setError] = useState("");
+    const [success, setSuccess] = useState(false);
 
     const navigate = useNavigate();
 
@@ -102,16 +106,28 @@ export const BookingForm = () => {
       }
 
     const handleBooking = () => {
-        const myFunds = parseInt(localStorage.getItem('myFunds'), 10);
-        const days = differenceInDays(dateRange.endDate, dateRange.startDate) + 1;
-        if (totalPrice > myFunds) {
-            setShowNotification(true);
-            setTimeout(() => {setShowNotification(false)}, 5000);
-        } else {
-            localStorage.setItem('myFunds', (myFunds - totalPrice).toString());
-            localStorage.setItem('booked', 'true')
-            navigate('/');
-        }
+        const token = localStorage.getItem("authToken");
+        const username = localStorage.getItem("username");
+        if (!token || !username) return;
+        makeRequest(
+            `/booking/create_booking/${username}/${spaceToBook.carspaceid}?provider_username=${spaceToBook.username}`,
+            "POST",
+            {
+                start_date: dayjs(dateRange.startDate).toISOString(),
+                end_date: dayjs(dateRange.endDate).toISOString()
+            },
+            { token }
+        ).then((resp) => {
+            if (resp.status === 200) {
+                setSuccess(true);
+                localStorage.setItem('booked', 'true')
+                navigate("/");
+            } else {
+                setError(resp.resp.detail);
+                setShowNotification(true)
+            }
+        })
+        
     }
 
     function isSameDay(date1: any, date2: any) {
@@ -144,95 +160,115 @@ export const BookingForm = () => {
 
     const allFilledOut = carRegistration !== '' && vehicleType !== '' && totalPrice !== 0;
 
+    const today = new Date()
+    const tomorrow = new Date(today)
+    tomorrow.setDate(tomorrow.getDate() + 1)
+
     return (
-        <Container>
-            <br />
-            <Row>
-                <h1 style={{textAlign: "center"}}>book a carspace 📅</h1>
-			</Row>
-            <Row>
-                <Form.Group>
-                    <Form.Label>Address</Form.Label>
-                        <Form.Control
-                        type="text"
-                        value={spaceToBook.address}
-                        disabled
-                        />
-                </Form.Group>
-            </Row>
-            <Row>
-                <Form.Group>
-                    <br />
-                    <Form.Label>Price (per day)</Form.Label>
-                        <Form.Control
-                        type="text"
-                        value={`$${spaceToBook.price}`}
-                        disabled
-                        />
-                </Form.Group>
-            </Row>
-            <Row>
-                <Form.Group>
-                    <br />
-                    <Form.Label>Provider</Form.Label>
-                        <Form.Control
-                        type="text"
-                        value={spaceToBook.username}
-                        disabled
-                        />
-                </Form.Group>
-            </Row><hr />
-            <Row>
-                <Col className="d-flex justify-content-center">
-                    <DateRangePicker dayContentRenderer={renderDayContent} minDate={new Date()} ranges={[dateRange]} onChange={handleSelect} />
-                </Col>
-            </Row>
-            <Row>
-                <Form.Group>
-                    <br />
-                    <Form.Label>Total Price</Form.Label>
-                        <Form.Control
-                        type="text"
-                        value={`$${totalPrice}`}
-                        disabled
-                        />
-                </Form.Group>
-            </Row>
-            <Row>
-                <Form.Group>
-                    <br />
-                    <Form.Label>Car Registration</Form.Label>
-                        <Form.Control
-                        type="text"
-                        placeholder='Please enter your car registration'
-                        onChange={(event) => {setCarRegistration(event.target.value)}}
-                        />
-                </Form.Group>
-            </Row><br />
-            <Row>
-                <Form.Group>
-                    <Form.Label>Vehicle Type</Form.Label>
-                    <FloatingLabel controlId="floatingVehicleType" label="Vehicle Type" className="mb-3">
-                        <Form.Select onChange={(event) => {setVehicleType(event.target.value)}}>
-                        <option value="">Please select an option</option>
-                        <option value="hatchback">Hatchback</option>
-                        <option value="sedan">Sedan</option>
-                        <option value="suv">SUV</option>
-                        <option value="ev">EV</option>
-                        <option value="ute">Ute</option>
-                        <option value="wagon">Wagon</option>
-                        <option value="van">Van</option>
-                        <option value="bike">Bike</option>
-                        </Form.Select>
-                    </FloatingLabel>
-                </Form.Group>
-            </Row><br />
-            <Row>
-                <Button onClick={handleBooking} disabled={!allFilledOut}>Book</Button>
-            </Row><br />
-            {showNotification && 
-            <NotificationBox position='middle-center' variant='danger' title='🚫 Booking Error' message='You do not have enough funds in your account to book for this many days. Add more funds to your account or reduce the length of your booking!' ></NotificationBox>
-            }
-        </Container>
+        <>
+            <Container>
+                <br />
+                <Row>
+                    <h1 style={{textAlign: "center"}}>book a carspace 📅</h1>
+                </Row>
+                <Row>
+                    <Form.Group>
+                        <Form.Label>Address</Form.Label>
+                            <Form.Control
+                            type="text"
+                            value={spaceToBook.address}
+                            disabled
+                            />
+                    </Form.Group>
+                </Row>
+                <Row>
+                    <Form.Group>
+                        <br />
+                        <Form.Label>Price (per day)</Form.Label>
+                            <Form.Control
+                            type="text"
+                            value={`$${spaceToBook.price}`}
+                            disabled
+                            />
+                    </Form.Group>
+                </Row>
+                <Row>
+                    <Form.Group>
+                        <br />
+                        <Form.Label>Provider</Form.Label>
+                            <Form.Control
+                            type="text"
+                            value={spaceToBook.username}
+                            disabled
+                            />
+                    </Form.Group>
+                </Row><hr />
+                <Row>
+                    <Col className="d-flex justify-content-center">
+                        <DateRangePicker dayContentRenderer={renderDayContent} minDate={new Date()} ranges={[dateRange]} onChange={handleSelect} />
+                    </Col>
+                </Row>
+                <Row>
+                    <Form.Group>
+                        <br />
+                        <Form.Label>Total Price</Form.Label>
+                            <Form.Control
+                            type="text"
+                            value={`$${totalPrice}`}
+                            disabled
+                            />
+                    </Form.Group>
+                </Row>
+                <Row>
+                    <Form.Group>
+                        <br />
+                        <Form.Label>Car Registration</Form.Label>
+                            <Form.Control
+                            type="text"
+                            placeholder='Please enter your car registration'
+                            onChange={(event) => {setCarRegistration(event.target.value)}}
+                            />
+                    </Form.Group>
+                </Row><br />
+                <Row>
+                    <Form.Group>
+                        <Form.Label>Vehicle Type</Form.Label>
+                        <FloatingLabel controlId="floatingVehicleType" label="Vehicle Type" className="mb-3">
+                            <Form.Select onChange={(event) => {setVehicleType(event.target.value)}}>
+                            <option value="">Please select an option</option>
+                            <option value="hatchback">Hatchback</option>
+                            <option value="sedan">Sedan</option>
+                            <option value="suv">SUV</option>
+                            <option value="ev">EV</option>
+                            <option value="ute">Ute</option>
+                            <option value="wagon">Wagon</option>
+                            <option value="van">Van</option>
+                            <option value="bike">Bike</option>
+                            </Form.Select>
+                        </FloatingLabel>
+                    </Form.Group>
+                </Row><br />
+                <Row>
+                    <Button onClick={handleBooking} disabled={!allFilledOut}>Book</Button>
+                </Row><br />
+                {/* {showNotification && 
+                <NotificationBox position='middle-center' variant='danger' title='🚫 Booking Error' message={error} ></NotificationBox>
+                } */}
+            </Container>
+            <Modal show={!!error} onHide={() => setError("")}>
+                <Modal.Header closeButton>
+                    <Modal.Title>Booking unsuccessful</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>{error}</Modal.Body>
+            </Modal>
+            {/* <Modal show={success} onHide={() => navigate("/")}>
+                <Modal.Header closeButton>
+                    <Modal.Title>Booking Successful!</Modal.Title>
+                </Modal.Header>
+                <Modal.Footer>
+                    <Button onClick={() => navigate("/")}>OK</Button>
+                </Modal.Footer>
+            </Modal> */}
+        </>
     )
 }

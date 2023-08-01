@@ -23,6 +23,7 @@ export const Login = () => {
       .then((response) => {
         if (response.status === 200) {
           localStorage.setItem("authToken", response.resp.token);
+          localStorage.setItem("username", username);
           navigate("/");
         } else {
           setError(response.resp.detail);
