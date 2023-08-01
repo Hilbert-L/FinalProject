@@ -35,12 +35,6 @@ export const MyDetails = () => {
 	const [passwordChange, setPasswordChange] = useState('');
 	const [photoChange, setPhotoChange] = useState('');
 
-	// Local storage trick
-	if (!localStorage.getItem('myFunds')) {
-		localStorage.setItem('myFunds', '0');
-	}
-	
-
 	useEffect(() => {
 		async function retrieveUserInfo() {
 			let token = localStorage.getItem('authToken') || '';

@@ -12,10 +12,6 @@ interface Payment {
 export const MyPaymentDetails = (props: any) => {
 
     const username = props.username;
-
-    // Local storage trick
-    const myFundsString = localStorage.getItem('myFunds');
-    const myFunds = myFundsString ? parseInt(myFundsString, 10) : 0;
     
     let token = localStorage.getItem('authToken') || '';
     const [showModal, setShowModal] = useState(false);
@@ -23,7 +19,6 @@ export const MyPaymentDetails = (props: any) => {
     const [detailsExist, setDetailsExist] = useState(false);
     const [triggerRender, setTriggerRender] = useState(true);
     const [paymentDetails, setPaymentDetails] = useState<Payment>({});
-    const [showError, setShowError] = useState(false);
 	const [errorMessage, setErrorMessage] = useState('');
     const [bsbCheck, setBSBCheck] = useState(false);
     const [accountNumberCheck, setAccountNumberCheck]= useState(false);
@@ -56,14 +51,13 @@ export const MyPaymentDetails = (props: any) => {
                         cardExpiry: userInfo.cardexpirydate,
                     }));
                     setDetailsExist(true);
+                    setFundsAmount(userInfo.balance);
                 }
             } catch (error) {
                 return;
             }
 		}
 		retrieveUserBankDetails();
-        // Local storage trick
-        setFundsAmount(myFunds);
 	}, [triggerRender]);
 
 	// Handles adding/changing bank details
@@ -165,7 +159,7 @@ export const MyPaymentDetails = (props: any) => {
                     cardNumber: '',
                     cardExpiry: '',
                 }));
-                localStorage.setItem('myFunds', "0")
+                setFundsAmount(0);
 			} catch (error) {
 				console.log(error)
 			}
@@ -175,25 +169,34 @@ export const MyPaymentDetails = (props: any) => {
     }
 
     const addFunds = () => {
-        if (addFundsAmount <= 0) {
-            // TODO
-            // Add error message
-            return;
-        }
-        setFundsAmount(fundsAmount + addFundsAmount);
-        setAddFundsAmount(0);
-        localStorage.setItem('myFunds', (fundsAmount + addFundsAmount).toString());
+        console.log("hello")
+        const token = localStorage.getItem("authToken");
+        const username = localStorage.getItem("username");
+        if (!token || !username) return;
+        makeRequest(`/bankaccounts/deposit/${username}?deposit=${addFundsAmount}`, "PUT", undefined, { token })
+            .then((resp) => {
+                if (resp.status === 200) {
+                    setFundsAmount(resp.resp["New Balance"]);
+                } else {
+                    setErrorMessage(resp.resp.detail);
+                }
+                setAddFundsAmount(0);
+            });
     }
 
     const withdrawFunds = () => {
-        if (withdrawFundsAmount <= 0 || (fundsAmount - withdrawFundsAmount) < 0) {
-            // TODO
-            // Add error message
-            return;
-        }
-        setFundsAmount(fundsAmount - withdrawFundsAmount);
-        setWithdrawFundsAmount(0);
-        localStorage.setItem('myFunds', (fundsAmount - withdrawFundsAmount).toString());
+        const token = localStorage.getItem("authToken");
+        const username = localStorage.getItem("username");
+        if (!token || !username) return;
+        makeRequest(`/bankaccounts/withdraw/${username}?withdraw=${withdrawFundsAmount}`, "PUT", undefined, { token })
+            .then((resp) => {
+                if (resp.status === 200) {
+                    setFundsAmount(resp.resp["New Balance"]);
+                } else {
+                    setErrorMessage(resp.resp.detail);
+                }
+                setWithdrawFundsAmount(0);
+            });
     }
 
 	// Handles showing the modal
@@ -209,120 +212,131 @@ export const MyPaymentDetails = (props: any) => {
     };
 
     return (
-        <Container>
-            <Row className="text-center">
-                <Col className="text-center">
-                    <span><i>your funds</i></span><br />
-                    <span style={{ fontSize: '40pt' }}>${fundsAmount}</span>
-                </Col>
-                <Col>
-                    <Row>
-                        <Col className="text-center">
-                            <InputGroup className="mb-3">
-                                <Form.Control placeholder="$" onChange={(event) => setAddFundsAmount(parseInt(event.target.value, 10))}/>
-                                <Button variant="success" style={{ width: '140px' }} disabled={detailsExist ? false : true} onClick={addFunds}>add funds</Button>
-                            </InputGroup>
-                        </Col>
-                    </Row>
-                    <Row>
-                        <Col className="text-center">
-                            <InputGroup className="mb-3">
-                                <Form.Control placeholder="$" onChange={(event) => setWithdrawFundsAmount(parseInt(event.target.value, 10))}/>
-                                <Button variant="danger" style={{ width: '140px' }} disabled={detailsExist ? false : true} onClick={withdrawFunds}>withdraw funds</Button>
-                            </InputGroup>
-                        </Col>
-                    </Row>
-                </Col>
-            </Row>
-            <hr style={{ height: '3px', background: 'black' }}/>
-            <Row className="text-center">
-                <span><i>your bank details</i></span><br /><br />
-                <InputGroup className="mb-3">
-                    <InputGroup.Text style={{ width: '150px' }}>bsb</InputGroup.Text>
-                    <Form.Control disabled value={paymentDetails.bsb} />
-                </InputGroup>
-                <InputGroup className="mb-3">
-                    <InputGroup.Text style={{ width: '150px' }}>account number</InputGroup.Text>
-                    <Form.Control disabled value={paymentDetails.accountNumber} />
-                </InputGroup>
-                <InputGroup className="mb-3">
-                    <InputGroup.Text style={{ width: '150px' }}>card number</InputGroup.Text>
-                    <Form.Control disabled value={paymentDetails.cardNumber} />
-                </InputGroup>
-                <InputGroup className="mb-3">
-                    <InputGroup.Text style={{ width: '150px' }}>card expiry</InputGroup.Text>
-                    <Form.Control disabled value={paymentDetails.cardExpiry} />
-                </InputGroup>
-            </Row>
-            <Row className="text-center">
-                <Col>
-                    <Button variant="success" style={{ width: '100px' }} disabled={detailsExist ? true : false} onClick={() => handleShow('add')}>add</Button>
-                </Col>
-                <Col>
-                    <Button style={{ width: '100px' }} disabled={detailsExist ? false : true} onClick={() => handleShow('change')}>change</Button>
-                </Col>
-                <Col>
-                    <Button variant="danger" style={{ width: '100px' }} disabled={detailsExist ? false : true} onClick={() => handleShow('delete')}>remove</Button>
-                </Col>
-            </Row>
-
-			<Modal show={showModal} onHide={handleClose}>
-				<Modal.Header closeButton>
-					<Modal.Title>payment details 💳</Modal.Title>
-				</Modal.Header>
-				<Modal.Body>
-                    { modalState !== "delete" &&
-                    <Form>
-                        <Form.Group className="mb-3">
-                            <Form.Label>BSB</Form.Label>
-                            <Form.Control type="text" required onBlur={() => validateDetails("bsb")} onChange={(event) => setBSBChange(event.target.value)}/>
-                            { bsbCheck && 
-                            <span style={{ fontSize: "8pt", color: "red" }}>BSB must be in xxx-xxx format!</span>
-                            }
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>account number</Form.Label>
-                            <Form.Control type="text" required onBlur={() => validateDetails("account")} onChange={(event) => setAccountNumberChange(event.target.value)}/>
-                            { accountNumberCheck && 
-                            <span style={{ fontSize: "8pt", color: "red" }}>Account number must be 6-10 digits with no leading zeros!</span>
-                            }
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>card number</Form.Label>
-                            <Form.Control type="text" required onBlur={() => validateDetails("card")} onChange={(event) => setCardNumberChange(event.target.value)}/>
-                            { cardNumberCheck && 
-                            <span style={{ fontSize: "8pt", color: "red" }}>Card number must be in xxxx-xxxx-xxxx-xxxx format!</span>
-                            }
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>card expiry</Form.Label>
-                            <Form.Control type="text" required onBlur={() => validateDetails("expiry")} onChange={(event) => setCardExpiryChange(event.target.value)}/>
-                            { cardExpiryCheck && 
-                            <span style={{ fontSize: "8pt", color: "red" }}>Card expiry must be in MM/YY format!</span>
-                            }
-                        </Form.Group>
-                        <Button disabled={buttonDisabled === true ? true : false} onClick={handleBankChange}>save changes</Button>
-                    </Form>
-                    }
-                    { modalState === "delete" &&
-                    <>
-                        <Row className="text-center">
-                            <span>Are you sure you want to delete your payment details?</span><br />
-                            <span><b>You will lose all the funds associated with your account</b> 😱</span><br /><br />
-                        </Row>  
+        <>
+            <Container>
+                <Row className="text-center">
+                    <Col className="text-center">
+                        <span><i>your funds</i></span><br />
+                        <span style={{ fontSize: '40pt' }}>${fundsAmount}</span>
+                    </Col>
+                    <Col>
                         <Row>
                             <Col className="text-center">
-                                <Button style={{ width: '100px' }} onClick={handleClose}>No</Button>
-                            </Col>
-                            <Col className="text-center">
-                                <Button variant="danger" style={{ width: '100px' }} onClick={handleDelete}>Yes</Button>
+                                <InputGroup className="mb-3">
+                                    <Form.Control placeholder="$" type="number" value={addFundsAmount} onChange={(event) => setAddFundsAmount(parseInt(event.target.value, 10))}/>
+                                    <Button variant="success" style={{ width: '140px' }} disabled={detailsExist ? false : true} onClick={addFunds}>add funds</Button>
+                                </InputGroup>
                             </Col>
                         </Row>
-                    </>
-                    }
-                </Modal.Body>
+                        <Row>
+                            <Col className="text-center">
+                                <InputGroup className="mb-3">
+                                    <Form.Control placeholder="$" type="number" value={withdrawFundsAmount} onChange={(event) => setWithdrawFundsAmount(parseInt(event.target.value, 10))}/>
+                                    <Button variant="danger" style={{ width: '140px' }} disabled={detailsExist ? false : true} onClick={withdrawFunds}>withdraw funds</Button>
+                                </InputGroup>
+                            </Col>
+                        </Row>
+                    </Col>
+                </Row>
+                <hr style={{ height: '3px', background: 'black' }}/>
+                <Row className="text-center">
+                    <span><i>your bank details</i></span><br /><br />
+                    <InputGroup className="mb-3">
+                        <InputGroup.Text style={{ width: '150px' }}>bsb</InputGroup.Text>
+                        <Form.Control disabled value={paymentDetails.bsb} />
+                    </InputGroup>
+                    <InputGroup className="mb-3">
+                        <InputGroup.Text style={{ width: '150px' }}>account number</InputGroup.Text>
+                        <Form.Control disabled value={paymentDetails.accountNumber} />
+                    </InputGroup>
+                    <InputGroup className="mb-3">
+                        <InputGroup.Text style={{ width: '150px' }}>card number</InputGroup.Text>
+                        <Form.Control disabled value={paymentDetails.cardNumber} />
+                    </InputGroup>
+                    <InputGroup className="mb-3">
+                        <InputGroup.Text style={{ width: '150px' }}>card expiry</InputGroup.Text>
+                        <Form.Control disabled value={paymentDetails.cardExpiry} />
+                    </InputGroup>
+                </Row>
+                <Row className="text-center">
+                    <Col>
+                        <Button variant="success" style={{ width: '100px' }} disabled={detailsExist ? true : false} onClick={() => handleShow('add')}>add</Button>
+                    </Col>
+                    <Col>
+                        <Button style={{ width: '100px' }} disabled={detailsExist ? false : true} onClick={() => handleShow('change')}>change</Button>
+                    </Col>
+                    <Col>
+                        <Button variant="danger" style={{ width: '100px' }} disabled={detailsExist ? false : true} onClick={() => handleShow('delete')}>remove</Button>
+                    </Col>
+                </Row>
+
+                <Modal show={showModal} onHide={handleClose}>
+                    <Modal.Header closeButton>
+                        <Modal.Title>payment details 💳</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body>
+                        { modalState !== "delete" &&
+                        <Form>
+                            <Form.Group className="mb-3">
+                                <Form.Label>BSB</Form.Label>
+                                <Form.Control type="text" required onBlur={() => validateDetails("bsb")} onChange={(event) => setBSBChange(event.target.value)}/>
+                                { bsbCheck && 
+                                <span style={{ fontSize: "8pt", color: "red" }}>BSB must be in xxx-xxx format!</span>
+                                }
+                            </Form.Group>
+                            <Form.Group className="mb-3">
+                                <Form.Label>account number</Form.Label>
+                                <Form.Control type="text" required onBlur={() => validateDetails("account")} onChange={(event) => setAccountNumberChange(event.target.value)}/>
+                                { accountNumberCheck && 
+                                <span style={{ fontSize: "8pt", color: "red" }}>Account number must be 6-10 digits with no leading zeros!</span>
+                                }
+                            </Form.Group>
+                            <Form.Group className="mb-3">
+                                <Form.Label>card number</Form.Label>
+                                <Form.Control type="text" required onBlur={() => validateDetails("card")} onChange={(event) => setCardNumberChange(event.target.value)}/>
+                                { cardNumberCheck && 
+                                <span style={{ fontSize: "8pt", color: "red" }}>Card number must be in xxxx-xxxx-xxxx-xxxx format!</span>
+                                }
+                            </Form.Group>
+                            <Form.Group className="mb-3">
+                                <Form.Label>card expiry</Form.Label>
+                                <Form.Control type="text" required onBlur={() => validateDetails("expiry")} onChange={(event) => setCardExpiryChange(event.target.value)}/>
+                                { cardExpiryCheck && 
+                                <span style={{ fontSize: "8pt", color: "red" }}>Card expiry must be in MM/YY format!</span>
+                                }
+                            </Form.Group>
+                            <Button disabled={buttonDisabled === true ? true : false} onClick={handleBankChange}>save changes</Button>
+                        </Form>
+                        }
+                        { modalState === "delete" &&
+                        <>
+                            <Row className="text-center">
+                                <span>Are you sure you want to delete your payment details?</span><br />
+                                <span><b>You will lose all the funds associated with your account</b> 😱</span><br /><br />
+                            </Row>  
+                            <Row>
+                                <Col className="text-center">
+                                    <Button style={{ width: '100px' }} onClick={handleClose}>No</Button>
+                                </Col>
+                                <Col className="text-center">
+                                    <Button variant="danger" style={{ width: '100px' }} onClick={handleDelete}>Yes</Button>
+                                </Col>
+                            </Row>
+                        </>
+                        }
+                    </Modal.Body>
+                </Modal>
+            </Container>
+            <Modal show={!!errorMessage} onHide={() => setErrorMessage("")}>
+                <Modal.Header>
+                    <Modal.Title>Error</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>{errorMessage}</Modal.Body>
+                <Modal.Footer>
+                    <Button onClick={() => setErrorMessage("")}>OK</Button>
+                </Modal.Footer>
             </Modal>
-        </Container>
+        </>
     )
 }
 

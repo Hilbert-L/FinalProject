@@ -44,7 +44,7 @@ type VehicleType =
   | 'van'
   | 'bike';
 
-type ListingInfo = {
+export type ListingInfo = {
   address?: string;
   suburb?: string;
   postcode?: string;
