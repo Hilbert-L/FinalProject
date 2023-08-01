@@ -86,8 +86,8 @@ async def create_booking(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Booking dates overlap with existing bookings"
         )
 
-    # Calculate duration in hours
-    duration = int((carspace_booking.end_date - carspace_booking.start_date).total_seconds() / 86400) + 1
+    # Calculate duration in days
+    duration = (carspace_booking.end_date - carspace_booking.start_date).days + 1
     # Create a new booking instance
     booking = BookingCreateSchema(
         start_date=carspace_booking.start_date,
@@ -107,7 +107,7 @@ async def create_booking(
     booking_dict["provider_username"] = provider_username
     booking_dict["carspaceid"] = carspaceid
     booking_dict["transaction_time"] = datetime.now().strftime("%Y/%m/%d-%H:%M:%S")
-    booking_dict["duration_hours"] = duration # actually should be in days
+    booking_dict["duration_days"] = duration # actually should be in days
     booking_dict['total_price'] = total_price
     booking_dict["booking_id"] = Bookin_ID['id']
 
@@ -299,8 +299,8 @@ async def update_booking(
             status_code=status.HTTP_400_BAD_REQUEST, detail="UpdatedBooking dates overlap with existing bookings"
         )
 
-    # Calculate duration in hours
-    duration = int((booking_update.end_date - booking_update.start_date).total_seconds() / 3600)
+    # Calculate duration in days
+    duration = (booking_update.end_date - booking_update.start_date).days + 1
 
     carspaceid = booking["carspaceid"]
     provider_username = booking["provider_username"]
@@ -352,7 +352,7 @@ async def update_booking(
         {"$set": {
             "start_date": booking_update.start_date,
             "end_date": booking_update.end_date,
-            "duration_hours": duration,
+            "duration_days": duration,
             "total_price": total_price,
         }}
     )
