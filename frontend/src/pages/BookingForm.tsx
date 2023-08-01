@@ -8,7 +8,11 @@ import 'react-date-range/dist/theme/default.css';
 import { differenceInDays } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
-import { NotificationBox } from '../components/NotificationBox';
+
+interface TimeRange {
+    start_time: string;
+    end_time: string;
+  }
 
 export const BookingForm = () => {
     
@@ -21,7 +25,7 @@ export const BookingForm = () => {
     const [carRegistration, setCarRegistration] = useState('');
     const [vehicleType, setVehicleType] = useState('');
     const [showNotification, setShowNotification] = useState(false);
-    const [currentReservations, setCurrentReservations] = useState([]);
+    const [currentReservations, setCurrentReservations] = useState([new Date]);
     const [dateRange, setDateRange] = useState({
         startDate: new Date(),
         endDate: new Date(),
@@ -60,31 +64,22 @@ export const BookingForm = () => {
                         }
                     });
 				}
-                // let daysBetween = []
-                // if (currentListing) {
-                //     let reservations = await makeRequest(`/carspace/get_car_space_booking/${currentListing.carspaceid}`, "GET", undefined, { token });
-                //     setCurrentReservations(reservations.resp);
-                //     const extractedDays = reservations.resp.map(({ start_time, end_time }) => {
-                //         const startDate = new Date(start_time);
-                //         const endDate = new Date(end_time);
-                      
-                //         // Calculate the difference in days between the start and end dates
-                //         const timeDiff = endDate.getTime() - startDate.getTime();
-                //         const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
-                      
-                //         // Create an array to store the days between the start and end dates (including start date)
-                //         const daysBetween = [];
-                //         for (let i = 0; i < daysDiff; i++) {
-                //           const day = new Date(startDate);
-                //           day.setDate(day.getDate() + i);
-                //           daysBetween.push(day.toLocaleDateString());
-                //         }
-                        
-                //     })
-                //     console.log(daysBetween);
-                //     console.log(reservations.resp)
-                    
-                // }
+                if (currentListing) {
+                    let reservations = await makeRequest(`/carspace/get_car_space_booking/${currentListing.carspaceid}`, "GET", undefined, { token });
+                    console.log(reservations.resp)
+                    let allDates = extractDatesBetween(reservations.resp);
+                    let allDatesList = [new Date];
+                    allDates.forEach((dateString) => {
+                        const parts = dateString.split('/');
+                        const month = parseInt(parts[1], 10) - 1; // Months are zero-based (January is 0)
+                        const day = parseInt(parts[0], 10);
+                        const year = parseInt(parts[2], 10);
+                        const dateObject = new Date(year, month, day);
+                        allDatesList.push(dateObject);
+                      });
+                    setCurrentReservations(allDatesList);
+                    console.log(allDatesList)
+                }
 			} catch (error) {
 				console.log(error);
 			}
@@ -94,6 +89,22 @@ export const BookingForm = () => {
 		retrieveCarspaces(postcode ? postcode : "");
 
 	}, []);
+
+    const extractDatesBetween = (data: TimeRange[]): string[] => {
+        const result: string[] = [];
+        data.forEach(({ start_time, end_time }) => {
+          const startDate = new Date(start_time);
+          const endDate = new Date(end_time);
+          const currentDate = new Date(startDate);
+      
+          while (currentDate <= endDate) {
+            result.push(new Date(`${currentDate.getMonth() + 1}/${currentDate.getDate()}/${currentDate.getFullYear()}`).toLocaleDateString());
+            currentDate.setDate(currentDate.getDate() + 1);
+            //
+          }
+        });
+        return result;
+      };
 
     React.useEffect(() => {
         const days = differenceInDays(dateRange.endDate, dateRange.startDate) + 1;
@@ -140,8 +151,7 @@ export const BookingForm = () => {
 
     function renderDayContent(day: any) {
 
-        const disabledDays = [new Date('08/10/2023'), new Date('08/15/2023')];
-      
+        const disabledDays = currentReservations;
         // Check if the current day is one of the disabled days
         const isDisabled = disabledDays.some(disabledDay => isSameDay(day, disabledDay));;
       
