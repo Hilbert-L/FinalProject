@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { makeRequest } from '../helpers';
-import { Button, Col, Container, Modal, Row } from 'react-bootstrap';
+import { Button, Modal } from 'react-bootstrap';
 import { ThemeProvider, createTheme } from '@mui/material';
 import MaterialTable from 'material-table';
 import dayjs from 'dayjs';
-import { ListingInfo } from './SearchPage';
 
 type Booking = {
     id: string;
@@ -16,30 +15,30 @@ type Booking = {
 }
 
 export const MyBookings = () => {
-    const [bookings, setBookings] = useState<Booking[]>([]);
-    const [showCancelModal, setCancelListingModal] = useState(false);
-    const [selectedBooking, setSelectedBooking] = useState("");
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [showCancelModal, setCancelListingModal] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState("");
   const [refresh, setRefresh] = useState(false);
 
-    useEffect(() => {
-        const token = localStorage.getItem("authToken");
-        const username = localStorage.getItem("username");
-        if (!token || !username) return;
-        makeRequest(`/booking/history/${username}`, "GET", undefined, { token })
-            .then((resp) => {
-                if (resp.status === 200) {
-                    const data = resp.resp["Booking History"];
-                    setBookings(data.map((booking: any) => ({
-                        id: booking.booking_id,
-                        startDate: dayjs(booking.start_date).format("YYYY-MM-DD"),
-                        endDate: dayjs(booking.end_date).format("YYYY-MM-DD"),
-                        duration: booking.duration_hours, // actually in days
-                        price: booking.total_price,
-                        provider: booking.provider_username,
-                    })))
-                }
-            })
-    }, [refresh]);
+  useEffect(() => {
+      const token = localStorage.getItem("authToken");
+      const username = localStorage.getItem("username");
+      if (!token || !username) return;
+      makeRequest(`/booking/history/${username}`, "GET", undefined, { token })
+          .then((resp) => {
+              if (resp.status === 200) {
+                  const data = resp.resp["Booking History"];
+                  setBookings(data.map((booking: any) => ({
+                      id: booking.booking_id,
+                      startDate: dayjs(booking.start_date).format("YYYY-MM-DD"),
+                      endDate: dayjs(booking.end_date).format("YYYY-MM-DD"),
+                      duration: booking.duration_hours, // actually in days
+                      price: booking.total_price,
+                      provider: booking.provider_username,
+                  })))
+              }
+          })
+  }, [refresh]);
 
   const theme = createTheme()
 
@@ -80,7 +79,12 @@ export const MyBookings = () => {
     )
 }
 
-const CancelListingModal = ({ show, onHide, bookingId, refresh }) => {
+const CancelListingModal = ({ show, onHide, bookingId, refresh }: {
+  show: boolean;
+  onHide: () => void;
+  bookingId: string;
+  refresh: () => void;
+}) => {
   const [success, setSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
