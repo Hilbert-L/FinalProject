@@ -351,7 +351,7 @@ async def delete_car_space_reviews_for_producer_carspace(username: str, carspace
 @check_token
 async def get_car_spaces_by_user(username: str, token: str = Depends(verify_admin_token)):
     filter = {"username": username}
-    carspace_cursor = car_space_collections.find({filter})
+    carspace_cursor = car_space_collections.find(filter)
     carspaces = []
     for document in carspace_cursor:
         document_str = json.dumps(document, default=str)
@@ -363,7 +363,7 @@ async def get_car_spaces_by_user(username: str, token: str = Depends(verify_admi
 @check_token
 async def get_car_space_by_id(username: str, carspaceid: int, token: str = Depends(verify_admin_token)):
     filter = {"username": username, "carspaceid": carspaceid}
-    carspace_cursor = car_space_collections.find({filter})
+    carspace_cursor = car_space_collections.find(filter)
     carspaces = []
     []
     for document in carspace_cursor:
@@ -461,8 +461,8 @@ async def update_car_space_by_id(username: str, carspaceid: int, update_car_spac
 @AdminRouter.get("/admin/carspace/getcarspacereviews/{username}", tags=["Administrators"])
 @check_token
 async def get_car_spaces_reviews_by_user(username: str, token: str = Depends(verify_admin_token)):
-    filter = {"username": username}
-    carspace_cursor = car_space_review_collections.find({filter})
+    filter = {"ownerusername": username}
+    carspace_cursor = car_space_review_collections.find(filter)
     carspaces = []
     for document in carspace_cursor:
         document_str = json.dumps(document, default=str)
@@ -470,11 +470,11 @@ async def get_car_spaces_reviews_by_user(username: str, token: str = Depends(ver
         carspaces.append(document_dict)
     return {f"carspaces for user: {username}": carspaces}
 
-@AdminRouter.get("/admin/carspace/getcarspacereviews/{username}/{carspaceid}", tags=["Administrators"])
+@AdminRouter.get("/admin/carspace/getcarspacereviews_id/{username}/{carspaceid}", tags=["Administrators"])
 @check_token
 async def get_car_space_reviews_by_id(username: str, carspaceid: int, token: str = Depends(verify_admin_token)):
-    filter = {"username": username, "carspaceid": carspaceid}
-    carspace_cursor = car_space_review_collections.find({filter})
+    filter = {"ownerusername": username, "carspaceid": carspaceid}
+    carspace_cursor = car_space_review_collections.find(filter)
     carspaces = []
     for document in carspace_cursor:
         document_str = json.dumps(document, default=str)
