@@ -15,6 +15,7 @@ import { makeRequest } from '../helpers';
 export const ReviewComponent = (props: any) => { 
 
     const token = props.token;
+    console.log(props)
     const [review, setReview] = useState<ReviewInfo>({});
 
     const postReview = async () => {
