@@ -201,7 +201,7 @@ async def get_car_space_reviews_for_producer(username: str, token: str = Depends
 
 @CarSpaceRouter.get("/carspace/reviews/get_all_reviews_for_producer/{username}/{carspaceid}", tags=["Car Spaces"])
 @check_token
-async def get_car_space_reviews_for_producer(username: str, carspaceid: int, token: str = Depends(verify_user_token)):
+async def get_car_space_reviews_for_producer_by_carspaceid(username: str, carspaceid: int, token: str = Depends(verify_user_token)):
     # Verify user
     user = users_collections.find_one({"username": token})
     if user is None:
