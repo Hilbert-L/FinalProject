@@ -19,7 +19,7 @@ export const ListingReviews = (props: any) => {
         // Retrieves carspace reviews
         async function retrieveReviews() {
             try {
-                let response = await makeRequest(`/carspace/reviews/get_all_reviews_for_producer/${listing.username}/${listing.carspaceid}`, "GET", undefined, { token });
+                let response = await makeRequest(`/carspace/reviews/get_car_space_reviews_for_producer_by_carspaceid/${listing.username}/${listing.carspaceid}`, "GET", undefined, { token });
                 if (response.status !== 200) {
                     console.log("There was an error!")
                 } else {

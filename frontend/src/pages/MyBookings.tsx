@@ -91,7 +91,7 @@ export const MyBookings = () => {
         <Modal.Header>
           <Modal.Title>leave a review 📝</Modal.Title>
         </Modal.Header>
-        <ReviewComponent listing={selectedBooking?.carspaceid} token={localStorage.getItem("authToken")} onClose={() => setShowReviewModal(false)}></ReviewComponent>
+        <ReviewComponent provider={selectedBooking?.provider} listing={selectedBooking?.carspaceid} token={localStorage.getItem("authToken")} onClose={() => setShowReviewModal(false)}></ReviewComponent>
       </Modal>
     </ThemeProvider>
   )

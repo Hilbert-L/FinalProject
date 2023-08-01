@@ -21,7 +21,7 @@ export const ReviewComponent = (props: any) => {
     const postReview = async () => {
         try {
             const body = {
-                ownerusername: review.username,
+                ownerusername: props.provider,
                 overall: review.overall,
                 location: review.location,
                 cleanliness: review.cleanliness,
