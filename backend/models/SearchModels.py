@@ -52,6 +52,7 @@ class AdvancedSearch(BaseModel):
     recommendersystem : Optional[str] = Field(default=None)
     resultlimit: Optional[int] = Field(default=None)
     sortmethod: Optional[str] = Field(default=None)
+    suburb: str = Field(default=None)
     class Config:
         schema = {
             "sample" : {
@@ -65,6 +66,7 @@ class AdvancedSearch(BaseModel):
                 "distancefrompin": 1.0,
                 "recommendersystem": "cosine",
                 "resultlimit": 10,
-                "sortmethod": "price-descending"
+                "sortmethod": "price-descending",
+                "suburb" : "Kensington"
             }
         }

@@ -10,6 +10,7 @@ import pandas as pd
 import numpy as np
 import os 
 import random
+import re 
 from surprise import Dataset, Reader, SVD
 from surprise.model_selection import train_test_split
 
@@ -89,10 +90,10 @@ async def search_by_address(address_search: SearchByAddress):
 @SearchRouter.post("/search/advancedsearch", tags=["Search Car Spaces"])
 async def advanced_search(advanced_search: AdvancedSearch, 
         token: str = Depends(verify_user_token)):
-    if token is None:
+    if token is None or re.match("^fake_user_[0-9]+$", token) is None:
         userId = random.randint(0, 2000)
     else:
-        userId = token
+        userId = int(token.split("fake_user_")[1])
 
     combined_conditions = []
     advanced_search_dict = advanced_search.dict()
@@ -132,6 +133,9 @@ async def advanced_search(advanced_search: AdvancedSearch,
                     {"vehicleSize": value},
                     {"Vehiclesize": value}
             ]})
+
+        elif key == 'suburb':
+            combined_conditions.append({"suburb": value})
             
     filter = {"$and": combined_conditions} if len(combined_conditions) > 0 else {}
     car_space_cursor = car_space_collections.find(filter)
@@ -193,32 +197,36 @@ async def advanced_search(advanced_search: AdvancedSearch,
         # Create a list of dictionaries containing only the specified fields
         filtered_results = [{field: document[field] for field in fields_to_include if field in document} for document in carspace_review_cursor]
 
-        df = pd.DataFrame(filtered_results)
-        df = df[["carspaceid", "overall", "reviewer_username"]].dropna(subset=["reviewer_username"])
-        df = df[df["reviewer_username"].str.match("fake_user")]
-        df["reviewer_id"] = df["reviewer_username"].str.split("fake_user_").str[1].astype(int)
-        df = df[["carspaceid", "overall", "reviewer_id"]]
-        df["overall"] = df["overall"].add(1)
-        df["overall"] = df["overall"].add(1)
+        try:
+            df = pd.DataFrame(filtered_results)
+            df = df[["carspaceid", "overall", "reviewer_username"]].dropna(subset=["reviewer_username"])
+            df = df[df["reviewer_username"].str.match("fake_user")]
+            df["reviewer_id"] = df["reviewer_username"].str.split("fake_user_").str[1].astype(int)
+            df = df[["carspaceid", "overall", "reviewer_id"]]
+            df["overall"] = df["overall"].add(1)
+            df["overall"] = df["overall"].add(1)
+            
 
-        reader = Reader(rating_scale=(1, 6))
-        data = Dataset.load_from_df(df[["reviewer_id", "carspaceid", "overall"]], reader)
+            reader = Reader(rating_scale=(1, 6))
+            data = Dataset.load_from_df(df[["reviewer_id", "carspaceid", "overall"]], reader)
 
-        model = SVD()
+            model = SVD()
 
-        trainset = data.build_full_trainset()
-        model.fit(trainset)
-        carspace_ids = df["carspaceid"].unique()
-        predictions = []
-        for carspace_id in carspace_ids:
-            prediction = model.predict(userId, carspace_id)
-            predictions.append((carspace_id, prediction.est))
+            trainset = data.build_full_trainset()
+            model.fit(trainset)
+            carspace_ids = df["carspaceid"].unique()
+            predictions = []
+            for carspace_id in carspace_ids:
+                prediction = model.predict(userId, carspace_id)
+                predictions.append((carspace_id, prediction.est))
 
-        predictions.sort(key=lambda x: x[1], reverse=True)
-        json_dict = {obj['carspaceid']: obj for obj in filtered_carspaces}
-        recommender_order_car_spaces = [int(p[0]) for p in predictions]
-        filtered_carspaces = [json_dict[id] for id in recommender_order_car_spaces]
+            predictions.sort(key=lambda x: x[1], reverse=True)
+            json_dict = {obj['carspaceid']: obj for obj in filtered_carspaces}
+            recommender_order_car_spaces = [int(p[0]) for p in predictions]
+            filtered_carspaces = [json_dict[id] for id in recommender_order_car_spaces]
 
+        except Exception as E:
+            print(f"Exception occurred: {E}")
     # Return results as a limit
     if advanced_search_dict["resultlimit"] is not None:
         filtered_carspaces = filtered_carspaces[:advanced_search_dict["resultlimit"]] 
