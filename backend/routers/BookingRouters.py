@@ -144,9 +144,6 @@ async def create_booking(
 
 
     Bookin_ID['id'] += 1
-    booking_id_collections.update_one({"_id": ObjectId("64ba93484acd519515400595")}, {"$set": {"id": Bookin_ID["id"]}})
-
-    booking_collections.insert_one(dict(booking_dict))
 
     num_transactions = transaction_information_collections.count_documents({})
 

@@ -169,6 +169,7 @@ export const MyPaymentDetails = (props: any) => {
     }
 
     const addFunds = () => {
+        console.log("hello")
         const token = localStorage.getItem("authToken");
         const username = localStorage.getItem("username");
         if (!token || !username) return;

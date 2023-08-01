@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { makeRequest } from '../helpers';
-import { Button, Col, Container, Row } from 'react-bootstrap';
+import { Button, Col, Container, Modal, Row } from 'react-bootstrap';
 import { ThemeProvider, createTheme } from '@mui/material';
 import MaterialTable from 'material-table';
 import dayjs from 'dayjs';
+import { ListingInfo } from './SearchPage';
 
 type Booking = {
     id: string;
@@ -16,6 +17,9 @@ type Booking = {
 
 export const MyBookings = () => {
     const [bookings, setBookings] = useState<Booking[]>([]);
+    const [showCancelModal, setCancelListingModal] = useState(false);
+    const [selectedBooking, setSelectedBooking] = useState("");
+  const [refresh, setRefresh] = useState(false);
 
     useEffect(() => {
         const token = localStorage.getItem("authToken");
@@ -35,7 +39,7 @@ export const MyBookings = () => {
                     })))
                 }
             })
-    }, []);
+    }, [refresh]);
 
   const theme = createTheme()
 
@@ -57,14 +61,84 @@ export const MyBookings = () => {
           }}
           actions={[
             {
-              icon: () => <Button>View Listing</Button>,
+              icon: () => <Button variant="danger">Cancel Booking</Button>,
               tooltip: "View lisiting",
-              onClick: () => {
-                console.log("fetch listing info");
+              onClick: (_, rowData) => {
+                setCancelListingModal(true);
+                setSelectedBooking((rowData as Booking).id)
               }
             }
           ]}
         />
+        <CancelListingModal
+          show={showCancelModal}
+          onHide={() => setCancelListingModal(false)}
+          bookingId={selectedBooking}
+          refresh={() => setRefresh(!refresh)}
+        />
       </ThemeProvider>
     )
+}
+
+const CancelListingModal = ({ show, onHide, bookingId, refresh }) => {
+  const [success, setSuccess] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const handleCancel = () => {
+    const token = localStorage.getItem("authToken");
+    const username = localStorage.getItem("username");
+    if (!token || !username) return;
+    makeRequest(`/booking/delete_booking/${bookingId}`, "DELETE", undefined, { token })
+      .then((resp) => {
+        if (resp.status === 200) {
+          setSuccess(true)
+        } else {
+          setErrorMessage(resp.resp.detail)
+        }
+      })
+  }
+
+  const handleHideSuccess = () => {
+    setSuccess(false)
+    onHide()
+    refresh()
+  }
+
+  const handleHideError = () => {
+    setErrorMessage("")
+    onHide()
+  }
+
+  return (
+    <>
+      <Modal show={show} onHide={onHide} >
+        <Modal.Header>
+          <Modal.Title>Cancel Booking</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>Are you sure you want to cancel this booking?</Modal.Body>
+        <Modal.Footer>
+          <Button variant="danger" onClick={handleCancel}>Yes</Button>
+          <Button onClick={onHide}>No</Button>
+        </Modal.Footer>
+      </Modal>
+      <Modal show={success} onHide={handleHideSuccess} >
+        <Modal.Header>
+          <Modal.Title>Successfully cancelled booking</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>Success!</Modal.Body>
+        <Modal.Footer>
+          <Button variant="danger" onClick={handleHideSuccess}>OK</Button>
+        </Modal.Footer>
+      </Modal>
+      <Modal show={!!errorMessage} onHide={handleHideError}>
+        <Modal.Header>
+          <Modal.Title>Unable to cancel booking</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>{errorMessage}</Modal.Body>
+        <Modal.Footer>
+          <Button variant="danger" onClick={handleHideError}>OK</Button>
+        </Modal.Footer>
+      </Modal>
+    </>
+  )
 }
