@@ -82,6 +82,7 @@ export const SearchPage = () => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [myUsername, setMyUsername] = useState('');
   const [showNotification, setShowNotification] = useState(false);
+  const [filteredCarspaces, setFilteredCarspaces] = useState([]);
 
   const handleExpandClick = () => {
     setIsExpanded(!isExpanded);
@@ -89,12 +90,21 @@ export const SearchPage = () => {
 
   React.useEffect(() => {
     // Perform any necessary actions with the updated carspaces state here
-    console.log('Filtered Car Spaces Updated:', carspaces);
-  }, [carspaces]);
+    console.log('Filtered Car Spaces Updated:', filteredCarspaces);
+    if (filteredCarspaces.length > 0) {
+      setCarspaces(filteredCarspaces)
+      console.log("New Carspaces", carspaces)
+    }
+  }, [filteredCarspaces]);
 
-  const updateFilteredCarSpaces = (value: any) => {
-    setCarspaces(value);
+  const updateFilteredCarSpaces = (value: any, newMapCentre: any) => {
+    console.log("New Car Spaces", value)
+    setFilteredCarspaces(value);
+    if (newMapCentre){
+      setMapCentre(newMapCentre)
+    }
   };
+
       
   React.useEffect(() => {
     async function retrieveUsername() {
@@ -105,7 +115,6 @@ export const SearchPage = () => {
     retrieveUsername();
   }, [])
 
-  // Retrieves car spaces from the backend every time the mapCentre changes
   React.useEffect(() => {
     // Retrieves car spaces given the postcode
     async function retrieveCarspaces(postcode: string) {
@@ -148,7 +157,7 @@ export const SearchPage = () => {
   }, [mapCentre]);
 
   // Takes the search input and converts it into coordinates - moves the map to these coordinates
-  const handleSearch = () => {
+  const handleSearch = async () => {
     if (!searchValue) return;
     const geocoder = new window.google.maps.Geocoder();
     geocoder.geocode({ address: searchValue }, (results, status) => {
@@ -159,6 +168,7 @@ export const SearchPage = () => {
         console.error('Could not find coordinates!', status);
       }
     });
+    console.log(carspaces)
   };
 
   // Given a location (the current mapCentre lat/lng), extracts the suburb and postcode

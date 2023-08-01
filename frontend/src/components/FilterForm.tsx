@@ -6,6 +6,8 @@ import {
   ToggleButton,
   ToggleButtonGroup,
   Row,
+  Container,
+  Spinner
 } from 'react-bootstrap';
 
 import {
@@ -32,7 +34,8 @@ export const FilterForm = (props: any) => {
   const [sortMethod, setSortMethod] = React.useState('none');
   const [latitude, setLatitude] = React.useState(0.000000);
   const [longitude, setLongitude] = React.useState(0.000000);
-
+  const [beyondSuburb, setBeyondSuburb] = React.useState("false");
+  const [loaded, setLoaded] = React.useState(true)
   const [filteredCarSpaces, setFilteredCarSpaces] = React.useState({});
 
   React.useEffect(() => {
@@ -55,6 +58,31 @@ export const FilterForm = (props: any) => {
     }
   }, [filteredCarSpaces, props.onUpdateState])
 
+
+  // Given a location (the current mapCentre lat/lng), extracts the suburb and postcode
+  const extractSuburb = async () => {
+    let searchedSuburb: string = '';
+    let searchedPostcode: string = '';
+
+    try {
+      const response = await fetch(
+        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=AIzaSyB4Bsp9jhz4i39NidfXExaaZV89o8jP5To`
+      );
+      const data = await response.json();
+      const allComponents = data.results[0].address_components;
+      const addressComponents = data.results[0];
+      for (const component of allComponents) {
+        const types = component.types;
+        if (types.includes('locality')) searchedSuburb = component.short_name;
+        if (types.includes('postal_code'))
+          searchedPostcode = component.short_name;
+      }
+    } catch (error) {
+      console.error('Error retrieving information!', error);
+    }
+    return [searchedSuburb, searchedPostcode];
+  };
+
   async function handleFilterSubmit(event: any) {
     event.preventDefault();
 
@@ -64,7 +92,12 @@ export const FilterForm = (props: any) => {
 
     if (recommenderSystem !== 'none' && sortMethod !== 'none') {
         alert("Cannot have recommender system and sort method both inputed")
+        return
     }
+
+    setLoaded(false);
+
+    const suburbAndPostcode = await extractSuburb();
 
     const body = {
       searchvalue: props.searchValue !== '' ? props.searchValue : null,
@@ -74,11 +107,15 @@ export const FilterForm = (props: any) => {
       maxprice: maxPrice !== '' ? maxPrice : null,
       spacetype: spaceType !== 'none' ? spaceType : null,
       vehicletype: vehicleType !== 'none' ? vehicleType : null,
-      distancefrompin: distanceFromPin !== '' ? distanceFromPin : null,
+      distancefrompin: distanceFromPin !== '' ? distanceFromPin : 5,
       recommendersystem: recommenderSystem !== 'none' ? recommenderSystem : null,
       resultlimit: resultLimit !== '' ? resultLimit : null,
       sortmethod: sortMethod !== 'none' ? sortMethod : null,
+      suburb: suburbAndPostcode[0] !== 'none' ? suburbAndPostcode[0] : null
     };
+    if (beyondSuburb === "true") {
+      body.suburb = null
+    }
     console.log(body);
     const token = localStorage.getItem('authToken') || '';
 
@@ -94,11 +131,12 @@ export const FilterForm = (props: any) => {
             alert("Invalid Response")
         }
     } catch (error) {
-    console.log(error);
+      console.log(error);
     }
     console.log(filteredCarSpaces)
+    setLoaded(true);
     setIsFilterVisible(!isFilterVisible);
-  };
+  }
 
   const handleFilterButtonClick = () => {
     setIsFilterVisible(!isFilterVisible);
@@ -215,10 +253,29 @@ export const FilterForm = (props: any) => {
             </Form.Select>
           </Form.Group>
           <br></br>
+          <Form.Group>
+            <Form.Label>Search Beyond Suburb:</Form.Label>
+            <Form.Select
+              value={beyondSuburb}
+              onChange={(event) => handleInputChange(event, setBeyondSuburb)}
+            >
+              <option value="false">Suburb Only</option>
+              <option value="true">Beyond Suburb</option>
+            </Form.Select>
+          </Form.Group>
+          <br></br>
           <Button variant="primary" type="submit" onClick={handleFilterSubmit}>
             Advanced Search
           </Button>
-        </Form>
+        </Form>)
+      }
+      {!loaded && (
+        <Container className="text-center">
+        <br />
+        <Spinner animation="grow" variant="dark" />
+        <br />
+        <br />
+        </Container>
       )}
       <br></br>
     </div>
