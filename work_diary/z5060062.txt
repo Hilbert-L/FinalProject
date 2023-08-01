@@ -1,22 +1,47 @@
 Week 1 
     - sort out the group and decide on the project
+    - Selected the scrum master and setup Jira 
+    - Decided project topic with group members
+
 Week 2 
     - start the proposal draft and come up with functionalities including novel functionalities
+    - Write user stories for search, recommender systems and discussed with various team members on how to allocate tasks
+    - Added items for backlog to Jira
+    - Write items for backlog in Jira.
+
 Week 3 
     - Finalise Proposal and made a start on the sprint API and sample UI using React and FastAPI
+    - Helped with the React Setup and made authentication tokens for user login using FastAPI
+    - Started drafting out the CreateUser Routers, CarSpaceRouters, SearchRouters, TransactionRouters, GeneralRouters and AdminRouters
+
 Week 4 
-    - Bug fixes for connecting backend to frontend and updated field requirements. Made a start on Sprint 2 tasks. Created Docker container.
+    - Bug fixes for connecting backend to frontend and updated field requirements. Made a start on Sprint 2 tasks. 
+    - Created Docker container for the backend (FastAPI), this helped other team members to use the API without setup issues 
+    
 Week 5 
     - Added some image upload features for the user profile routers 
     - Bug fixes for user profile
+    
 Week 6 
     - Made a start on the banking transaction routers 
-    - added regex matching for the backend to verify bank account info is correct
+    - added validation to check to see if the bank account info is correct
+    - made a draft on the banking and transactions routers before passing it onto another team member
+
 Week 7 
     - Fix the bugs for listings and added some car space routers 
-    - 
+    - Made some small modifications to backend routers and started filtered search router
+
 Week 8 
-    - Made a start on the Search filter 
+    - Made a start on the Search filter in the frontend
     - Created Mock Data to be placed into mongodb
+    - Discussed with team about storing the latest id for all mongodb collections to prevent any duplicate ids appearing.
+
 Week 9 
     - Made a start on the Recommender System
+    - Simulated users, carspace reviews, carspaces, user bank accounts to make the search functionality appear more realistic
+    - Fixed some small bugs in the search filter 
+    - Added Recommender system router feature to train simulated user reviews, carspaces and search functionality
+
+Week 10 
+    - Fix random bugs in the project 
+    - Present the project, finalise the report, submit the project, complete peer review
