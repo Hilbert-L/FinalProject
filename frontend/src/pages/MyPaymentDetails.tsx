@@ -83,6 +83,11 @@ export const MyPaymentDetails = (props: any) => {
                     return;
 				} 
                 setDetailsExist(true);
+                setBSBChange('');
+                setAccountNumberChange('');
+                setCardNumberChange('');
+                setCardExpiryChange('');
+                setButtonDisabled(true);
                 setTriggerRender(triggerRender === true ? false : true);
 			} catch (error) {
 				console.log(error)
@@ -97,6 +102,11 @@ export const MyPaymentDetails = (props: any) => {
 					setErrorMessage(response.resp);
                     return;
 				}
+                setBSBChange('');
+                setAccountNumberChange('');
+                setCardNumberChange('');
+                setCardExpiryChange('');
+                setButtonDisabled(true);
                 setTriggerRender(triggerRender === true ? false : true);
 			} catch (error) {
 				console.log(error)
@@ -217,7 +227,7 @@ export const MyPaymentDetails = (props: any) => {
                 <Row className="text-center">
                     <Col className="text-center">
                         <span><i>your funds</i></span><br />
-                        <span style={{ fontSize: '40pt' }}>${fundsAmount}</span>
+                        <span style={{ fontSize: '40pt' }}>${fundsAmount.toFixed(1)}</span>
                     </Col>
                     <Col>
                         <Row>

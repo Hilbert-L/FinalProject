@@ -8,10 +8,15 @@ import 'react-date-range/dist/theme/default.css';
 import { differenceInDays } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
-import { NotificationBox } from '../components/NotificationBox';
+
+interface TimeRange {
+    start_time: string;
+    end_time: string;
+  }
 
 export const BookingForm = () => {
     
+    const token = localStorage.getItem('authToken');
     const searchParams = new URLSearchParams(location.search);
     const listingID = searchParams.get('id');
     const postcode = searchParams.get('postcode');
@@ -20,6 +25,7 @@ export const BookingForm = () => {
     const [carRegistration, setCarRegistration] = useState('');
     const [vehicleType, setVehicleType] = useState('');
     const [showNotification, setShowNotification] = useState(false);
+    const [currentReservations, setCurrentReservations] = useState([new Date]);
     const [dateRange, setDateRange] = useState({
         startDate: new Date(),
         endDate: new Date(),
@@ -36,6 +42,7 @@ export const BookingForm = () => {
 
 		// Retrieves car spaces given the postcode
 		async function retrieveCarspaces(postcode: string) {
+            let currentListing = null;
 			let body = {
 				"limit": "100",
 				"sort": "false",
@@ -44,17 +51,35 @@ export const BookingForm = () => {
 			try {
 				let response = await makeRequest("/search/postcode", "POST", body, undefined);
 				if (response.status !== 200) {
-					console.log("There was an error!")
+					console.log("There was an error!");
+                    return;
 				} else {
 					let spaces = response.resp;
 					const carspaces = spaces['Postcode Search Results'];
                     Object.entries(carspaces).forEach(([key, value]) => {
-                        if (value._id === listingID) {
+                        if (value && value._id === listingID) {
                             setSpaceToBook(value);
+                            currentListing = value;
                             console.log(value);
                         }
                     });
 				}
+                if (currentListing) {
+                    let reservations = await makeRequest(`/carspace/get_car_space_booking/${currentListing.carspaceid}`, "GET", undefined, { token });
+                    console.log(reservations.resp)
+                    let allDates = extractDatesBetween(reservations.resp);
+                    let allDatesList = [new Date];
+                    allDates.forEach((dateString) => {
+                        const parts = dateString.split('/');
+                        const month = parseInt(parts[1], 10) - 1; // Months are zero-based (January is 0)
+                        const day = parseInt(parts[0], 10);
+                        const year = parseInt(parts[2], 10);
+                        const dateObject = new Date(year, month, day);
+                        allDatesList.push(dateObject);
+                      });
+                    setCurrentReservations(allDatesList);
+                    console.log(allDatesList)
+                }
 			} catch (error) {
 				console.log(error);
 			}
@@ -64,6 +89,22 @@ export const BookingForm = () => {
 		retrieveCarspaces(postcode ? postcode : "");
 
 	}, []);
+
+    const extractDatesBetween = (data: TimeRange[]): string[] => {
+        const result: string[] = [];
+        data.forEach(({ start_time, end_time }) => {
+          const startDate = new Date(start_time);
+          const endDate = new Date(end_time);
+          const currentDate = new Date(startDate);
+      
+          while (currentDate <= endDate) {
+            result.push(new Date(`${currentDate.getMonth() + 1}/${currentDate.getDate()}/${currentDate.getFullYear()}`).toLocaleDateString());
+            currentDate.setDate(currentDate.getDate() + 1);
+            //
+          }
+        });
+        return result;
+      };
 
     React.useEffect(() => {
         const days = differenceInDays(dateRange.endDate, dateRange.startDate) + 1;
@@ -90,8 +131,11 @@ export const BookingForm = () => {
         ).then((resp) => {
             if (resp.status === 200) {
                 setSuccess(true);
+                localStorage.setItem('booked', 'true')
+                navigate("/");
             } else {
                 setError(resp.resp.detail);
+                setShowNotification(true)
             }
         })
         
@@ -107,8 +151,7 @@ export const BookingForm = () => {
 
     function renderDayContent(day: any) {
 
-        const disabledDays = [new Date('08/10/2023'), new Date('08/15/2023')];
-      
+        const disabledDays = currentReservations;
         // Check if the current day is one of the disabled days
         const isDisabled = disabledDays.some(disabledDay => isSameDay(day, disabledDay));;
       
@@ -218,9 +261,9 @@ export const BookingForm = () => {
                 <Row>
                     <Button onClick={handleBooking} disabled={!allFilledOut}>Book</Button>
                 </Row><br />
-                {showNotification && 
-                <NotificationBox position='middle-center' variant='danger' title='🚫 Booking Error' message='You do not have enough funds in your account to book for this many days. Add more funds to your account or reduce the length of your booking!' ></NotificationBox>
-                }
+                {/* {showNotification && 
+                <NotificationBox position='middle-center' variant='danger' title='🚫 Booking Error' message={error} ></NotificationBox>
+                } */}
             </Container>
             <Modal show={!!error} onHide={() => setError("")}>
                 <Modal.Header closeButton>
@@ -228,14 +271,14 @@ export const BookingForm = () => {
                 </Modal.Header>
                 <Modal.Body>{error}</Modal.Body>
             </Modal>
-            <Modal show={success} onHide={() => navigate("/")}>
+            {/* <Modal show={success} onHide={() => navigate("/")}>
                 <Modal.Header closeButton>
                     <Modal.Title>Booking Successful!</Modal.Title>
                 </Modal.Header>
                 <Modal.Footer>
                     <Button onClick={() => navigate("/")}>OK</Button>
                 </Modal.Footer>
-            </Modal>
+            </Modal> */}
         </>
     )
 }

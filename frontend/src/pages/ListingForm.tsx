@@ -1,7 +1,7 @@
 import { Button, Col, FloatingLabel, Form, Row, Container, Spinner } from "react-bootstrap";
 import { FormContainer } from "../components/StyledFormContainer";
 import { useJsApiLoader, Autocomplete } from '@react-google-maps/api';
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { makeRequest } from "../helpers";
 import { useNavigate } from "react-router-dom";
 
@@ -44,6 +44,7 @@ export const ListingForm = () => {
   const [info, setInfo] = useState<ListingInfo>({});
 
   const [error, setError] = useState<string>();
+  const [disabled, setDisabled] = useState(true);
 
   const navigate = useNavigate();
 
@@ -112,13 +113,27 @@ export const ListingForm = () => {
 		setInfo({...info, suburb: searchedSuburb, postcode: searchedPostcode});;
 	}
 
-  const allFilledOut = info.address !== undefined
-    && info.spaceType !== undefined
-    && info.vehicleType !== undefined
-    && info.accessKey !== undefined
-    && info.width !== undefined
-    && info.length !== undefined
-    && info.price !== undefined
+  useEffect(() => {
+    //console.log(info.address, info.spaceType, info.vehicleType, info.accessKey, info.width, info.length, info.price)
+    if (info.address !== undefined
+        && info.spaceType !== undefined
+        && info.vehicleType !== undefined
+        && info.accessKey !== undefined
+        && info.width !== undefined
+        && info.length !== undefined
+        && info.price !== undefined) {
+          setDisabled(false);
+        }
+
+  }, [info])
+
+  // const allFilledOut = info.address !== undefined
+  //   && info.spaceType !== undefined
+  //   && info.vehicleType !== undefined
+  //   && info.accessKey !== undefined
+  //   && info.width !== undefined
+  //   && info.length !== undefined
+  //   && info.price !== undefined
   
   if (!isLoaded) {
     return (
@@ -267,7 +282,7 @@ export const ListingForm = () => {
             variant="primary"
             size="lg"
             onClick={handleSubmit}
-            disabled={!allFilledOut}
+            disabled={disabled}
           >Add Listing</Button>
         </div>
       </div>
