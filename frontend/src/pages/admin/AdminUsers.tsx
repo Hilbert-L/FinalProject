@@ -2,7 +2,9 @@ import React, { useEffect, useState } from "react";
 import MaterialTable from 'material-table';
 import { ThemeProvider, createTheme } from "@mui/material";
 import { makeRequest } from "../../helpers";
-import { Button, Modal } from "react-bootstrap";
+import { Button, Col, Container, Modal, Row } from "react-bootstrap";
+import { ListingReviews } from "../../components/ListingReviews";
+import { StarRating } from "../../components/StarRating";
 
 type User = {
   id: string;
@@ -21,6 +23,7 @@ export const AdminUsers = () => {
   const [selectedUser, setSelectedUser] = useState<User>();
   const [showMakeUserAdminModal, setShowMakeUserAdminModal] = useState(false);
   const [showDeactivateUserModal, setShowDeactivateUserModal] = useState(false);
+  const [showViewReviewsModal, setShowViewReviewsModal] = useState(false);
   const [refresh, setRefresh] = useState(false);
 
   useEffect(() => {
@@ -78,6 +81,14 @@ export const AdminUsers = () => {
               setShowDeactivateUserModal(true)
               setSelectedUser(rowData as User)
             }
+          },
+          {
+            icon: "star",
+            tooltip: "View reviews of this user",
+            onClick: (_, rowData) => {
+              setShowViewReviewsModal(true)
+              setSelectedUser(rowData as User)
+            }
           }
         ]}
       />
@@ -93,7 +104,113 @@ export const AdminUsers = () => {
         refresh={() => setRefresh(!refresh)}
         user={selectedUser}
       />
+      <ViewReviewsModal
+        show={showViewReviewsModal}
+        onHide={() => setShowViewReviewsModal(false)}
+        user={selectedUser}
+      />
     </ThemeProvider>
+  );
+}
+
+type Review = {
+  id: string;
+  cleanliness: number;
+  communication: number;
+  easeofaccess: number;
+  location: number;
+  overall: number;
+  reviewer: string;
+  feedback: string;
+}
+
+const ViewReviewsModal = ({
+  show,
+  onHide,
+  user,
+}: {
+  show: boolean;
+  onHide: () => void;
+  user?: User;
+}) => {
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [refresh, setRefresh] = useState(false);
+
+  useEffect(() => {
+    const token = localStorage.getItem("adminToken");
+    if (!token || !user) return;
+    makeRequest(`/admin/carspace/getcarspacereviews/${user?.username}`, "GET", undefined, { token })
+      .then((resp) => {
+        if (resp.status === 200) {
+          setReviews(resp.resp[`carspaces for user: ${user?.username}`].map((review: any) => ({
+            id: review._id,
+            cleanliness: review.cleanliness,
+            communication: review.communication,
+            easeofaccess: review.easeofaccess,
+            location: review.location,
+            overall: review.overall,
+            reviewer: review.reviewer_username,
+            feedback: review.writtenfeedback,
+          })));
+        }
+      })
+  }, [user, refresh]);
+
+  const handleDelete = (id: string) => {
+    const token = localStorage.getItem("adminToken");
+    if (!token) return;
+    makeRequest(`/admin/carspacereview/${id}`, "DELETE", undefined, { token })
+      .then((resp) => {
+        if (resp.status === 200) {
+          setRefresh(!refresh)
+        }
+      })
+  }
+
+  return (
+    <Modal show={show} onHide={onHide}>
+      <Modal.Header closeButton>Reviews for {user?.username}</Modal.Header>
+      <Modal.Body>
+        <div style={{ overflowY: 'scroll', maxHeight: '400px' }}>
+          {reviews.map((review) => (
+            <Container style={{ padding: '10px 15px' }}>
+              <Row>
+                  <span><b>{review.reviewer}</b> says <i>"{review.feedback}"</i></span>
+              </Row>
+              <br />
+              <Row>
+                <Col>
+                  🫧 Cleanliness<br />
+                  💬 Communication<br />
+                  ✅ Ease of Access<br />
+                  🗺️ Location<br />
+                  🟰 Overall
+                </Col>
+                <Col>
+                  <StarRating stars={review.cleanliness} />
+                  <StarRating stars={review.communication} />
+                  <StarRating stars={review.easeofaccess} />
+                  <StarRating stars={review.location} />
+                  <StarRating stars={review.overall} />
+                </Col>
+              </Row>
+              <br />
+              <Row>
+                <div>
+                  <Button variant="danger" onClick={() => handleDelete(review.id)}>
+                    Delete
+                  </Button>
+                </div>
+              </Row>
+              <hr />
+            </Container>
+          ))}
+        </div>
+      </Modal.Body>
+      <Modal.Footer>
+        <Button onClick={onHide}>OK</Button>
+      </Modal.Footer>
+    </Modal>
   );
 }
 

@@ -270,6 +270,16 @@ async def unset_user_as_admin(username: str, token: str = Depends(verify_admin_t
 
     return {"Message": f"{username} is no longer an admin"}
 
+@AdminRouter.delete("/admin/carspacereview/{reviewid}", tags=["Administrators"])
+@check_token
+async def delete_car_space_review(reviewid: str, token: str = Depends(verify_admin_token)):
+    result = car_space_review_collections.delete_one({"_id": ObjectId(reviewid)})
+    
+    if result.deleted_count < 1:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Could not find review with id: {reviewid}")
+    else:
+        return {"Message": f"Review successfully deleted"}
+
 
 @AdminRouter.delete("/admin/carspacereview/consumer/{username}", tags=["Administrators"])
 @check_token
