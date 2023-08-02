@@ -3,6 +3,7 @@ import MaterialTable from 'material-table';
 import { ThemeProvider, createTheme } from "@mui/material";
 import { makeRequest } from "../../helpers";
 import { Button, Modal } from "react-bootstrap";
+import { ListingReviews } from "../../components/ListingReviews";
 
 type User = {
   id: string;
@@ -21,6 +22,7 @@ export const AdminUsers = () => {
   const [selectedUser, setSelectedUser] = useState<User>();
   const [showMakeUserAdminModal, setShowMakeUserAdminModal] = useState(false);
   const [showDeactivateUserModal, setShowDeactivateUserModal] = useState(false);
+  const [showViewReviewsModal, setShowViewReviewsModal] = useState(false);
   const [refresh, setRefresh] = useState(false);
 
   useEffect(() => {
@@ -78,6 +80,14 @@ export const AdminUsers = () => {
               setShowDeactivateUserModal(true)
               setSelectedUser(rowData as User)
             }
+          },
+          {
+            icon: "star",
+            tooltip: "View reviews of this user",
+            onClick: (_, rowData) => {
+              setShowViewReviewsModal(true)
+              setSelectedUser(rowData as User)
+            }
           }
         ]}
       />
@@ -93,7 +103,46 @@ export const AdminUsers = () => {
         refresh={() => setRefresh(!refresh)}
         user={selectedUser}
       />
+      <ViewReviewsModal
+        show={showViewReviewsModal}
+        onHide={() => setShowViewReviewsModal(false)}
+        refresh={() => setRefresh(!refresh)}
+        user={selectedUser}
+      />
     </ThemeProvider>
+  );
+}
+
+const ViewReviewsModal = ({
+  show,
+  onHide,
+  refresh,
+  user,
+}: {
+  show: boolean;
+  onHide: () => void;
+  refresh: () => void;
+  user?: User;
+}) => {
+  useEffect(() => {
+    const token = localStorage.getItem("adminToken");
+    if (!token) return;
+    makeRequest(`/admin/carspace/getcarspacereviews/${user?.username}`, "GET", undefined, { token })
+      .then((resp) => {
+        console.log(resp);
+      })
+  }, [user]);
+
+  return (
+    <Modal show={show} onHide={onHide}>
+      <Modal.Header>Reviews for {user?.username}</Modal.Header>
+      <Modal.Body>
+        {}
+      </Modal.Body>
+      <Modal.Footer>
+        <Button onClick={onHide}>OK</Button>
+      </Modal.Footer>
+    </Modal>
   );
 }
 

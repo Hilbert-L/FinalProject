@@ -462,7 +462,7 @@ async def update_car_space_by_id(username: str, carspaceid: int, update_car_spac
 @check_token
 async def get_car_spaces_reviews_by_user(username: str, token: str = Depends(verify_admin_token)):
     filter = {"username": username}
-    carspace_cursor = car_space_review_collections.find({filter})
+    carspace_cursor = car_space_review_collections.find(filter)
     carspaces = []
     for document in carspace_cursor:
         document_str = json.dumps(document, default=str)
@@ -474,7 +474,7 @@ async def get_car_spaces_reviews_by_user(username: str, token: str = Depends(ver
 @check_token
 async def get_car_space_reviews_by_id(username: str, carspaceid: int, token: str = Depends(verify_admin_token)):
     filter = {"username": username, "carspaceid": carspaceid}
-    carspace_cursor = car_space_review_collections.find({filter})
+    carspace_cursor = car_space_review_collections.find(filter)
     carspaces = []
     for document in carspace_cursor:
         document_str = json.dumps(document, default=str)
