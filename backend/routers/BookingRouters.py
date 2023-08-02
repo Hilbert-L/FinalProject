@@ -48,13 +48,13 @@ async def create_booking(
         )
 
     # convert start_date to UTC format
-    start_date_utc = carspace_booking.start_date.replace(tzinfo=pytz.UTC)
-    current_time_utc = datetime.now(pytz.UTC)
-    if start_date_utc < current_time_utc:
+    start_date_utc = datetime.date(carspace_booking.start_date.replace(tzinfo=pytz.UTC))
+    current_date_utc = datetime.date(datetime.now(pytz.UTC))
+    if start_date_utc < current_date_utc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Start date cannot be in the past")
 
     # Verify start_date is ealier than the end_date
-    if carspace_booking.start_date >= carspace_booking.end_date:
+    if carspace_booking.start_date > carspace_booking.end_date:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid booking dates. Start date should be earlier than end date."
