@@ -35,14 +35,15 @@ type VehicleType =
 export const ListingComponent = (props: any) => {  
 
     const token = props.token;
-    console.log(props);
     const [info, setInfo] = useState<ListingInfo>({});
     const [photo, setPhoto] = useState('');
 
     useEffect(() => {
+        // Finds the relevant listing to be shown
         const currentListing = props.allListings.find((listing: any) => listing["Your Car Space Information"].carspaceid === props.listing);
         const currentListingInfo = currentListing["Your Car Space Information"];
 
+        // Sets the state variable with all the correct details
         setInfo(info => ({
             ...info,
             address: currentListingInfo.address,
@@ -55,6 +56,7 @@ export const ListingComponent = (props: any) => {
         }))
     }, [])
 
+    // Updates the listing given the new inputs from the user
     const updateListing = async () => {
         try {
             const body = {
@@ -72,7 +74,7 @@ export const ListingComponent = (props: any) => {
         } catch (error) {
             console.log(error);
         }
-        // If there is a photo, upload it
+        // If there is a photo, upload it too
         if (photo) {
             let formData = new FormData();
             formData.append("file", photo, photo.name);
@@ -86,17 +88,19 @@ export const ListingComponent = (props: any) => {
                 console.log(error);
             }          
         }
+        // Close the modal and rerender the page to reflect the changes
         props.onClose();
         props.rerender();
     }
 
+    // Checks if a photo input has been uploaded
     const handlePhoto = (event: any) => {
         if (event.target.files && event.target.files[0]) {
             setPhoto(event.target.files[0]);
-            console.log(event.target.files[0])
         }
       };
 
+    // Used to control enabling the button once all the necessary fields are filled
     const allFilledOut = info.spaceType !== undefined
     && info.vehicleType !== undefined
     && info.accessKey !== undefined

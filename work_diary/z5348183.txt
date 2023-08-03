@@ -1,0 +1,17 @@
+W1: decided on the car space topic for project; brainstormed some user stories.
+
+W2: created all the balsamiq story boards; finalised the user stories for proposal.
+
+W3: project frontend setup with react and vite.
+
+W4: worked on login and register part of the app.
+
+W5: finished login and register stuff; made form for adding a listing; presented first sprint results.
+
+W7: added users and listings to admin portal.
+
+W8: admins can activate/deactivate users, and make them admins; presented results of second sprint.
+
+W9: added ability for users to add/withdraw funds and make bookings, and view bookings; work on project report.
+
+W10: added ability for admins to view bookings, and view/delete reviews for users; final presentation prep; project report finished.

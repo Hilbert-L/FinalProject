@@ -39,7 +39,6 @@ export const BookingForm = () => {
 
     // Retrieves car spaces from the backend every time the mapCentre changes
 	React.useEffect(() => {
-
 		// Retrieves car spaces given the postcode
 		async function retrieveCarspaces(postcode: string) {
             let currentListing = null;
@@ -56,29 +55,33 @@ export const BookingForm = () => {
 				} else {
 					let spaces = response.resp;
 					const carspaces = spaces['Postcode Search Results'];
+                    // Runs through all of the carspaces in that postcode
                     Object.entries(carspaces).forEach(([key, value]) => {
+                        // Checks if the id is equal to the id of the carspace the user wants to book
                         if (value && value._id === listingID) {
+                            // Sets this as the space to book
                             setSpaceToBook(value);
                             currentListing = value;
-                            console.log(value);
                         }
                     });
 				}
                 if (currentListing) {
+                    // Retrieves all the existing bookings for the given carspace
                     let reservations = await makeRequest(`/carspace/get_car_space_booking/${currentListing.carspaceid}`, "GET", undefined, { token });
-                    console.log(reservations.resp)
+                    // Finds all of the dates the car space is booked, given the ranges of the reservations
                     let allDates = extractDatesBetween(reservations.resp);
                     let allDatesList = [new Date];
+                    // For each of the dates, extracts the day, month and year
                     allDates.forEach((dateString) => {
                         const parts = dateString.split('/');
-                        const month = parseInt(parts[1], 10) - 1; // Months are zero-based (January is 0)
+                        const month = parseInt(parts[1], 10) - 1;
                         const day = parseInt(parts[0], 10);
                         const year = parseInt(parts[2], 10);
+                        // Creates a date object for the date and adds it into the array
                         const dateObject = new Date(year, month, day);
                         allDatesList.push(dateObject);
                       });
                     setCurrentReservations(allDatesList);
-                    console.log(allDatesList)
                 }
 			} catch (error) {
 				console.log(error);
@@ -90,32 +93,36 @@ export const BookingForm = () => {
 
 	}, []);
 
+    // Finds all of the days between a given start and end date
     const extractDatesBetween = (data: TimeRange[]): string[] => {
         const result: string[] = [];
         data.forEach(({ start_time, end_time }) => {
-          const startDate = new Date(start_time);
-          const endDate = new Date(end_time);
-          const currentDate = new Date(startDate);
-      
-          while (currentDate <= endDate) {
-            result.push(new Date(`${currentDate.getMonth() + 1}/${currentDate.getDate()}/${currentDate.getFullYear()}`).toLocaleDateString());
-            currentDate.setDate(currentDate.getDate() + 1);
-            //
-          }
+            // Extracts the start and end date
+            const startDate = new Date(start_time);
+            const endDate = new Date(end_time);
+            const currentDate = new Date(startDate);
+            // Loops through the dates until it hits the end date
+            while (currentDate <= endDate) {
+                // Adds a date object to the array then moves onto the next date
+                result.push(new Date(`${currentDate.getMonth() + 1}/${currentDate.getDate()}/${currentDate.getFullYear()}`).toLocaleDateString());
+                currentDate.setDate(currentDate.getDate() + 1);
+            }
         });
         return result;
       };
 
     React.useEffect(() => {
         const days = differenceInDays(dateRange.endDate, dateRange.startDate) + 1;
+        // Finds the total price; returns if it is not a number
         if (isNaN(days * spaceToBook.price)) return;
         setTotalPrice(days * spaceToBook.price)
     }, [dateRange]);
-
+    // Allows for a range of dates to be selected
     const handleSelect = (ranges) => {
         setDateRange(ranges.selection);
       }
 
+    // Sends the booking request to the backend
     const handleBooking = () => {
         const token = localStorage.getItem("authToken");
         const username = localStorage.getItem("username");
@@ -130,6 +137,7 @@ export const BookingForm = () => {
             { token }
         ).then((resp) => {
             if (resp.status === 200) {
+                // If successful, returns to the search page
                 setSuccess(true);
                 localStorage.setItem('booked', 'true')
                 navigate("/");
@@ -141,6 +149,7 @@ export const BookingForm = () => {
         
     }
 
+    // A simple function used to check if two given dates are the same
     function isSameDay(date1: any, date2: any) {
         return (
           date1.getDate() === date2.getDate() &&
@@ -149,13 +158,14 @@ export const BookingForm = () => {
         );
       }
 
+    // Used to render the days on the calendar a certain way
     function renderDayContent(day: any) {
 
         const disabledDays = currentReservations;
         // Check if the current day is one of the disabled days
-        const isDisabled = disabledDays.some(disabledDay => isSameDay(day, disabledDay));;
+        const isDisabled = disabledDays.some(disabledDay => isSameDay(day, disabledDay));
       
-        // Style for disabled days
+        // Style for disabled days; red font with strikethrough
         const disabledStyles = {
           color: 'red',
           textDecoration: 'line-through'
@@ -166,8 +176,9 @@ export const BookingForm = () => {
             {day.getDate()}
           </div>
         );
-      }
+    }
 
+    // Ensures all required fields are filled out
     const allFilledOut = carRegistration !== '' && vehicleType !== '' && totalPrice !== 0;
 
     const today = new Date()
@@ -261,9 +272,6 @@ export const BookingForm = () => {
                 <Row>
                     <Button onClick={handleBooking} disabled={!allFilledOut}>Book</Button>
                 </Row><br />
-                {/* {showNotification && 
-                <NotificationBox position='middle-center' variant='danger' title='🚫 Booking Error' message={error} ></NotificationBox>
-                } */}
             </Container>
             <Modal show={!!error} onHide={() => setError("")}>
                 <Modal.Header closeButton>
@@ -271,14 +279,6 @@ export const BookingForm = () => {
                 </Modal.Header>
                 <Modal.Body>{error}</Modal.Body>
             </Modal>
-            {/* <Modal show={success} onHide={() => navigate("/")}>
-                <Modal.Header closeButton>
-                    <Modal.Title>Booking Successful!</Modal.Title>
-                </Modal.Header>
-                <Modal.Footer>
-                    <Button onClick={() => navigate("/")}>OK</Button>
-                </Modal.Footer>
-            </Modal> */}
         </>
     )
 }

@@ -26,7 +26,7 @@ export const AdminBookings = () => {
           id: booking.booking_id,
           startDate: dayjs(booking.start_date).format("YYYY-MM-DD"),
           endDate: dayjs(booking.end_date).format("YYYY-MM-DD"),
-          duration: booking.duration_hours, // actually in days
+          duration: booking.duration_hours || booking.duration_days,
           price: booking.total_price,
           provider: booking.provider_username,
           consumer: booking.consumer_username,

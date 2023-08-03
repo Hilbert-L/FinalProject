@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { makeRequest } from '../helpers';
 import { StarRating } from './StarRating';
 import {
@@ -8,15 +8,15 @@ import {
     Spinner,
   } from 'react-bootstrap';
 
+// Used to display all of the reviews for a given listing
 export const ListingReviews = (props: any) => {
-    //console.log(props.listing)
     let token = localStorage.getItem('authToken') || '';
     const listing = props.listing;
     const [isLoaded, setIsLoaded] = useState(false);
     const [reviews, setReviews] = useState("");
 
     useEffect(() => {
-        // Retrieves carspace reviews
+        // Retrieves reviews for a carspace given its id
         async function retrieveReviews() {
             try {
                 let response = await makeRequest(`/carspace/reviews/get_car_space_reviews_for_producer_by_carspaceid/${listing.username}/${listing.carspaceid}`, "GET", undefined, { token });
@@ -24,8 +24,8 @@ export const ListingReviews = (props: any) => {
                     console.log("There was an error!")
                 } else {
                     let reviews = response.resp;
+                    // Store all the reviews in the state variable
                     setReviews(reviews[`Reviews received by user: ${listing.username} and carspace: ${listing.carspaceid}`]);
-                    console.log(reviews[`Reviews received by user: ${listing.username} and carspace: ${listing.carspaceid}`]);
                     setIsLoaded(true);
                 }
             } catch (error) {

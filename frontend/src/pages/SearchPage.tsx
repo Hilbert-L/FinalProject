@@ -62,6 +62,7 @@ export type ListingInfo = {
   carspaceid?: string;
 }
 
+// The main page where the user lands when they login - it is used to search for carspaces
 export const SearchPage = () => {
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: 'AIzaSyB4Bsp9jhz4i39NidfXExaaZV89o8jP5To',
@@ -90,7 +91,6 @@ export const SearchPage = () => {
 
   React.useEffect(() => {
     // Perform any necessary actions with the updated carspaces state here
-    console.log('Filtered Car Spaces Updated:', filteredCarspaces);
     if (filteredCarspaces.length > 0) {
       setCarspaces(filteredCarspaces)
       console.log("New Carspaces", carspaces)
@@ -98,14 +98,13 @@ export const SearchPage = () => {
   }, [filteredCarspaces]);
 
   const updateFilteredCarSpaces = (value: any, newMapCentre: any) => {
-    console.log("New Car Spaces", value)
     setFilteredCarspaces(value);
     if (newMapCentre){
       setMapCentre(newMapCentre)
     }
   };
 
-      
+  // Retrieves the users token and username
   React.useEffect(() => {
     async function retrieveUsername() {
       let token = localStorage.getItem('authToken') || '';
@@ -115,6 +114,7 @@ export const SearchPage = () => {
     retrieveUsername();
   }, [])
 
+  // Sends a request to retrieve carspaces
   React.useEffect(() => {
     // Retrieves car spaces given the postcode
     async function retrieveCarspaces(postcode: string) {
@@ -141,7 +141,7 @@ export const SearchPage = () => {
       }
       return 0;
     }
-
+    // Stores the carspaces in a state variable
     async function addMarkers() {
       const suburbAndPostcode = await extractSuburb();
       const carspaceResults = await retrieveCarspaces(suburbAndPostcode[1]);
@@ -150,6 +150,7 @@ export const SearchPage = () => {
 
     addMarkers();
     const booked = localStorage.getItem('booked');
+    // Checks if a user just booked a carspace, and displays a notification if they have
     if (booked === 'true') {
       setShowNotification(true);
       localStorage.setItem('booked', 'false')
@@ -163,12 +164,12 @@ export const SearchPage = () => {
     geocoder.geocode({ address: searchValue }, (results, status) => {
       if (status === 'OK' && results && results.length > 0) {
         const { lat, lng } = results[0].geometry.location;
+        // Changes the centre of the map
         setMapCentre({ lat: lat(), lng: lng() });
       } else {
         console.error('Could not find coordinates!', status);
       }
     });
-    console.log(carspaces)
   };
 
   // Given a location (the current mapCentre lat/lng), extracts the suburb and postcode
@@ -184,7 +185,9 @@ export const SearchPage = () => {
       );
       const data = await response.json();
       const allComponents = data.results[0].address_components;
+      // Stores all of the address components for the given map centre
       setAddressComponents(data.results[0]);
+      // Finds the suburb and postcode for the given map centre
       for (const component of allComponents) {
         const types = component.types;
         if (types.includes('locality')) searchedSuburb = component.short_name;
@@ -203,14 +206,14 @@ export const SearchPage = () => {
     for (const key in carspaces) {
 			if (carspaces.hasOwnProperty(key)) {
 				const listing = carspaces[key];
+        // Finds the carspace with the id of the pin the user clicked
 				if (listing._id === carspace) {
 					carspaceToView = listing;
-          console.log(carspaceToView)
 					break;
 				}
 			}
 		}
-
+    // Sets the current info to the listing chosen
 		setListingInfo({...listingInfo, 
 			username: carspaceToView.username,
 			address: carspaceToView.address,
@@ -227,6 +230,7 @@ export const SearchPage = () => {
       carspaceid: carspaceToView.carspaceid
 		})
 
+    // If it is my own carspace, disables the book button
     if (myUsername === carspaceToView.username) {
       setIsMyListing(true);
     } else {
@@ -235,18 +239,13 @@ export const SearchPage = () => {
 		setShowModal(true);
 	}
 
-
+  // Closes the modal and defaults to the listing details view
   const handleCloseModal = () => {
     setShowModal(false);
     setModalView("See Reviews");
   }
-
-  // For debugging
-  // const print = () => {
-  // 	console.log(Object.entries(carspaces))
-  // 	Object.entries(carspaces).map(([key, value]) => (console.log("value is:", value._id)))
-  // }
   
+  // Shows a spinner until the page loads
   if (!isLoaded) {
     return (
       <Container className="text-center">

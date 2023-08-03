@@ -8,8 +8,8 @@ export const Layout = ({ children }: PropsWithChildren<{}>) => {
   const navigate = useNavigate();
   const token = localStorage.getItem("authToken");
   const [showNotification, setShowNotification] = useState(false);
-  const [reservationCount, setReservationCount] = useState(0);
 
+  // Used to log the user out, clears the authtoken
   const handleLogout = () => {
     if (!token) return;
     makeRequest("/user/auth/logout", "POST", undefined, { token })
@@ -21,6 +21,7 @@ export const Layout = ({ children }: PropsWithChildren<{}>) => {
       });
   }
 
+  // Checks if the user has had any of their car spaces booked
   useEffect(() => {
     async function checkForBookings() {
       let reservations = localStorage.getItem("reservations");
@@ -29,15 +30,17 @@ export const Layout = ({ children }: PropsWithChildren<{}>) => {
         if (response.status !== 200) {
           console.log(response.resp)
         } 
+        // If there is a new booking, update the value in local storage and show the notification
         if (response.resp['Reservation Count'] > parseInt(reservations, 10)) {
-          console.log(response.resp['Reservation Count'], parseInt(reservations, 10))
           localStorage.setItem("reservations", response.resp['Reservation Count']);
-          setShowNotification(true);
+          setShowNotification(true)
+          setTimeout(() => {setShowNotification(false)}, 5000);
         }
       } catch (error) {
         console.log(error)
       }
     }
+    // Repeat the check every 10 seconds
     const interval = setInterval(checkForBookings, 10000);
 
     // Clean up the interval when the component unmounts to avoid memory leaks

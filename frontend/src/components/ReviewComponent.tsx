@@ -12,12 +12,13 @@ import { makeRequest } from '../helpers';
     writtenfeedback?: string;
   }
 
+// Used to leave reviews for a carspace
 export const ReviewComponent = (props: any) => { 
 
     const token = props.token;
-    console.log(props)
     const [review, setReview] = useState<ReviewInfo>({});
 
+    // Given the user input, sends a request to store the review
     const postReview = async () => {
         try {
             const body = {
@@ -36,9 +37,11 @@ export const ReviewComponent = (props: any) => {
         } catch (error) {
             console.log(error);
         }
+        // Closes the modal
         props.onClose();
     }
 
+    // Ensures all fields are filled
     const allFilledOut = review.overall !== undefined
     && review.location !== undefined
     && review.cleanliness !== undefined
@@ -147,7 +150,7 @@ export const ReviewComponent = (props: any) => {
                         <Form.Select
                         value={review.overall}
                         onChange={
-                            (event) => {console.log(event.target.value); setReview({
+                            (event) => {setReview({
                             ...review,
                             overall:
                                 event.target.value === "none"

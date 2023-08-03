@@ -35,7 +35,7 @@ export const MyBookings = () => {
             id: booking.booking_id,
             startDate: dayjs(booking.start_date).format("YYYY-MM-DD"),
             endDate: dayjs(booking.end_date).format("YYYY-MM-DD"),
-            duration: booking.duration_hours, // actually in days
+            duration: booking.duration_hours || booking.duration_days,
             price: booking.total_price,
             provider: booking.provider_username,
             carspaceid: booking.carspaceid,
@@ -55,13 +55,14 @@ export const MyBookings = () => {
           { title: "Provider", field: "provider" },
           { title: "Start Date", field: "startDate" },
           { title: "End Date", field: "endDate" },
-          { title: "Duration (hours)", field: "duration" },
+          { title: "Duration (days)", field: "duration" },
           { title: "Price", field: "price" },
         ]}
         data={bookings}
         options={{
           search: false,
         }}
+        // Displays the leave review and cancel booking buttons
         actions={[
           {
             icon: () => <Button variant="warning">Review</Button>,
