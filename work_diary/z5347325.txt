@@ -48,5 +48,11 @@ WEEK 9
 
 - Added photos to car listings on map, list view and my listings page.
 - Added reviews to search page. Created star rating component to visualise reviews.
+- Fixed bugs causing buttons not to enable.
 
 WEEK 10
+
+- Changed formatting for booked dates on calendar.
+- Fixed issue causing notifications not to display.
+- Added review button in my bookings section.
+- Finalised project for demo.

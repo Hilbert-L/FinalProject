@@ -18,7 +18,6 @@ export const MyListings = (props: any) => {
     const [showBookingsModal, setShowBookingsModal] = useState(false);
     const [showModal, setShowModal] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
-    const [bookingsListingToBeChecked, setBookingsListingToBeChecked] = useState('');
     const [listingToBeUpdated, setListingToBeUpdated] = useState('');
     const [listingToBeDeleted, setListingToBeDeleted] = useState('');
     const [triggerRender, setTriggerRender] = useState(true);
@@ -31,7 +30,7 @@ export const MyListings = (props: any) => {
       });
 
     useEffect(() => {
-        // Retrieves car spaces given the postcode
+        // Retrieves car spaces given that the user has posted
 		async function retrieveListings() {
 			try {
 				let response = await makeRequest(`/carspace/get_car_space_Info/${username}`, "GET", undefined, { token });
@@ -39,6 +38,7 @@ export const MyListings = (props: any) => {
 					console.log("There was an error!")
 				} else {
 					let listings = response.resp;
+                    // Store the listings in a state variable
                     setMyListings(listings);
                     return listings;
 				}
@@ -50,6 +50,7 @@ export const MyListings = (props: any) => {
         retrieveListings();
     }, [triggerRender]);
 
+    // Extracts all the dates between the given start and end dates
     const extractDatesBetween = (data: TimeRange[]): string[] => {
         const result: string[] = [];
         data.forEach(({ start_time, end_time }) => {
@@ -57,25 +58,28 @@ export const MyListings = (props: any) => {
           const endDate = new Date(end_time);
           const currentDate = new Date(startDate);
       
+          // Loops through the dates until all the dates are covered
           while (currentDate <= endDate) {
             result.push(new Date(`${currentDate.getMonth() + 1}/${currentDate.getDate()}/${currentDate.getFullYear()}`).toLocaleDateString());
             currentDate.setDate(currentDate.getDate() + 1);
-            //
           }
         });
         return result;
       };
 
+    // Retrieves all the reservations for the given carspace
     const bookingListingCheck = async (id: string) => {
         let reservations = await makeRequest(`/carspace/get_car_space_booking/${id}`, "GET", undefined, { token });
-        console.log(reservations.resp)
+        // Extracts all the dates between the reservation dates
         let allDates = extractDatesBetween(reservations.resp);
         let allDatesList = [new Date];
+        // For each date, extracts the day, month and year
         allDates.forEach((dateString) => {
             const parts = dateString.split('/');
-            const month = parseInt(parts[1], 10) - 1; // Months are zero-based (January is 0)
+            const month = parseInt(parts[1], 10) - 1;
             const day = parseInt(parts[0], 10);
             const year = parseInt(parts[2], 10);
+            // Creates a new date object and adds it to the list
             const dateObject = new Date(year, month, day);
             allDatesList.push(dateObject);
             });
@@ -83,38 +87,44 @@ export const MyListings = (props: any) => {
         setShowBookingsModal(true);
     }
 
+    // Sets the id for the listing to be updated and shows the modal
     const updateListingCheck = (id: string) => {
         setListingToBeUpdated(id);
         setShowModal(true);
-        console.log(id);
     }
 
+    // Sets the id for the listing to be deleted and shows the modal
     const deleteListingCheck = (id: string) => {
         setListingToBeDeleted(id);
         setShowDeleteModal(true);
     }
 
+    // Sends a request to delete a given listing
     const deleteListing = async () => {
         try {
             let response = await makeRequest(`/carspace/deletecarspace/${username}/${listingToBeDeleted}`, "DELETE", undefined, { token });
             if (response.status !== 200) {
+                // Set the notification to show for 5 seconds if there is an error
                 setShowNotification(true)
                 setTimeout(() => {setShowNotification(false)}, 5000);
             } else {
+                // Otherwise rerender the page
                 setTriggerRender(triggerRender === true ? false : true);
             }
         } catch (error) {
             console.log(error);
         }
-
+        // Reset the state variables
         setListingToBeDeleted('');
         setShowDeleteModal(false);
     }
 
+    // Handle closing the modals
     const handleCloseBookingsModal = () => setShowBookingsModal(false);
 	const handleCloseModal = () => setShowModal(false);
     const handleCloseDeleteModal = () => setShowDeleteModal(false);
 
+    // A function used to check if two given dates are the same
     function isSameDay(date1: any, date2: any) {
         return (
           date1.getDate() === date2.getDate() &&
@@ -123,6 +133,7 @@ export const MyListings = (props: any) => {
         );
       }
 
+    // Used to render the days on the calendar using a given style
     function renderDayContent(day: any) {
 
         const disabledDays = currentReservations;

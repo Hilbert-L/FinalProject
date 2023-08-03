@@ -62,6 +62,7 @@ export const MyBookings = () => {
         options={{
           search: false,
         }}
+        // Displays the leave review and cancel booking buttons
         actions={[
           {
             icon: () => <Button variant="warning">Review</Button>,

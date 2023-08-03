@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Toast, ToastContainer, ProgressBar } from 'react-bootstrap';
 
+// Used to display a notification on the screen
 export const NotificationBox = (props: any) => {
     const [show, setShow] = useState(true);
     const [progress, setProgress] = useState(100);

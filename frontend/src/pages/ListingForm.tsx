@@ -50,11 +50,13 @@ export const ListingForm = () => {
 
   const token = localStorage.getItem("authToken")!;
 
+  // Loads the google maps api
   const {isLoaded} = useJsApiLoader({
     googleMapsApiKey: 'AIzaSyB4Bsp9jhz4i39NidfXExaaZV89o8jP5To',
     libraries: libraries,
   })
 
+  // Sends the details to the backend in order to create a new carspace
   const handleSubmit = () => {
 
     const body = {
@@ -72,18 +74,20 @@ export const ListingForm = () => {
     };
     makeRequest("/carspace/create_car_space", "POST", body, { token })
       .then((response) => {
+        // Returns to the search page if the request was successful
         if (response.status === 200) navigate("/");
         else setError(response.resp.detail);
       })
   }
 
-  // Takes the search input and converts it into coordinates
+  // Takes the search input and converts it into coordinates using the geocoder
 	const findCoordinates = () => {
 		if (!info.address) return;
 		const geocoder = new window.google.maps.Geocoder();
 		geocoder.geocode({ address: info.address }, (results, status) => {
 			if (status === 'OK' && results && results.length > 0) {
 				const { lat, lng } = results[0].geometry.location;
+        // Adds the coordinates to the info state variable
         setInfo({...info, latitude: lat().toString(), longitude: lng().toString()});
 			} else {
 				console.error('Could not find coordinates!', status);
@@ -104,17 +108,19 @@ export const ListingForm = () => {
 			const allComponents = data.results[0].address_components;
 			for (const component of allComponents) {
 				const types = component.types;
+        // Extracts the suburb and postcode
 				if (types.includes('locality')) searchedSuburb = component.short_name;
 				if (types.includes('postal_code')) searchedPostcode = component.short_name;
 			}
 		} catch (error) {
 			console.error('Error retrieving information!', error);
 		}
+    // ...and adds it to the info state variable
 		setInfo({...info, suburb: searchedSuburb, postcode: searchedPostcode});;
 	}
 
   useEffect(() => {
-    //console.log(info.address, info.spaceType, info.vehicleType, info.accessKey, info.width, info.length, info.price)
+    // Checks that all fields are filled then enables the button
     if (info.address !== undefined
         && info.spaceType !== undefined
         && info.vehicleType !== undefined
@@ -127,14 +133,7 @@ export const ListingForm = () => {
 
   }, [info])
 
-  // const allFilledOut = info.address !== undefined
-  //   && info.spaceType !== undefined
-  //   && info.vehicleType !== undefined
-  //   && info.accessKey !== undefined
-  //   && info.width !== undefined
-  //   && info.length !== undefined
-  //   && info.price !== undefined
-  
+  // Displays a spinner until the page loads  
   if (!isLoaded) {
     return (
       <Container className="text-center">
@@ -196,7 +195,7 @@ export const ListingForm = () => {
             <Form.Select
               value={info.vehicleType}
               onChange={
-                (event) => {console.log(event.target.value); setInfo({
+                (event) => {setInfo({
                   ...info,
                   vehicleType:
                     event.target.value === "none"

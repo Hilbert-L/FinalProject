@@ -35,6 +35,7 @@ export const MyPaymentDetails = (props: any) => {
     const [cardNumberChange, setCardNumberChange] = useState('');
     const [cardExpiryChange, setCardExpiryChange] = useState('');
 
+    // Used to initially retrieve a user's bank details
     useEffect(() => {
 		async function retrieveUserBankDetails() {
 			let token = localStorage.getItem('authToken') || '';
@@ -42,6 +43,7 @@ export const MyPaymentDetails = (props: any) => {
                 let response = await makeRequest(`/bankaccounts/get_bank_account/${username}`, "GET", undefined, { token });
                 if (response.status !== 200) return;
                 let userInfo = (response.resp[`bank accounts for user: ${username}`])[0];
+                // Set the user's bank details if they exist
                 if (userInfo) {
                     setPaymentDetails(details => ({
                         ...details,
@@ -51,6 +53,7 @@ export const MyPaymentDetails = (props: any) => {
                         cardExpiry: userInfo.cardexpirydate,
                     }));
                     setDetailsExist(true);
+                    // Update their balance
                     setFundsAmount(userInfo.balance);
                 }
             } catch (error) {
@@ -74,7 +77,7 @@ export const MyPaymentDetails = (props: any) => {
             "cardexpirydate": cardExpiryChange,
             "cardccv": null
         }
-
+        // Used to add new bank details, given the changes in the input fields
 		async function addBank() {
 			try {
 				const response = await makeRequest("/bankaccounts/create_account", "POST", body, { token })
@@ -94,7 +97,7 @@ export const MyPaymentDetails = (props: any) => {
 			}
 		}
 
-        // Changes the bank details
+        // Used to update the bank details, given the changes in the input fields
         async function changeBank() {
 			try {
 				const response = await makeRequest(`/bankaccounts/update_account/${username}`, "PUT", body, { token })
@@ -112,6 +115,7 @@ export const MyPaymentDetails = (props: any) => {
 				console.log(error)
 			}
 		}
+        // Runs the appropriate function depending on the button the user clicks
 		if (modalState === 'add') {
             addBank();
         } else {
@@ -120,37 +124,42 @@ export const MyPaymentDetails = (props: any) => {
 		setShowModal(false);
 	}
 
+    // Uses regular expressions to validate the user's inputs
     const validateDetails = (type: string) => {
 
         // RegExp for checking BSB format
         let regex = /^\d{3}-\d{3}$/;
         let isValid = false;
 
+        // Should be in form xxx-xxx
         if (type === "bsb") {
             isValid = regex.test(BSBChange);
             if (!isValid) setBSBCheck(true);
             if (isValid) setBSBCheck(false);
+        // Should be in form xxxxxx
         } else if (type === "account") {
             regex = /^[1-9]\d{5,9}$/;
             isValid = regex.test(accountNumberChange);
             if (!isValid) setAccountNumberCheck(true);
             if (isValid) setAccountNumberCheck(false);
+        // Should be in form xxxx-xxxx-xxxx-xxxx
         } else if (type === "card") {
             regex = /^\d{4}-\d{4}-\d{4}-\d{4}$/;
             isValid = regex.test(cardNumberChange);
             if (!isValid) setCardNumberCheck(true);
             if (isValid) setCardNumberCheck(false);
+        // Should be in form xx/xx
         } else {
             regex = /^(0[1-9]|1[0-2])\/\d{2}$/;
             isValid = regex.test(cardExpiryChange);
             if (!isValid) setCardExpiryCheck(true);
             if (isValid) setCardExpiryCheck(false);
         }
-
+        // Ensures all fields are filled
         if (!bsbCheck && !accountNumberCheck && !cardNumberCheck && !cardExpiryCheck && BSBChange && accountNumberChange && cardNumberChange && cardExpiryChange) setButtonDisabled(false);
     };
 
-    // TODO
+    // Handles deleting the bank details
     const handleDelete = () => {
         async function deleteBank() {
 			try {
@@ -158,8 +167,7 @@ export const MyPaymentDetails = (props: any) => {
 				if (response.status !== 200) {
 					setErrorMessage(response.resp);
 				}
-                // TODO 
-                // Remember to fix this
+                // Resets the state variables and sets the funds to 0
                 setDetailsExist(false);
                 setTriggerRender(triggerRender === true ? false : true);
                 setPaymentDetails(details => ({
@@ -178,8 +186,8 @@ export const MyPaymentDetails = (props: any) => {
         setShowModal(false)
     }
 
+    // Sends a request to add funds to the user's account
     const addFunds = () => {
-        console.log("hello")
         const token = localStorage.getItem("authToken");
         const username = localStorage.getItem("username");
         if (!token || !username) return;
@@ -194,6 +202,7 @@ export const MyPaymentDetails = (props: any) => {
             });
     }
 
+    // Sends a request to withdraw funds from a user's account
     const withdrawFunds = () => {
         const token = localStorage.getItem("authToken");
         const username = localStorage.getItem("username");

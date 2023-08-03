@@ -11,9 +11,7 @@ interface Profile {
 	number?: string
   }
 
-// TODO
-// Add error messages + validation
-
+// Displays the profile details on the user's profile
 export const MyDetails = () => {
 
 	let token = localStorage.getItem('authToken') || '';
@@ -35,6 +33,7 @@ export const MyDetails = () => {
 	const [passwordChange, setPasswordChange] = useState('');
 	const [photoChange, setPhotoChange] = useState('');
 
+	// Retrieves all of the user's information and sets it in a state variable
 	useEffect(() => {
 		async function retrieveUserInfo() {
 			let token = localStorage.getItem('authToken') || '';
@@ -50,6 +49,7 @@ export const MyDetails = () => {
 				photo: profileInfo.image,
 				number: profileInfo.phonenumber,
 			}));
+			// Sets the page as loaded
 			setIsLoaded(true);
 		}
 		retrieveUserInfo();
@@ -75,11 +75,12 @@ export const MyDetails = () => {
 					"newPhoneNumber": null,
 			}
 			try {
+				// Sends the change request to the backend
 				const response = await makeRequest("/user/update_personal_details", "PUT", body, { token })
 				if (response.status !== 200) {
 					setErrorMessage(response.resp.detail[0].msg);
-					// console.log(response)
 				} 
+				// Rerenders the page
 				setTriggerRender(triggerRender === true ? false : true);
 			} catch (error) {
 				console.log(error)
@@ -96,6 +97,7 @@ export const MyDetails = () => {
 			return;
 		};
 		uploadDetails();
+		// Reset the state variables
 		setFirstNameChange("");
 		setLastNameChange("");
 		setEmailChange("");
@@ -136,9 +138,7 @@ export const MyDetails = () => {
 		setShowModal(false);
 	}
 	
-	// Takes the photo input the user uploaded
-	// TODO
-	// Validation
+// Takes the photo input the user uploaded
 const uploadPhoto = (event: any) => {
     if (event.target.files) {
       const file = event.target.files[0];
@@ -146,16 +146,16 @@ const uploadPhoto = (event: any) => {
     }
 }
 
-	// Handles changing profile picture
+// Handles changing profile picture
 const handlePhotoChange = () => {
     async function uploadPhoto() {
         let formData = new FormData();
         formData.append("file", photoChange, photoChange.name);
         try {
+			// Sends the request to the backend
             const response = await makeRequest("/user/upload_profile_picture", "POST", formData, { token })
             if (response.status !== 200) {
                 setErrorMessage(response.resp.detail[0].msg);
-                console.log(response.resp.detail[0].msg);
                 return;
             }
             setTriggerRender(triggerRender === true ? false : true);
@@ -167,12 +167,14 @@ const handlePhotoChange = () => {
     setShowModal(false);
 }
 
+	// Displays a tooltip next to the profile picture
 	const renderTooltip = (props: any) => (
 		<Tooltip {...props}>
 			change
 		</Tooltip>
 	);
 
+	// Displays a spinner if the page is not loaded
 	if (!isLoaded) {
 			return (
 				<Container className="text-center">
