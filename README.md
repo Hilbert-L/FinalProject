@@ -13,7 +13,7 @@ uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 This final command starts the server.
 
 # Frontend
-First we need to install the latest version of `node`. We will use `nvm` to do this. Open another terminal and run these commands:
+First you need install the latest version of `node`. Use `nvm` to do this. Open another terminal and run these commands:
 ```
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.3/install.sh | bash
 nvm install node
