@@ -1,61 +1,22 @@
 # capstone-project-9900w18c777
-# How this project was initialised
-```
-mkdir backend && cd backend
-python3 -m venv .venv
-touch requirements.txt
-echo "fastapi==0.70.0
-uvicorn==0.15.0
-PyJWT==2.1.0  # Update the version to the latest
-numpy==1.24.3
-scikit-learn==1.2.2
-pandas==2.0.2
-python-decouple==3.8
-python-jose==3.3.0
-pymongo==4.3.3
-requests==2.31.0
-bcrypt==4.0.1
-click==8.1.3
-email-validator==2.0.0.post2
-passlib==1.7.4
-python-multipart==0.0.5" >> requirements.txt
-touch .env 
-touch main.py
-cd .. 
-echo backend/.venv/ >> .gitignore
-npm create vite@latest
-cd frontend
-npm install axios bootstrap react-router-dom
-```
+Getting this project to work locally requires two terminals: one for backend and one for the frontend.
 
-# Setup Frontend from package root
-```
-cd frontend
-npm install -g create-vite
-npm install --save-dev prettier
-npm run dev
-```
-
-## To format frontent files
-```
-cd frontend
-npx prettier --write .
-```
-
-## From project backend directory, build the docker image with the following and start the application this will enable you to run the backend on http://0.0.0.0:8000
+# Backend
+Open a terminal and navigate to `COMP9900` directory. Then run the following commands in order:
 ```
 cd backend
-docker-compose build
-docker run -p 8000:8000 backend-app
+virtualenv -p python3 env
+source env/bin/activate
+pip3 install --no-cache-dir -r requirements.txt
+uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```
+This final command starts the server.
 
-# Docker Container for backend
+# Frontend
+Open another terminal and navigate to `COMP9900` directory. Then run the following commands:
 ```
-cd frontend && touch Dockerfile && touch .dockerignore
-touch Dockerfile
+cd frontend
+npm install
+npm run dev
 ```
-
-# Docker Container for backend
-```
-cd backend && touch Dockerfile && touch .dockerignore
-```
+The command should show a url. Go to this url in your browser to use the app.
