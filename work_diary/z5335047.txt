@@ -1,1 +1,51 @@
-1
+week 1
+-Formed the group
+-Decided to work on Car Space Reservation System
+
+
+week 2
+- Decided on the objectives of the project and wrote user stories for the login and regestration objectives assigned to me
+- Discussed and brainstormed novel objectives together
+
+
+week 3
+- Finalised the  proposal.
+- Compiled the user stories into the Jira backlog 
+
+
+week 4
+-Research the backend architecture
+-Learn about the principle of FastAPI  and mongoDB
+
+
+week 5
+- Test the endpoints functionality in swagger UI
+- Find potential bugs and fix them
+
+
+week 6
+-Start work on the booking models and routers
+-Create endpoints for create bookings, update booking, delete booking and retrieve the booking history
+
+
+week 7
+-Integrate the booking and transactions routers into a single router
+-Link booking router with the bank account router
+-Fix some bugs for carspace router
+
+
+week 8
+-Add a withdraw endpoint in bank account router
+-Add two new id collections for carspace and bookings in MongoDB, to avoid duplicate id problems
+-Optimize some function logics like user cannot delete carspace if future booking exists
+
+
+week 9
+- Add some endpionts in carspace routers
+- Update endpoints in booking routers and fix some potential bugs
+- Start to work on final report
+
+
+week 10
+- Fix some bugs in carspace, users, booking and admin routers
+- Present the project, finalise the report
