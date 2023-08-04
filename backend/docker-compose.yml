@@ -1,0 +1,14 @@
+version: "3.8"
+services:
+  app:
+    build:
+      context: .
+      dockerfile: DockerFile
+    ports:
+      - 8000:8000
+    environment:
+      - SECRET=2ea7e571df496b58d0cd8cc4c0a329a8
+      - ALGORITHM=HS256
+      - MONGODB_USER=GenericUser
+      - MONGODB_CLUSTER_NAME=atlascluster
+      - PROJECT_NAME=CarSpaceReservations
